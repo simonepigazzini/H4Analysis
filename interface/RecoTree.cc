@@ -3,7 +3,8 @@
 RecoTree::RecoTree(int nCh, int* idx, string prefix)
 {
     prefix_=prefix;
-    tree_ = new TTree();
+    tree_ = new TTree("reco_tree", "reco_tree");
+    tree_->SetMaxVirtualSize(10000000);
 
     index=idx;
     time_stamp=0;

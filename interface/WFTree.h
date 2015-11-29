@@ -18,7 +18,7 @@ class WFTree
 {
 public: 
     //---ctors---
-    WFTree(int nCh, int nSamples, int* idx, TString suffix="");
+    WFTree(int nCh, int nSamples, int* idx, TString suffix="", Long64_t autosave=10);
     //---dtor---
     ~WFTree();
 
@@ -38,10 +38,11 @@ public:
     float* WF_val;
 };
 
-WFTree::WFTree(int nCh, int nSamples, int* idx, TString suffix)
+WFTree::WFTree(int nCh, int nSamples, int* idx, TString suffix, Long64_t autosave)
 {
     suffix_= suffix;
-    tree_ = new TTree();
+    tree_ = new TTree("wf", "wf_tree");
+    tree_->SetMaxVirtualSize(10000000);
 
     index=idx;
     time_stamp=0;

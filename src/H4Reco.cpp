@@ -89,14 +89,14 @@ int main(int argc, char* argv[])
   
     //-----output setup-----
     int iEvent=-1;
-    TFile* outROOT = TFile::Open("ntuples/"+TString(run)+".root", "RECREATE");
+    TFile* outROOT = TFile::Open("ntuples/"+TString(run)+".root", "RECREATE");    
     InfoTree outInfo(channelsNames, nSamples, opts.GetOpt<bool>("global.H4hodo"),
                      opts.GetOpt<int>("global.nWireChambers"), &iEvent);
     RecoTree outTree(channelsNames.size(), &iEvent);
     RecoTree outToysTree(channelsNames.size(), &iEvent);
     RecoTree outCleanedRecoTree(channelsNames.size(), &iEvent);
-    WFTree outWFTree(channelsNames.size(), nSamples, &iEvent);
-    WFTree outCleanedWFTree(channelsNames.size(), nSamples, &iEvent);
+    WFTree outWFTree(channelsNames.size(), nSamples, &iEvent, "", 1000/opts.GetOpt<int>("global.WFtreePrescale"));
+    WFTree outCleanedWFTree(channelsNames.size(), nSamples, &iEvent, "", 1000/opts.GetOpt<int>("global.WFtreePrescale"));
   
     //-----input setup-----
     TChain* inTree = new TChain("H4tree");
@@ -239,7 +239,7 @@ int main(int argc, char* argv[])
                 outTree.fit_chi2[outCh] = fitResults.chi2;
 
                 // --- Throw toys
-                if (fillToys)
+                if(fillToys)
 		{
                     emulatedWFs[channel]->Reset();
                     WFs[channel]->EmulatedWF(*(emulatedWFs[channel]), baselineInfo.rms, fitResults.ampl, fitResults.time);
@@ -254,26 +254,26 @@ int main(int argc, char* argv[])
                     outToysTree.time[outCh] = toy_timeInfo.first;
                     outToysTree.time_chi2[outCh] = toy_timeInfo.second;
                     outToysTree.maximum[outCh] = toy_maximum;
-                    outToysTree.amp_max[outCh] = toy_amp_max;
-		  
+                    outToysTree.amp_max[outCh] = toy_amp_max;		  
                     outToysTree.charge_tot[outCh] = emulatedWFs[channel]->GetModIntegral(opts.GetOpt<int>(channel+".baselineInt", 1), 
                                                                                          nSamples);
                     outToysTree.charge_sig[outCh] = emulatedWFs[channel]->GetSignalIntegral(opts.GetOpt<int>(channel+".signalInt", 0), 
                                                                                             opts.GetOpt<int>(channel+".signalInt", 1));
 		  
                     WFFitResults toy_fitResults{-1, -1000, -1};
-                    toy_fitResults = emulatedWFs[channel]->TemplateFit(opts.GetOpt<float>(channel+".templateFit.fitWin", 0), opts.GetOpt<int>(channel+".templateFit.fitWin", 1), opts.GetOpt<int>(channel+".templateFit.fitWin", 2));
-		  
+                    toy_fitResults = emulatedWFs[channel]->TemplateFit(opts.GetOpt<float>(channel+".templateFit.fitWin", 0),
+                                                                       opts.GetOpt<int>(channel+".templateFit.fitWin", 1),
+                                                                       opts.GetOpt<int>(channel+".templateFit.fitWin", 2));
                     outToysTree.fit_ampl[outCh] = toy_fitResults.ampl;
                     outToysTree.fit_time[outCh] = toy_fitResults.time;
                     outToysTree.fit_chi2[outCh] = toy_fitResults.chi2;
+
+                    outToysTree.time_stamp = h4Tree.evtTime;        
 		}
             }         
-	    if (fillToys)
-                outToysTree.time_stamp = h4Tree.evtTime;        
 
 	    // ---- Cleaned (FFT) WF -----
-	    if (FFTCleanWF)
+	    if(FFTCleanWF)
             {
 		cleanedWFs[channel]->Reset();
 		WFs[channel]->FFT(*(cleanedWFs[channel]),opts.GetOpt<int>(channel+".FFTCuts", 0),
@@ -284,7 +284,8 @@ int main(int argc, char* argv[])
 						     opts.GetOpt<int>(channel+".signalWin", 1)+timeRef);
 		double cleaned_maximum=cleanedWFs[channel]->GetAmpMax();
 		double cleaned_amp_max=cleanedWFs[channel]->GetInterpolatedAmpMax(-1,-1,opts.GetOpt<int>(channel+".signalWin", 2));
-		pair<float, float> cleaned_timeInfo = cleanedWFs[channel]->GetTime(opts.GetOpt<string>(channel+".timeType"), timeOpts[channel]);
+		pair<float, float> cleaned_timeInfo = cleanedWFs[channel]->GetTime(opts.GetOpt<string>(channel+".timeType"),
+                                                                                   timeOpts[channel]);
 		outCleanedRecoTree.time[outCh] = cleaned_timeInfo.first;
 		outCleanedRecoTree.time_chi2[outCh] = cleaned_timeInfo.second;
 		outCleanedRecoTree.maximum[outCh] = cleaned_maximum;
@@ -338,6 +339,7 @@ int main(int argc, char* argv[])
         //---fill the output trees if the event is good
         if(!badEvent)
         {
+            outROOT->cd();
             ++iEvent;
             if(iEvent % 1000 == 0)
                 cout << ">>>Processed good events: " << iEvent << "/" << h4Tree.GetEntries() << endl;

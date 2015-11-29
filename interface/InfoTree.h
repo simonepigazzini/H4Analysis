@@ -48,7 +48,8 @@ public:
 
 InfoTree::InfoTree(vector<string> names, int nSamples, bool H4hodo, int nWireCh, int* idx)
 {
-    tree_ = new TTree();
+    tree_ = new TTree("info_tree", "info_tree");
+    tree_->SetMaxVirtualSize(10000000);
     unsigned int nCh=names.size();
 
     index=idx;
@@ -73,12 +74,15 @@ InfoTree::InfoTree(vector<string> names, int nSamples, bool H4hodo, int nWireCh,
         tree_->Branch(names[iCh].c_str(), &(channels[iCh]), (names[iCh]+"/I").c_str());
     }
     //---wire chamber branches
-    n_wchamber = nWireCh;
-    wireX = new float[nWireCh];
-    wireY = new float[nWireCh];
-    tree_->Branch("n_wchamber", &n_wchamber, "n_wchamber/I");
-    tree_->Branch("wireX", wireX, "wireX[n_wchamber]/F");
-    tree_->Branch("wireY", wireY, "wireY[n_wchamber]/F");
+    if(nWireCh>0)
+    {
+        n_wchamber = nWireCh;
+        wireX = new float[nWireCh];
+        wireY = new float[nWireCh];
+        tree_->Branch("n_wchamber", &n_wchamber, "n_wchamber/I");
+        tree_->Branch("wireX", wireX, "wireX[n_wchamber]/F");
+        tree_->Branch("wireY", wireY, "wireY[n_wchamber]/F");
+    }
     //---hodoscope branches
     hodoX1=0;
     hodoY1=0; 
