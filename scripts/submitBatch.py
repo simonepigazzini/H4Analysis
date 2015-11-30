@@ -21,9 +21,10 @@ def get_comma_separated_args(self, arg_line):
 
 def submitJob (run, path, cfg, eosdir, queue, job_dir):
     jobname = job_dir+'/H4Reco_'+queue+'_'+run+'.sh'
+    gitRepo = getoutput('git remote -v | grep origin | grep fetch | awk \'{print $2}\'')
     f = open (jobname, 'w')
     f.write ('#!/bin/sh' + '\n\n')
-    f.write ('git clone https://github.com/simonepigazzini/H4Analysis.git \n')
+    f.write ('git clone '+gitRepo+' \n')
     f.write ('cd H4Analysis/ \n')
     f.write ('source scripts/setup_lxplus.sh \n')
     f.write ('make -j 2 \n')
@@ -33,7 +34,7 @@ def submitJob (run, path, cfg, eosdir, queue, job_dir):
     f.write ('cmsStage -f ntuples/'+run+'.root '+eosdir+'\n')
     f.close ()
     getstatusoutput ('chmod 755 ' + jobname)
-    getstatusoutput ('cd '+job_dir+'; bsub -q ' + queue + ' ' + '-u simone.pigazzini@cern.ch ' + jobname + '; cd -')
+    getstatusoutput ('cd '+job_dir+'; bsub -q ' + queue + ' ' + '-u ' + os.environ['USER'] + '@cern.ch ' + jobname + '; cd -')
 
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
