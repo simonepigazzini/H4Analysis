@@ -25,7 +25,7 @@ def submitJob (run, path, cfg, eosdir, queue, job_dir):
     f.write ('#!/bin/sh' + '\n\n')
     f.write ('git clone https://github.com/simonepigazzini/H4Analysis.git \n')
     f.write ('cd H4Analysis/ \n')
-    f.write ('source scripts/setup.sh \n')
+    f.write ('source scripts/setup_lxplus.sh \n')
     f.write ('make -j 2 \n')
     f.write ('cp '+path+cfg+' job.cfg \n\n')
     f.write ('cp '+path+'/ntuples/Template*.root ./ntuples/ \n\n')
