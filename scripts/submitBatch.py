@@ -21,7 +21,8 @@ def get_comma_separated_args(self, arg_line):
 
 def submitJob (run, path, cfg, eosdir, queue, job_dir):
     jobname = job_dir+'/H4Reco_'+queue+'_'+run+'.sh'
-    gitRepo = getoutput('git remote -v | grep origin | grep fetch | awk \'{print $2}\'')
+    #gitRepo = getoutput('git remote -v | grep origin | grep fetch | awk \'{print $2}\'')
+    gitRepo = "https://github.com/simonepigazzini/H4Analysis.git"
     f = open (jobname, 'w')
     f.write ('#!/bin/sh' + '\n\n')
     f.write ('git clone '+gitRepo+' \n')
