@@ -114,6 +114,8 @@ int main(int argc, char* argv[])
     string path=opts.GetOpt<string>("global.path2data");
     string run=opts.GetOpt<string>("global.run");
     string outSuffix=opts.GetOpt<string>("global.outFileSuffix");
+    string tag=opts.GetOpt<string>("global.tag");
+
     if(argc > 2)
         run = argv[2];
     int maxEvents = opts.GetOpt<int>("global.maxEvents");
@@ -137,7 +139,7 @@ int main(int argc, char* argv[])
     outROOT->cd();
     map<string, TH2F*> templates;
     for(auto channel : channelsNames)
-        templates[channel] = new TH2F(channel.c_str(), channel.c_str(),
+      templates[channel] = new TH2F(Form("%s_%s",channel.c_str(),tag.c_str()), Form("%s_%s",channel.c_str(),tag.c_str()),
 				      16000, -40, 160, 1200, -0.1, 1.1);
   
     //-----input setup-----
