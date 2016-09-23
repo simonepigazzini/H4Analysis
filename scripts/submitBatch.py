@@ -21,10 +21,10 @@ def get_comma_separated_args(self, arg_line):
 
 def lxbatchSubmitJob (run, path, cfg, outdir, queue, job_dir, dryrun):
     jobname = job_dir+'/H4Reco_'+queue+'_'+run+'.sh'
+    gitRepo = getoutput('git remote -v | grep origin | grep fetch | awk \'{print $2}\'')
     f = open (jobname, 'w')
     f.write ('#!/bin/sh' + '\n\n')
-    f.write ('export X509_USER_PROXY=/afs/cern.ch/user/s/spigazzi/x509up_u68758 \n\n')
-    f.write ('git clone --recursive https://github.com/simonepigazzini/H4Analysis.git \n')
+    f.write ('git clone --recursive '+gitRepo+' \n')
     f.write ('cd H4Analysis/ \n')
     f.write ('source scripts/setup.sh \n')
     f.write ('make -j 2 \n')
@@ -32,13 +32,13 @@ def lxbatchSubmitJob (run, path, cfg, outdir, queue, job_dir, dryrun):
     f.write ('cp '+path+'/ntuples/Template*.root ./ntuples/ \n\n')
     f.write ('bin/H4Reco job.cfg '+run+'\n\n')
     if "/eos/cms/" in outdir:
-        f.write ('cmsStage -f ntuples/*'+run+'.root '+outdir+'\n')
+        f.write ('for file in ntuples/*'+run+'.root; do /afs/cern.ch/project/eos/installation/0.3.84-aquamarine/bin/eos.select cp $file '+outdir+'/$file; done\n')
     else:
         f.write ('cp ntuples/*'+run+'.root '+outdir+'\n')
     f.close ()
     getstatusoutput ('chmod 755 ' + jobname)
     if not dryrun:
-        getstatusoutput ('cd '+job_dir+'; bsub -q ' + queue + ' ' + '-u simone.pigazzini@cern.ch ' + jobname + '; cd -')
+        getstatusoutput ('cd '+job_dir+'; bsub -q ' + queue + ' ' + '-u ' + os.environ['USER'] + '@cern.ch ' + jobname + '; cd -')
 
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 

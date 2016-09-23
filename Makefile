@@ -18,7 +18,7 @@ PLUG_OBJS = lib/libDigitizerReco.so lib/libMakeCovarianceMatrix.so \
 	lib/libInfoTreeMaker.so lib/libADCReco.so lib/libWFAnalyzer.so lib/libFFTAnalyzer.so
 DICT_OBJS = lib/WFViewer.o lib/MCPAnalyzer.o
 
-MAIN = bin/H4Reco 
+MAIN = bin/H4Reco bin/TemplatesMaker 
 
 all: dynamicTree cfgManager $(DEPS_OBJS) $(PLUG_OBJS) $(MAIN) lib/LinkDef.cxx 
 
@@ -39,7 +39,7 @@ lib/H4Dict.so: lib/LinkDef.cxx $(DICT_OBJS)
 	@$ $(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ $^ $(INCLUDE) $(ROOT_LIB) $(ROOT_FLAGS) $(LIB)
 
 bin/%: main/%.cpp $(DEPS_OBJS) interface/PluginLoader.h CfgManager/lib/CfgManagerDict.so
-	@echo " CXX $<"o
+	@echo " CXX $<"
 	@$ $(CXX) $(CXXFLAGS) -ldl -o $@ $^ $(INCLUDE) $(ROOT_LIB) $(ROOT_FLAGS) $(LIB)
 
 CfgManager/lib/CfgManagerDict.so: cfgManager

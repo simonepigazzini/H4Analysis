@@ -17,6 +17,28 @@
 #include "interface/RecoTree.h"
 #include "interface/PluginBase.h"
 
+#include <netdb.h>
+#include <unistd.h>
+
+string getMachineDomain()
+{
+  char hn[254];
+  char *dn;
+  struct hostent *hp;
+
+  gethostname(hn, 254);
+  hp = gethostbyname(hn);
+  dn = strchr(hp->h_name, '.');
+  if ( dn != NULL ) 
+    {
+      return std::string(++dn);
+    }
+  else 
+    {
+      return "";
+    }
+}
+
 //----------Simple function to track memory and CPU usage---------------------------------
 void TrackProcess(float* cpu, float* mem, float* vsz, float* rss)
 {
@@ -61,7 +83,12 @@ void ReadInputFiles(CfgManager& opts, TChain* inTree)
 
     //---Get file list searching in specified path (eos or locally)
     if(path.find("/eos/cms") != string::npos)
-        ls_command = string("gfal-ls root://eoscms/"+path+run+" | grep 'root' > tmp/"+run+".list");
+      {
+	if ( getMachineDomain() != "cern.ch" )
+	  ls_command = string("gfal-ls root://eoscms/"+path+run+" | grep 'root' > tmp/"+run+".list");
+	else
+	  ls_command = string("/afs/cern.ch/project/eos/installation/0.3.84-aquamarine/bin/eos.select ls "+path+run+" | grep 'root' > tmp/"+run+".list");
+      }
     else if(path.find("srm://") != string::npos)
         ls_command = string("lcg-ls "+path+run+
                             " | sed -e 's:^.*\\/cms\\/:root\\:\\/\\/xrootd-cms.infn.it\\/\\/:g' | grep 'root' > tmp/"+run+".list");
