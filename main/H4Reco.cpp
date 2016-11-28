@@ -63,8 +63,8 @@ void ReadInputFiles(CfgManager& opts, TChain* inTree)
     if(path.find("/eos/cms") != string::npos)
         ls_command = string("gfal-ls root://eoscms/"+path+run+" | grep 'root' > tmp/"+run+".list");
     else if(path.find("srm://") != string::npos)
-        ls_command = string("lcg-ls "+path+run+
-                            " | sed -e 's:^.*\\/cms\\/:root\\:\\/\\/xrootd-cms.infn.it\\/\\/:g' | grep 'root' > tmp/"+run+".list");
+        ls_command = string("echo "+path+run+"/`gfal-ls "+path+run+
+                            "` | sed -e 's:^.*\\/cms\\/:root\\:\\/\\/xrootd-cms.infn.it\\/\\/:g' | grep 'root' > tmp/"+run+".list");
     else
         ls_command = string("ls "+path+run+" | grep 'root' > tmp/"+run+".list");
     system(ls_command.c_str());
