@@ -188,17 +188,22 @@ int main(int argc, char* argv[])
             TrackProcess(cpu, mem, vsz, rss);
         }
 
-        //---call ProcessEvent for each plugin
+        //---call ProcessEvent for each plugin and check the return status
+        bool status=true;
         for(auto& plugin : pluginSequence)
-            plugin->ProcessEvent(h4Tree, pluginMap, opts);
+            if(status)
+                status = plugin->ProcessEvent(h4Tree, pluginMap, opts);
 
         //---fill the main tree with info variables and increase event counter
-        mainTree.time_stamp = h4Tree.evtTimeStart;
-        mainTree.run = h4Tree.runNumber;
-        mainTree.spill = h4Tree.spillNumber;
-        mainTree.event = h4Tree.evtNumber;
-        mainTree.Fill();
-        ++index;
+        if(status)
+        {
+            mainTree.time_stamp = h4Tree.evtTimeStart;
+            mainTree.run = h4Tree.runNumber;
+            mainTree.spill = h4Tree.spillNumber;
+            mainTree.event = h4Tree.evtNumber;
+            mainTree.Fill();
+            ++index;
+        }
     }
 
     //---end

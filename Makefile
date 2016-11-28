@@ -38,11 +38,11 @@ lib/H4Dict.so: lib/LinkDef.cxx $(DICT_OBJS)
 	@echo " CXX $<"
 	@$ $(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ $^ $(INCLUDE) $(ROOT_LIB) $(ROOT_FLAGS) $(LIB)
 
-bin/%: main/%.cpp $(DEPS_OBJS) interface/PluginLoader.h CfgManager/lib/CfgManagerDict.so
-	@echo " CXX $<"o
+bin/%: main/%.cpp $(DEPS_OBJS) interface/PluginLoader.h CfgManager/lib/libCFGMan.so
+	@echo " CXX $<"
 	@$ $(CXX) $(CXXFLAGS) -ldl -o $@ $^ $(INCLUDE) $(ROOT_LIB) $(ROOT_FLAGS) $(LIB)
 
-CfgManager/lib/CfgManagerDict.so: cfgManager
+CfgManager/lib/libCFGMan.so: cfgManager
 
 dynamicTree:
 	cd DynamicTTree && $(MAKE)
