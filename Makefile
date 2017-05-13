@@ -11,14 +11,15 @@ DEPS = Makefile DynamicTTree/interface/DynamicTTreeBase.h DynamicTTree/interface
 	CfgManager/interface/CfgManager.h CfgManager/interface/CfgManagerT.h \
 	interface/WFClass.h
 DEPS_OBJS = lib/utils.o lib/WFClass.o lib/WFClassNINO.o lib/FFTClass.o lib/WFViewer.o lib/MCPAnalyzer.o \
-	lib/H4Tree.o lib/RecoTree.o lib/DigiTree.o lib/WFTree.o lib/PositionTree.o lib/PluginBase.o lib/H4Dict.so
+	lib/H4Tree.o lib/RecoTree.o lib/DigiTree.o lib/WFTree.o lib/PositionTree.o lib/PluginBase.o lib/H4Dict.so \
+	lib/SetTDRStyle.o lib/FitUtils.o
 PLUG_DEPS = lib/PluginBase.o
 PLUG_OBJS = lib/libDigitizerReco.so lib/libMakeCovarianceMatrix.so \
 	lib/libHodoReco.so lib/libHodoBTFReco.so lib/libWireChamberReco.so \
 	lib/libInfoTreeMaker.so lib/libADCReco.so lib/libWFAnalyzer.so lib/libFFTAnalyzer.so
 DICT_OBJS = lib/WFViewer.o lib/MCPAnalyzer.o
 
-MAIN = bin/H4Reco 
+MAIN = bin/H4Reco bin/drawCTRPlots 
 
 all: dynamicTree cfgManager $(DEPS_OBJS) $(PLUG_OBJS) $(MAIN) lib/LinkDef.cxx 
 

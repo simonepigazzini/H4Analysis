@@ -19,7 +19,7 @@ typedef unsigned long long int uint64;
 #define DYNAMIC_TREE_NAME H4TreeBase
 
 #define DATA_TABLE                              \
-    DATA(uint64,        evtTimeStart)           \
+    DATA(unsigned int,  evtTimeStart)           \
     DATA(unsigned int,  runNumber)              \
     DATA(unsigned int,  spillNumber)            \
     DATA(unsigned int,  evtNumber)              \
