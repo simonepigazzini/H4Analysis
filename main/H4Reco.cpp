@@ -88,7 +88,7 @@ void ReadInputFiles(CfgManager& opts, TChain* inTree)
         }
         ++nFiles;
     }
-
+    std::cout << "+++ Added " << nFiles << " files with " << inTree->GetEntries() << " events" << std::endl;
     return;
 }
 
@@ -176,24 +176,31 @@ int main(int argc, char* argv[])
     }
             
     //---events loop
+    int nEvents = h4Tree.GetEntries();
     int maxEvents = opts.OptExist("h4reco.maxEvents") ? opts.GetOpt<int>("h4reco.maxEvents") : -1;
     cout << ">>> Processing H4DAQ run #" << run << " <<<" << endl;
-    while(h4Tree.NextEntry() && (index-stoul(run)*1e9<maxEvents || maxEvents==-1))
+    for(int iEvent = 0; iEvent < nEvents; ++iEvent)
     {
+        if(maxEvents >- 1 && index-stoul(run)*1e9 >= maxEvents) break;
+        
         if(index % 1000 == 0)
         {
-            cout << ">>> Processed events: " << index-stoul(run)*1e9 << "/"
-                 << (maxEvents<0 ? h4Tree.GetEntries() : min(h4Tree.GetEntries(), (uint64)maxEvents))
+            cout << "\n>>> Processed events: " << index-stoul(run)*1e9 << "/"
+                 << (maxEvents<0 ? nEvents : min(nEvents,maxEvents))
                  << endl;
             TrackProcess(cpu, mem, vsz, rss);
         }
-
+        
         //---call ProcessEvent for each plugin and check the return status
         bool status=true;
         for(auto& plugin : pluginSequence)
+        {
             if(status)
+            {
                 status = plugin->ProcessEvent(h4Tree, pluginMap, opts);
-
+            }
+        }
+        
         //---fill the main tree with info variables and increase event counter
         if(status)
         {

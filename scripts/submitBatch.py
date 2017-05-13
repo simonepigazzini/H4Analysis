@@ -1,3 +1,4 @@
+
 #!/usr/bin/python2
 
 import sys
@@ -23,14 +24,20 @@ def lxbatchSubmitJob (run, cfg, basedir, outdir, queue, job_dir, dryrun):
     jobname = job_dir+'/H4Reco_'+queue+'_'+run+'.sh'
     f = open (jobname, 'w')
     f.write ('#!/bin/sh' + '\n\n')
+    f.write("echo 'BEGIN---------------' \n")
+    f.write("hostname \n")
+    f.write("pwd \n")
     f.write ('cd '+basedir+' \n')
+    f.write("pwd \n")
     f.write ('source scripts/setup.sh \n')
+    f.write ('echo ${ROOTSYS} \n')
     f.write ('./bin/H4Reco '+'cfg/'+cfg+' '+run+'\n\n')
     if "/eos/cms/" in outdir:
         f.write ('cmsStage -f ntuples/*'+run+'.root '+outdir+'\n')
         f.write ('rm ntuples/*'+run+'.root \n')
     else:
         f.write ('mv ntuples/*'+run+'.root '+outdir+'\n')
+    f.write("echo 'END---------------' \n")
     f.close ()
     getstatusoutput ('chmod 755 ' + jobname)
     if not dryrun:
