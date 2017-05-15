@@ -17,7 +17,7 @@ bool WFAnalyzer::Begin(CfgManager& opts, uint64* index)
     timeRecoTypes_ = opts.GetOpt<vector<string> >(instanceName_+".timeRecoTypes");
 
     //---channels setup
-    string templateTag="";
+    string templateTag="prof";
     if(opts.OptExist(instanceName_+".templateTags"))
         for(auto& tag : opts.GetOpt<vector<string> >(instanceName_+".templateTags"))
             for(auto& run : opts.GetOpt<vector<string> >(tag+".runList"))

@@ -40,7 +40,7 @@ const vector<double>* FFTClass::GetAmplitudes()
     //   if not fill it
     if(vars_["ampl"].size() == 0)
         for(int i=0; i<vars_["re"].size(); ++i)
-            vars_["ampl"].push_back(sqrt(pow(vars_["re"][i], 2) + pow(vars_["im"][i], 2)));
+	  vars_["ampl"].push_back(sqrt(pow(vars_["re"][i], 2) + pow(vars_["im"][i], 2)));
 
     return &vars_["ampl"];
 }

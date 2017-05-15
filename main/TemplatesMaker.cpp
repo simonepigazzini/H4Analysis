@@ -16,6 +16,31 @@
 
 using namespace std;
 
+//#define DEBUG
+
+#include <netdb.h>
+#include <unistd.h>
+
+string getMachineDomain()
+{
+  char hn[254];
+  char *dn;
+  struct hostent *hp;
+
+  gethostname(hn, 254);
+  hp = gethostbyname(hn);
+  dn = strchr(hp->h_name, '.');
+  if ( dn != NULL ) 
+    {
+      return std::string(++dn);
+    }
+  else 
+    {
+      return "";
+    }
+}
+
+
 //----------DFT---------------------------------------------------------------------------
 pair<TH1F, TH1F> DFT_cut(TH1F* inWave, string name, float fCut)
 {
@@ -96,6 +121,55 @@ TH1F* getMeanProfile(TH2F* waveForm)
     }
     return prof;
 }
+
+//----------Get input files---------------------------------------------------------------
+void ReadInputFiles(CfgManager& opts, TChain* inTree)
+{
+    int nFiles=0;
+    string ls_command;
+    string file;
+    string path=opts.GetOpt<string>("global.path2data");
+    string run=opts.GetOpt<string>("global.run");
+
+    //---Get file list searching in specified path (eos or locally)
+    if(path.find("/eos/cms") != string::npos)
+      {
+	if ( getMachineDomain() != "cern.ch" )
+	  ls_command = string("gfal-ls root://eoscms/"+path+run+" | grep 'root' > tmp/"+run+".list");
+	else
+	  ls_command = string("/afs/cern.ch/project/eos/installation/0.3.84-aquamarine/bin/eos.select ls "+path+run+" | grep 'root' > tmp/"+run+".list");
+      }
+    else if(path.find("srm://") != string::npos)
+        ls_command = string("lcg-ls "+path+run+
+                            " | sed -e 's:^.*\\/cms\\/:root\\:\\/\\/xrootd-cms.infn.it\\/\\/:g' | grep 'root' > tmp/"+run+".list");
+    else
+        ls_command = string("ls "+path+run+" | grep 'root' > tmp/"+run+".list");
+    system(ls_command.c_str());
+    ifstream waveList(string("tmp/"+run+".list").c_str(), ios::in);
+    while(waveList >> file && (opts.GetOpt<int>("global.maxFiles")<0 || nFiles<opts.GetOpt<int>("global.maxFiles")) )
+    {
+        if(path.find("/eos/cms") != string::npos)
+        {
+            std::cout << "+++ Adding file " << ("root://eoscms/"+path+run+"/"+file).c_str() << std::endl;
+            inTree->AddFile(("root://eoscms/"+path+run+"/"+file).c_str());
+        }
+        else if(path.find("srm://") != string::npos)
+        {
+            std::cout << "+++ Adding file " << file << std::endl;
+            inTree->AddFile((file).c_str());
+        }
+        else
+        {
+            std::cout << "+++ Adding file " << (path+run+"/"+file).c_str() << std::endl;
+            inTree->AddFile((path+run+"/"+file).c_str());
+        }
+        ++nFiles;
+    }
+
+    return;
+}
+
+
 //**********MAIN**************************************************************************
 int main(int argc, char* argv[])
 {
@@ -106,16 +180,23 @@ int main(int argc, char* argv[])
     }
 
     gROOT->SetBatch(kTRUE);
-    //---load options---
+    //---load options---    
     CfgManager opts;
     opts.ParseConfigFile(argv[1]);
+
+    //-----input setup-----    
+    if(argc > 2)
+    {
+        vector<string> run(1, argv[2]);
+        opts.SetOpt("global.run", run);
+    }
 
     //---data opts
     string path=opts.GetOpt<string>("global.path2data");
     string run=opts.GetOpt<string>("global.run");
+
     string outSuffix=opts.GetOpt<string>("global.outFileSuffix");
-    if(argc > 2)
-        run = argv[2];
+
     int maxEvents = opts.GetOpt<int>("global.maxEvents");
     //---channels opts
     int nCh = opts.GetOpt<int>("global.nCh");
@@ -138,36 +219,10 @@ int main(int argc, char* argv[])
     map<string, TH2F*> templates;
     for(auto channel : channelsNames)
         templates[channel] = new TH2F(channel.c_str(), channel.c_str(),
-				      16000, -40, 160, 1200, -0.1, 1.1);
+				      18000, -20, 160, 1200, -0.1, 1.1);
   
-    //-----input setup-----
     TChain* inTree = new TChain("H4tree");
-    string ls_command;
-    if(path.find("/eos/cms") != string::npos)
-        ls_command = string("gfal-ls root://eoscms/"+path+run+" | grep 'root' > tmp/"+run+".list");
-    else
-        ls_command = string("ls "+path+run+" | grep 'root' > tmp/"+run+".list");
-    system(ls_command.c_str());
-    ifstream waveList(string("tmp/"+run+".list").c_str(), ios::in);
-    string file;
-    
-    int nFiles=0;
-    while(waveList >> file && (opts.GetOpt<int>("global.maxFiles")<0 || nFiles<opts.GetOpt<int>("global.maxFiles")) )
-    {
-      
-        if(path.find("/eos/cms") != string::npos)
-	  {
-	    std::cout << "+++ Adding file " << ("root://eoscms/"+path+run+"/"+file).c_str() << std::endl;
-            inTree->AddFile(("root://eoscms/"+path+run+"/"+file).c_str());
-	  }
-        else
-	  {
-	    std::cout << "+++ Adding file " << (path+run+"/"+file).c_str() << std::endl;
-            inTree->AddFile((path+run+"/"+file).c_str());
-	  }
-	++nFiles;
-
-    }
+    ReadInputFiles(opts, inTree);
     H4Tree h4Tree(inTree);
 
     //---process WFs---
@@ -175,6 +230,9 @@ int main(int argc, char* argv[])
     cout << ">>> Processing H4DAQ run #" << run << " events #" << nentries << " <<<" << endl;
     while(h4Tree.NextEntry() && (iEvent<maxEvents || maxEvents==-1))
     {        
+#ifdef DEBUG
+      std::cout << "*************" << std::endl;
+#endif
         ++iEvent;
 	if (iEvent%1000==0) std::cout << "Processing event " << iEvent << "/" << nentries << std::endl;
         //---setup output event 
@@ -206,11 +264,14 @@ int main(int argc, char* argv[])
         WF.SetSignalWindow(opts.GetOpt<int>(refChannel+".signalWin", 0), 
                            opts.GetOpt<int>(refChannel+".signalWin", 1));
         WFBaseline refBaseline=WF.SubtractBaseline();
-        refAmpl = WF.GetInterpolatedAmpMax();            
+        refAmpl = WF.GetInterpolatedAmpMax().ampl;            
         refTime = WF.GetTime(opts.GetOpt<string>(refChannel+".timeType"), timeOpts[refChannel]).first;
 	//---you may want to use an offset, for example if you use the trigger time
 	if(opts.OptExist(refChannel+".timeOffset"))refTime -= opts.GetOpt<float>(refChannel+".timeOffset");
         //---require reference channel to be good
+#ifdef DEBUG
+	std::cout << "--- " << refChannel << " " << refAmpl << "," << refTime << "," << refBaseline.rms << std::endl;
+#endif
         if(refTime/tUnit < opts.GetOpt<int>(refChannel+".signalWin", 0) ||
            refTime/tUnit > opts.GetOpt<int>(refChannel+".signalWin", 1) ||
 	   refBaseline.rms > opts.GetOpt<float>(refChannel+".noiseThreshold") ||  refAmpl < opts.GetOpt<int>(refChannel+".amplitudeThreshold"))
@@ -244,8 +305,11 @@ int main(int argc, char* argv[])
             WF.SetSignalWindow(opts.GetOpt<int>(channel+".signalWin", 0), 
                                opts.GetOpt<int>(channel+".signalWin", 1));
             WFBaseline channelBaseline=WF.SubtractBaseline();
-	    channelAmpl = WF.GetInterpolatedAmpMax(-1,-1,opts.GetOpt<int>(channel+".signalWin", 2));
+	    channelAmpl = WF.GetInterpolatedAmpMax(-1,-1,opts.GetOpt<int>(channel+".signalWin", 2)).ampl;
             channelTime = WF.GetTime(opts.GetOpt<string>(channel+".timeType"), timeOpts[channel]).first;
+#ifdef DEBUG
+	    std::cout << "--- " << channel << " " << channelAmpl << "," << channelTime << "," << channelBaseline.rms << std::endl;
+#endif
             //---skip bad events or events with no signal
             if(channelTime/tUnit > opts.GetOpt<int>(channel+".signalWin", 0) &&
                channelTime/tUnit < opts.GetOpt<int>(channel+".signalWin", 1) &&
@@ -253,9 +317,9 @@ int main(int argc, char* argv[])
                channelAmpl > opts.GetOpt<int>(channel+".amplitudeThreshold") &&
                channelAmpl < 4000)
             {                
-                vector<float>* analizedWF = WF.GetSamples();
-                for(int iSample=0; iSample<analizedWF->size(); ++iSample)
-		  templates[channel]->Fill(iSample*tUnit-refTime, analizedWF->at(iSample)/channelAmpl);
+	      const vector<double>* analizedWF = WF.GetSamples();
+	      for(int iSample=0; iSample<analizedWF->size(); ++iSample)
+		templates[channel]->Fill(iSample*tUnit-refTime, analizedWF->at(iSample)/channelAmpl);
 	    }
         }
     }   
@@ -267,9 +331,9 @@ int main(int argc, char* argv[])
 
     for(auto& channel : channelsNames)
     {
-      //      pair<TH1F, TH1F> dft = DFT_cut(getMeanProfile(templates[channel]), channel, 4);
-      //      dft.first.Write();
-      //      dft.second.Write();
+      pair<TH1F, TH1F> dft = DFT_cut(getMeanProfile(templates[channel]), channel, 5);
+      dft.first.Write();
+      dft.second.Write();
       if (templates[channel]->GetEntries()>1024*10)
 	{
 	  TH1F* prof=getMeanProfile(templates[channel]);

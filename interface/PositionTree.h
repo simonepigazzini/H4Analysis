@@ -31,6 +31,8 @@ public:
     int n_planes;
     int n_hitsX;
     int n_hitsY;
+    int*  nFibresOnX;
+    int*  nFibresOnY;
     float* X;
     float* Y;
 };
