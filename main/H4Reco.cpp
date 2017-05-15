@@ -87,7 +87,7 @@ void ReadInputFiles(CfgManager& opts, TChain* inTree)
 	if ( getMachineDomain() != "cern.ch" )
             ls_command = string("gfal-ls root://eoscms/"+path+run+" | grep 'root' > tmp/"+run+".list");
 	else
-            ls_command = string("/afs/cern.ch/project/eos/installation/0.3.84-aquamarine/bin/eos.select ls "+path+run+" | grep 'root' > tmp/"+run+".list");
+            ls_command = string("ls "+path+run+" | grep 'root' > tmp/"+run+".list");
     }
     else if(path.find("srm://") != string::npos)
         ls_command = string("echo "+path+run+"/`gfal-ls "+path+run+
