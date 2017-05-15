@@ -28,18 +28,18 @@ float WFClassNINO::GetSignalIntegral(int thr, int min=-1)
             break;
         }
     }            
-            
-    //---compute integral
-    float integral=0;
-    for(int iSample=begin; iSample<end; ++iSample)
-    {
-        //---if signal window goes out of bound return a bad value
-        if(iSample > samples_.size() || iSample < 0)
-            return -1000;        
-        integral += samples_.at(iSample);
-    }
-
-    return integral;
+    
+    // //---compute integral
+    // float integral=0;
+    // for(int iSample=begin; iSample<end; ++iSample)
+    // {
+    //     //---if signal window goes out of bound return a bad value
+    //     if(iSample > samples_.size() || iSample < 0)
+    //         return -1000;        
+    //     integral += samples_.at(iSample);
+    // }
+    
+    return 1.*(end-begin);
 }
 
 

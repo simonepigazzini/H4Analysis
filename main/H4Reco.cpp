@@ -100,8 +100,16 @@ void ReadInputFiles(CfgManager& opts, TChain* inTree)
     {
         if(path.find("/eos/cms") != string::npos)
         {
-            std::cout << "+++ Adding file " << ("root://eoscms/"+path+run+"/"+file).c_str() << std::endl;
-            inTree->AddFile(("root://eoscms/"+path+run+"/"+file).c_str());
+            if ( getMachineDomain() != "cern.ch" )
+            {
+                std::cout << "+++ Adding file " << ("root://eoscms/"+path+run+"/"+file).c_str() << std::endl;
+                inTree->AddFile(("root://eoscms/"+path+run+"/"+file).c_str());
+            }
+            else
+            {
+                std::cout << "+++ Adding file " << (path+run+"/"+file).c_str() << std::endl;
+                inTree->AddFile((path+run+"/"+file).c_str());
+            }
         }
         else if(path.find("srm://") != string::npos)
         {

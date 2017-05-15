@@ -28,20 +28,21 @@ def lxbatchSubmitJob (run, cfg, basedir, outdir, queue, job_dir, dryrun):
     f.write("echo 'BEGIN---------------' \n")
     f.write("hostname \n")
     f.write("pwd \n")
-    f.write ('cd '+basedir+' \n')
+    f.write("cd "+basedir+" \n")
     f.write("pwd \n")
-    f.write ('source scripts/setup.sh \n')
-    f.write ('echo ${ROOTSYS} \n')
-    f.write ('./bin/H4Reco '+'cfg/'+cfg+' '+run+'\n\n')
+    f.write("source scripts/setup.sh \n")
+    f.write("echo ${ROOTSYS} \n")
+    f.write("echo 'START EXECUTIVE---------------' \n")
+    f.write("./bin/H4Reco cfg/"+cfg+" "+run+" \n")
     if "/eos/cms/" in outdir:
-        f.write ('for file in ntuples/*'+run+'.root; do /afs/cern.ch/project/eos/installation/0.3.84-aquamarine/bin/eos.select cp $file '+outdir+'/$file; done\n')
+        f.write ("for file in ntuples/*'+run+'.root; do /afs/cern.ch/project/eos/installation/0.3.84-aquamarine/bin/eos.select cp $file "+outdir+"/$file; done\n")
     else:
-        f.write ('mv ntuples/*'+run+'.root '+outdir+'\n')
+        f.write ("mv ntuples/*"+run+".root "+outdir+"\n")
     f.write("echo 'END---------------' \n")
     f.close ()
-    getstatusoutput ('chmod 755 ' + jobname)
+    getstatusoutput("chmod 755 "+jobname)
     if not dryrun:
-        getstatusoutput ('cd '+job_dir+'; bsub -q ' + queue + ' ' + '-cwd ./ -u ' + os.environ['USER'] + '@cern.ch ' + jobname + '; cd -')
+        getstatusoutput ("cd "+job_dir+"; bsub -q "+queue+" "+"-cwd ./ -u "+os.environ['USER']+"@cern.ch "+jobname+"; cd -")
 
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
