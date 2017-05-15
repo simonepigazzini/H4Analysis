@@ -38,6 +38,8 @@ bool WireChamberReco::ProcessEvent(const H4Tree& h4Tree, map<string, PluginBase*
     }
 
     //---compute X and Y from channels times
+    wireTree_.n_hitsX = timeR.size()+timeL.size();
+    wireTree_.n_hitsY = timeD.size()+timeU.size();
     if(timeR.size()!=0 && timeL.size()!=0)
         wireTree_.X[0] = (*min_element(timeR.begin(), timeR.begin()+timeR.size()) -
                           *min_element(timeL.begin(), timeL.begin()+timeL.size()))*0.005;

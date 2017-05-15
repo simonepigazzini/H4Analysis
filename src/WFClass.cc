@@ -64,7 +64,7 @@ WFFitResults WFClass::GetInterpolatedAmpMax(int min, int max, int nFitSamples)
         h_max.SetBinError(bin, BaselineRMS());
         ++bin;
     }
-    auto fit_result = h_max.Fit(&f_max, "QRS");
+    auto fit_result = h_max.Fit(&f_max, "QRSO");
     fitTimeMax_ = -f_max.GetParameter(1)/(2*f_max.GetParameter(2));
     fitAmpMax_ = f_max.Eval(fitTimeMax_);
     fitChi2Max_ = fit_result->Chi2()/(nFitSamples-3);
@@ -152,7 +152,7 @@ pair<float, float> WFClass::GetTimeLE(float thr, int nmFitSamples, int npFitSamp
     if(min!=-1 && max!=-1)
         SetSignalWindow(min, max);
     //---compute LED time value 
-    if(thr != leThr_ || leSample_ != -1)
+    if(thr != leThr_ || leSample_ == -1)
     {
         //---find first sample above thr
         leThr_ = thr;
