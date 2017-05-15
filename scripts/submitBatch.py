@@ -1,3 +1,4 @@
+
 #!/usr/bin/python2
 
 import sys
@@ -19,26 +20,28 @@ def get_comma_separated_args(self, arg_line):
 
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
-def lxbatchSubmitJob (run, path, cfg, outdir, queue, job_dir, dryrun):
+def lxbatchSubmitJob (run, cfg, basedir, outdir, queue, job_dir, dryrun):
     jobname = job_dir+'/H4Reco_'+queue+'_'+run+'.sh'
     gitRepo = getoutput('git remote -v | grep origin | grep fetch | awk \'{print $2}\'')
     f = open (jobname, 'w')
     f.write ('#!/bin/sh' + '\n\n')
-    f.write ('git clone --recursive '+gitRepo+' \n')
-    f.write ('cd H4Analysis/ \n')
+    f.write("echo 'BEGIN---------------' \n")
+    f.write("hostname \n")
+    f.write("pwd \n")
+    f.write ('cd '+basedir+' \n')
+    f.write("pwd \n")
     f.write ('source scripts/setup.sh \n')
-    f.write ('make -j 2 \n')
-    f.write ('cp '+path+cfg+' job.cfg \n\n')
-    f.write ('cp '+path+'/ntuples/Template*.root ./ntuples/ \n\n')
-    f.write ('bin/H4Reco job.cfg '+run+'\n\n')
+    f.write ('echo ${ROOTSYS} \n')
+    f.write ('./bin/H4Reco '+'cfg/'+cfg+' '+run+'\n\n')
     if "/eos/cms/" in outdir:
         f.write ('for file in ntuples/*'+run+'.root; do /afs/cern.ch/project/eos/installation/0.3.84-aquamarine/bin/eos.select cp $file '+outdir+'/$file; done\n')
     else:
-        f.write ('cp ntuples/*'+run+'.root '+outdir+'\n')
+        f.write ('mv ntuples/*'+run+'.root '+outdir+'\n')
+    f.write("echo 'END---------------' \n")
     f.close ()
     getstatusoutput ('chmod 755 ' + jobname)
     if not dryrun:
-        getstatusoutput ('cd '+job_dir+'; bsub -q ' + queue + ' ' + '-u ' + os.environ['USER'] + '@cern.ch ' + jobname + '; cd -')
+        getstatusoutput ('cd '+job_dir+'; bsub -q ' + queue + ' ' + '-cwd ./ -u ' + os.environ['USER'] + '@cern.ch ' + jobname + '; cd -')
 
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
@@ -71,16 +74,17 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser (description = 'submit H4Reco step to lsf')
     parser.add_argument('-r', '--runs' , action=customAction, help='run to be processed, either list or file')
     parser.add_argument('-q', '--queue' , default = '1nh', help='batch queue (1nh)')
-    parser.add_argument('-s', '--storage' , default = '/store/group/dpg_ecal/alca_ecalcalib/ECALTB_H4_Fall2015/', help='storage path')
+    parser.add_argument('-b', '--basedir' , default = './', help='absolute path of the H4Analysis code')
+    parser.add_argument('-s', '--storage' , default = '/store/group/dpg_ecal/alca_ecalcalib/ECALTB_H4_Fall2015/', help='storage absolute path')
     parser.add_argument('-v', '--version' , default = 'v1', help='production version')
-    parser.add_argument('-c', '--cfg' , default = '../cfg/H4DAQ_base.cfg', help='production version')
+    parser.add_argument('-c', '--cfg' , default = 'H4DAQ_base.cfg', help='config file name (should be in the cfg folder)')
     parser.add_argument('--dryrun' , action="store_true", default=False, help='do not submit the jobs, just create them')
     parser.add_argument('--batch' , default='lxbatch', help='batch system to use')
     
     args = parser.parse_args ()
 
     ## check ntuple version
-    stageOutDir = args.storage+'ntuples_'+args.version+'/'
+    stageOutDir = args.storage+'/ntuples_'+args.version+'/'
     
     if args.batch == 'lxbatch':
         if getoutput('gfal-ls root://eoscms/'+stageOutDir) == "":
@@ -113,6 +117,6 @@ if __name__ == '__main__':
     for run in args.runs:
         print 'submitting run: ', run
         if args.batch == 'lxbatch':
-            lxbatchSubmitJob(run, local_path, args.cfg, stageOutDir, args.queue, job_dir, args.dryrun) 
+            lxbatchSubmitJob(run, args.cfg, args.basedir, stageOutDir, args.queue, job_dir, args.dryrun) 
         if args.batch == 'hercules':
             herculesSubmitJob(run, local_path, args.cfg, stageOutDir, args.queue, job_dir, args.dryrun) 

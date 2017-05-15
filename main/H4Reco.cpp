@@ -83,12 +83,12 @@ void ReadInputFiles(CfgManager& opts, TChain* inTree)
 
     //---Get file list searching in specified path (eos or locally)
     if(path.find("/eos/cms") != string::npos)
-      {
+    {
 	if ( getMachineDomain() != "cern.ch" )
-	  ls_command = string("gfal-ls root://eoscms/"+path+run+" | grep 'root' > tmp/"+run+".list");
+            ls_command = string("gfal-ls root://eoscms/"+path+run+" | grep 'root' > tmp/"+run+".list");
 	else
-	  ls_command = string("/afs/cern.ch/project/eos/installation/0.3.84-aquamarine/bin/eos.select ls "+path+run+" | grep 'root' > tmp/"+run+".list");
-      }
+            ls_command = string("/afs/cern.ch/project/eos/installation/0.3.84-aquamarine/bin/eos.select ls "+path+run+" | grep 'root' > tmp/"+run+".list");
+    }
     else if(path.find("srm://") != string::npos)
         ls_command = string("echo "+path+run+"/`gfal-ls "+path+run+
                             "` | sed -e 's:^.*\\/cms\\/:root\\:\\/\\/xrootd-cms.infn.it\\/\\/:g' | grep 'root' > tmp/"+run+".list");
@@ -115,7 +115,7 @@ void ReadInputFiles(CfgManager& opts, TChain* inTree)
         }
         ++nFiles;
     }
-
+    std::cout << "+++ Added " << nFiles << " files with " << inTree->GetEntries() << " events" << std::endl;
     return;
 }
 
@@ -214,13 +214,17 @@ int main(int argc, char* argv[])
                  << endl;
             TrackProcess(cpu, mem, vsz, rss);
         }
-
+        
         //---call ProcessEvent for each plugin and check the return status
         bool status=true;
         for(auto& plugin : pluginSequence)
+        {
             if(status)
+            {
                 status = plugin->ProcessEvent(h4Tree, pluginMap, opts);
-
+            }
+        }
+        
         //---fill the main tree with info variables and increase event counter
         if(status)
         {
