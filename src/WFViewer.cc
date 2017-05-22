@@ -162,8 +162,8 @@ void WFViewer::Draw(unsigned int iEntry, const char* wf_tree)
     int wf_samples=0;
     tree_->SetBranchAddress("WF_samples", &wf_samples);    
     tree_->GetEntry(iEntry);
-    float wf_val[wf_samples]={0};
-    float wf_time[wf_samples]={0};
+    float* wf_val = new float[wf_samples];
+    float* wf_time = new float[wf_samples];
     tree_->SetBranchAddress("WF_val", wf_val);
     tree_->SetBranchAddress("WF_time", wf_time);
     tree_->GetEntry(iEntry);
