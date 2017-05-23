@@ -61,9 +61,9 @@ GLIBS   =  -lm -ldl -rdynamic -L./DynamicTTree/lib -L./CfgManager/lib -lDynamicT
 ifeq ($(ARCH),macosx64)
 LIBSuf  =  .dylib
 
-CPPFLAGS  =  -Wall -W -Woverloaded-virtual -O2 -pipe -I$(HDR) $(ROOTCFLAGS)
+CPPFLAGS  =  -Wall -W -O2 -pipe -I$(HDR) $(ROOTCFLAGS)
 
-CXXFLAGS  =  -Wall -W -Woverloaded-virtual -O2 -pipe -I$(HDR) $(ROOTCFLAGS)
+CXXFLAGS  =  -Wall -W -O2 -pipe -I$(HDR) $(ROOTCFLAGS)
 
 LDFLAGS  =  -dynamiclib -shared -single_module -undefined dynamic_lookup
 SONAME	 =  libH4Analysis.dylib

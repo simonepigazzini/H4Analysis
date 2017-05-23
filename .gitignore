@@ -19,3 +19,5 @@ AutoDict_*
 *.pdf
 *.dat
 *.tmp
+*.o
+*.so

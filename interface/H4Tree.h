@@ -9,7 +9,7 @@
 
 using namespace std;
 
-#define MAX_TDC_CHANNELS 20
+#define MAX_TDC_CHANNELS 200
 
 typedef unsigned long int uint32;
 typedef unsigned long long int uint64;
@@ -32,8 +32,8 @@ typedef unsigned long long int uint64;
     DATA(unsigned int, adcBoard, nAdcChannels)          \
     DATA(unsigned int, adcChannel, nAdcChannels)        \
     DATA(unsigned int, adcData, nAdcChannels)           \
-    DATA(unsigned int, tdcChannel, 20)                  \
-    DATA(unsigned int, tdcData, 20)                     \
+    DATA(unsigned int, tdcChannel, MAX_TDC_CHANNELS)    \
+    DATA(unsigned int, tdcData, MAX_TDC_CHANNELS)       \
     DATA(unsigned int, pattern, nPatterns)              \
     DATA(unsigned int, patternBoard, nPatterns)         \
     DATA(unsigned int, patternChannel, nPatterns)       \
