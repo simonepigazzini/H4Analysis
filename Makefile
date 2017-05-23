@@ -106,7 +106,7 @@ $(LIB)mydict.o: $(LIB)mydict.cc
 
 $(LIB)$(SONAME): $(OBJS) $(LIB)mydict.o
 	@echo "Linking $(SONAME):"
-	$(LD) $(LDFLAGS) $(OBJS) $(LIB)mydict.o -o $(LIB)$(SONAME) $(SOFLAGS)$(SONAME) 
+	$(LD) $(LDFLAGS) $(OBJS) $(LIB)mydict.o -o $(LIB)$(SONAME) $(SOFLAGS)$(SONAME)
 
 $(LIB)lib%$(LIBSuf): $(PLG)%$(SRCSuf) $(PLG)%$(HDRSuf) $(OBJS)
 	@echo "Creating plugin library " $@ " and " $<
