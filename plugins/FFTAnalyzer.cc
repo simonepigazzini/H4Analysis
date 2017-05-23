@@ -119,7 +119,7 @@ bool FFTAnalyzer::Begin(CfgManager& opts, uint64* index)
         fftTree_->Branch("ampl", amplitudes_, "ampl[n_tot]/F");
         fftTree_->Branch("phi", phases_, "phi[n_tot]/F");
         //---set default values
-        for(int i=0; i<n_tot_; ++i)
+        for(unsigned int i=0; i<n_tot_; ++i)
         {
 	  current_ch_[i]=-1;
             freqs_[i] = (i%nSamples_);
@@ -153,7 +153,6 @@ bool FFTAnalyzer::ProcessEvent(const H4Tree& event, map<string, PluginBase*>& pl
                 for(auto& sample : samples_norm)
                     sample /= max;
             }
-	    int i=0;
             //---build the FFT
             double Re[nSamples_], Im[nSamples_];
             auto fftr2c = TVirtualFFT::FFT(1, &nSamples_, "R2C");

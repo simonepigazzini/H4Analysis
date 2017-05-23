@@ -25,7 +25,7 @@ bool InfoTreeMaker::Begin(CfgManager& opts, uint64* index)
         //---seg fault protection: fill the map for as many values as the min between
         //   the orginal variable values and the remapped values.
         vector<float> values = opts.GetOpt<vector<float> >(instanceName_+"."+mappedVar);
-        for(int i=0; i<min(values.size(), originValues.size()); ++i)
+        for(unsigned int i=0; i<min(values.size(), originValues.size()); ++i)
             remap_[mappedVar][originValues[i]] = values[i];
     }
     

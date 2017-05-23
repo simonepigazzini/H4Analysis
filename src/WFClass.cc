@@ -6,10 +6,10 @@
 
 //**********Constructors******************************************************************
 WFClass::WFClass(int polarity, float tUnit):
-    polarity_(polarity), tUnit_(tUnit), trigRef_(0), sWinMin_(-1), sWinMax_(-1), 
+    tUnit_(tUnit), polarity_(polarity), trigRef_(0), sWinMin_(-1), sWinMax_(-1), 
     bWinMin_(-1), bWinMax_(-1),  maxSample_(-1), fitAmpMax_(-1), fitTimeMax_(-1),
-    fitChi2Max_(-1), baseline_(-1), bRMS_(-1), leSample_(-1), leTime_(-1),
-    cfSample_(-1), cfFrac_(-1), cfTime_(-1), chi2cf_(-1), chi2le_(-1),
+    fitChi2Max_(-1), baseline_(-1), bRMS_(-1), cfSample_(-1), cfFrac_(-1), cfTime_(-1),
+    leSample_(-1), leTime_(-1), chi2cf_(-1), chi2le_(-1),
     fWinMin_(-1), fWinMax_(-1), tempFitTime_(-1), tempFitAmp_(-1), interpolator_(NULL)
 {}
 //**********Getters***********************************************************************
@@ -101,11 +101,9 @@ pair<float, float> WFClass::GetTime(string method, vector<float>& params)
             return GetTimeLE(params[0], params[1], params[2], params[3], params[4]);
 
     }
-    else
-    {
-        cout << ">>>ERROR: time reconstruction method <" << method << "> not supported" << endl;
-        return make_pair(-1000, -1);
-    }    
+    
+    cout << ">>>ERROR: time reconstruction method <" << method << "> not supported" << endl;
+    return make_pair(-1000, -1);
 }
 
 //----------Get CF time for a given fraction and in a given range-------------------------
@@ -196,7 +194,7 @@ float WFClass::GetSignalIntegral(int riseWin, int fallWin)
     for(int iSample=maxSample_-riseWin; iSample<maxSample_+fallWin; iSample++)
     {
         //---if signal window goes out of bound return a bad value
-        if(iSample > samples_.size() || iSample < 0)
+      if(iSample > int(samples_.size()) || iSample < 0)
             return -1000;        
         integral += samples_.at(iSample);
     }
@@ -312,7 +310,7 @@ WFBaseline WFClass::SubtractBaseline(int min, int max)
     }
     baseline_ = baseline_/((float)(bWinMax_-bWinMin_));
     //---subtract baseline
-    for(int iSample=0; iSample<samples_.size(); iSample++)
+    for(unsigned int iSample=0; iSample<samples_.size(); iSample++)
         samples_.at(iSample) = (samples_.at(iSample) - baseline_);    
     //---interpolate baseline
     BaselineRMS();
@@ -365,7 +363,7 @@ void WFClass::EmulatedWF(WFClass& wf,float rms, float amplitude, float time)
         return;
     }
 
-    for (int i=0; i<samples_.size();++i)
+    for (unsigned int i=0; i<samples_.size();++i)
     {
         float emulatedSample=amplitude*interpolator_->Eval(i*tUnit_-tempFitTime_-(time-tempFitTime_));
         emulatedSample+=rnd.Gaus(0,rms);
@@ -464,7 +462,7 @@ float WFClass::LinearInterpolation(float& A, float& B, const int& min, const int
     int usedSamples=0;
     for(int iSample=min; iSample<=max; ++iSample)
     {
-        if(iSample<0 || iSample>=samples_.size()) 
+        if(iSample<0 || iSample>=int(samples_.size())) 
             continue;
         xx = iSample*iSample*tUnit_*tUnit_;
         xy = iSample*tUnit_*samples_[iSample];
@@ -484,7 +482,7 @@ float WFClass::LinearInterpolation(float& A, float& B, const int& min, const int
     float sigma2 = pow(bRMS_, 2);
     for(int iSample=min; iSample<=max; ++iSample)
     {
-        if(iSample<0 || iSample>=samples_.size()) 
+        if(iSample<0 || iSample>=int(samples_.size())) 
             continue;
         chi2 = chi2 + pow(samples_[iSample] - A - B*iSample*tUnit_, 2)/sigma2;
     } 
@@ -499,7 +497,7 @@ double WFClass::TemplateChi2(const double* par)
     double delta = 0;
     for(int iSample=fWinMin_; iSample<fWinMax_; ++iSample)
     {
-        if(iSample < 0 || iSample >= samples_.size())
+      if(iSample < 0 || iSample >= int(samples_.size()))
         {
             //cout << ">>>WARNING: template fit out of samples rage (chi2 set to -1)" << endl;
             chi2 += 9999;
@@ -522,7 +520,7 @@ double WFClass::TemplateChi2(const double* par)
 void WFClass::Print()
 {
     std::cout << "+++ DUMP WF +++" << std::endl;
-    for (int i=0; i<samples_.size(); ++i)
+    for (unsigned int i=0; i<samples_.size(); ++i)
         std::cout << "SAMPLE " << i << ": " << samples_[i] << std::endl;
 }
 
@@ -565,7 +563,7 @@ WFClass WFClass::operator-(const WFClass& sub)
         return *this;
 
     WFClass diff(1, tUnit_);
-    for(int iSample=0; iSample<min(samples_.size(), sub.samples_.size()); ++iSample)
+    for(unsigned int iSample=0; iSample<min(samples_.size(), sub.samples_.size()); ++iSample)
         diff.AddSample(samples_[iSample] - sub.samples_[iSample]);
 
     return diff;
@@ -578,7 +576,7 @@ WFClass WFClass::operator+(const WFClass& sub)
         return *this;
 
     WFClass sum(1, tUnit_);
-    for(int iSample=0; iSample<min(samples_.size(), sub.samples_.size()); ++iSample)
+    for(unsigned int iSample=0; iSample<min(samples_.size(), sub.samples_.size()); ++iSample)
         sum.AddSample(samples_[iSample] + sub.samples_[iSample]);
 
     return sum;
@@ -588,7 +586,7 @@ WFClass WFClass::operator+(const WFClass& sub)
 WFClass& WFClass::operator-=(const WFClass& sub)
 {
     if(tUnit_ == sub.tUnit_)
-        for(int iSample=0; iSample<min(samples_.size(), sub.samples_.size()); ++iSample)
+        for(unsigned int iSample=0; iSample<min(samples_.size(), sub.samples_.size()); ++iSample)
             samples_[iSample] -= sub.samples_[iSample];
     
     return *this;
@@ -598,7 +596,7 @@ WFClass& WFClass::operator-=(const WFClass& sub)
 WFClass& WFClass::operator+=(const WFClass& sub)
 {
     if(tUnit_ == sub.tUnit_)
-        for(int iSample=0; iSample<min(samples_.size(), sub.samples_.size()); ++iSample)
+        for(unsigned int iSample=0; iSample<min(samples_.size(), sub.samples_.size()); ++iSample)
             samples_[iSample] += sub.samples_[iSample];
     
     return *this;

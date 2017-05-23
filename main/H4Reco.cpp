@@ -249,7 +249,7 @@ int main(int argc, char* argv[])
     for(auto& plugin : pluginSequence)
     {
         //---call endjob for each plugin        
-        bool r_status = plugin->End(opts);
+        // bool r_status = plugin->End(opts);
         // if(!r_status)
         // {
         //     cout << ">>> ERROR: plugin returned bad flag from End() call: " << plugin->GetInstanceName() << endl;

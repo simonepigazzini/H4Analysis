@@ -312,7 +312,7 @@ int main(int argc, char** argv)
   TH1F* h_nEvents_vs_amp1   = new TH1F("h_nEvents_vs_amp1",  "",nBins_vs_amp,bins_vs_amp1);
   TH1F* h_nEvents_vs_amp2   = new TH1F("h_nEvents_vs_amp2",  "",nBins_vs_amp,bins_vs_amp2);
   TH1F* h_nEvents_vs_ampAvg = new TH1F("h_nEvents_vs_ampAvg","",nBins_vs_amp,bins_vs_ampAvg);
-  for(unsigned int it = 0; it <= nBins_vs_amp; ++it)
+  for(int it = 0; it <= nBins_vs_amp; ++it)
     std::cout << "it: " << it << "   val: " << bins_vs_amp1[it] << std::endl;
   
   
@@ -493,8 +493,6 @@ int main(int argc, char** argv)
     
     float amp1 = treeVars.t_amp[8+ch1] * 0.25;
     float amp2 = treeVars.t_amp[8+ch2] * 0.25;
-    float dur1 = treeVars.t_dur[ch1] * 0.2;
-    float dur2 = treeVars.t_dur[ch2] * 0.2;
     float time1 = treeVars.t_time[ch1];
     float time2 = treeVars.t_time[ch2];
     float CTR = (time2 - time1) - map_mean_vs_Vbias_th[label_Vbias_th] + map_mean_vs_Vbias_th[label_Vbias_th_max];
@@ -610,7 +608,6 @@ int main(int argc, char** argv)
   for(unsigned int it = 0; it < vec_Vbias.size(); ++it)
   {
     float Vbias1 = vec_Vbias.at(it).first;
-    float Vbias2 = vec_Vbias.at(it).second;
     std::string label_Vbias = std::string(Form("Vbias%.0fV",Vbias1));
     
     c1_scans[label_Vbias] = new TCanvas(Form("c1_CTR_vs_th_%s",label_Vbias.c_str()),Form("threshold scan -- %s",label_Vbias.c_str()),2100,900);
@@ -756,8 +753,6 @@ int main(int argc, char** argv)
     
     float amp1 = treeVars.t_amp[8+ch1] * 0.25;
     float amp2 = treeVars.t_amp[8+ch2] * 0.25;
-    float dur1 = treeVars.t_dur[ch1] * 0.2;
-    float dur2 = treeVars.t_dur[ch2] * 0.2;
     float time1 = treeVars.t_time[ch1];
     float time2 = treeVars.t_time[ch2];
     float CTR = (time2 - time1);
@@ -790,7 +785,6 @@ int main(int argc, char** argv)
   for(unsigned int it = 0; it < pairs_Vbias_th.size(); ++it)
   {
     float Vbias1 = pairs_Vbias_th.at(it).first.first;
-    float Vbias2 = pairs_Vbias_th.at(it).first.second;
     float th = pairs_Vbias_th.at(it).second;
     std::string label_Vbias = std::string(Form("Vbias%.0fV",Vbias1));
     std::string label_th    = std::string(Form("th%.0fmV",th));
@@ -830,7 +824,6 @@ int main(int argc, char** argv)
   for(unsigned int it = 0; it < vec_Vbias.size(); ++it)
   {
     float Vbias1 = vec_Vbias.at(it).first;
-    float Vbias2 = vec_Vbias.at(it).second;
     std::string label_Vbias = std::string(Form("Vbias%.0fV",Vbias1));
     
     c1_scans[label_Vbias] -> cd(1);
@@ -904,8 +897,6 @@ int main(int argc, char** argv)
     
     float amp1 = treeVars.t_amp[8+ch1] * 0.25;
     float amp2 = treeVars.t_amp[8+ch2] * 0.25;
-    float dur1 = treeVars.t_dur[ch1] * 0.2;
-    float dur2 = treeVars.t_dur[ch2] * 0.2;
     float time1 = treeVars.t_time[ch1];
     float time2 = treeVars.t_time[ch2];
     float CTR = (time2 - time1) - map_mean_vs_Vbias_th[label_Vbias_th] + map_mean_vs_Vbias_th[label_Vbias_th_max];
@@ -1042,7 +1033,6 @@ int main(int argc, char** argv)
     float* vals = new float[4];
     FindSmallestInterval(vals,histo,0.68,true); 
     
-    float mean = vals[0];      
     float min = vals[2];
     float max = vals[3];
     float delta = max-min;
@@ -1064,7 +1054,6 @@ int main(int argc, char** argv)
     float* vals = new float[4];
     FindSmallestInterval(vals,histo,0.68,true); 
     
-    float mean = vals[0];      
     float min = vals[2];
     float max = vals[3];
     float delta = max-min;
@@ -1086,7 +1075,6 @@ int main(int argc, char** argv)
     float* vals = new float[4];
     FindSmallestInterval(vals,histo,0.68,true); 
     
-    float mean = vals[0];      
     float min = vals[2];
     float max = vals[3];
     float delta = max-min;

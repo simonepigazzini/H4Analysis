@@ -1,60 +1,125 @@
-CXX = g++
-CXXFLAGS = -std=c++1y -fPIC
-SOFLAGS = -shared -O3
-INCLUDE = -I"./" 
-LIB = -L"./lib/" -L"./DynamicTTree/lib" -L"./CfgManager/lib" -Wl,-rpath=lib/:DynamicTTree/lib/:CfgManager/lib/ -lDTT 
+DIR := ${CURDIR}
 
-ROOT_LIB := `root-config --libs --glibs`
-ROOT_FLAGS := `root-config --cflags --ldflags` -lMathCore -lMathMore
+HDR = ./interface/
+SRC = ./src/
+PLG = ./plugins/
+PRG = ./main/
+OBJ = ./obj/
+LIB = ./lib/
+BIN = ./bin/
 
-DEPS = Makefile DynamicTTree/interface/DynamicTTreeBase.h DynamicTTree/interface/DynamicTTreeInterface.h \
-	CfgManager/interface/CfgManager.h CfgManager/interface/CfgManagerT.h \
-	interface/WFClass.h \
-	interface/SetTDRStyle.h interface/FitUtils.h
-DEPS_OBJS = lib/utils.o lib/WFClass.o lib/WFClassNINO.o lib/FFTClass.o lib/WFViewer.o lib/MCPAnalyzer.o \
-	lib/H4Tree.o lib/RecoTree.o lib/DigiTree.o lib/WFTree.o lib/PositionTree.o lib/PluginBase.o lib/H4Dict.so \
-	lib/SetTDRStyle.o lib/FitUtils.o
-PLUG_DEPS = lib/PluginBase.o
-PLUG_OBJS = lib/libDigitizerReco.so lib/libMakeCovarianceMatrix.so \
-	lib/libHodoReco.so lib/libHodoBTFReco.so lib/libWireChamberReco.so \
-	lib/libInfoTreeMaker.so lib/libADCReco.so lib/libWFAnalyzer.so lib/libFFTAnalyzer.so
-DICT_OBJS = lib/WFViewer.o lib/MCPAnalyzer.o
+HDRSuf = .h
+SRCSuf = .cc
+PRGSuf = .cpp
+OBJSuf = .o
+LIBSuf = .so
+BINSuf = .exe
 
-MAIN = bin/H4Reco bin/drawCTRPlots
+HDRS     =  $(wildcard $(HDR)*$(HDRSuf))
+SRCS     =  $(wildcard $(SRC)*$(SRCSuf))
+PLGS     =  $(wildcard $(PLG)*$(SRCSuf))
+_OBJS    =  $(patsubst %$(SRCSuf), %$(OBJSuf), $(SRCS))
+OBJS     =  $(patsubst $(SRC)%, $(OBJ)%, $(_OBJS))
+_PLGOBJS =  $(patsubst %$(SRCSuf), %$(OBJSuf), $(PLGS))
+PLGOBJS  =  $(patsubst $(PLG)%, $(OBJ)%, $(_PLGOBJS))
+_LIBS    =  $(patsubst %$(SRCSuf), %$(LIBSuf), $(PLGS))
+LIBS     =  $(patsubst $(PLG)%, $(LIB)lib%, $(_LIBS))
+PRGS     =  $(wildcard $(PRG)*$(PRGSuf))
+_BINS    =  $(wildcard $(PRG)*$(PRGSuf))
+__BINS   =  $(_BINS:$(PRGSuf)=$(BINSuf))
+___BINS  =  $(notdir $(__BINS))
+BINS     =  $(addprefix $(BIN),${___BINS})
 
-all: dynamicTree cfgManager $(DEPS_OBJS) $(PLUG_OBJS) $(MAIN) lib/LinkDef.cxx 
+LINKDEF   =  $(wildcard ${HDR}*LinkDef.h)
+DICTHDRS  =  $(patsubst $(LINKDEF),,$(HDRS)) $(LINKDEF)
 
-lib/%.o: src/%.cc interface/%.h $(DEPS)
-	@echo " CXX $<"
-	@$ $(CXX) $(CXXFLAGS) -c -o $@ $< $(INCLUDE) $(ROOT_LIB) $(ROOT_FLAGS)
 
-lib/lib%.so: plugins/%.cc plugins/%.h $(PLUG_DEPS) $(DEPS_OBJS)
-	@echo " CXX $<"
-	@$ $(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ $< $(INCLUDE) $(ROOT_LIB) $(ROOT_FLAGS) $(LIB)
+ARCH  =  $(shell root-config --arch)
 
-lib/LinkDef.cxx: interface/WFViewer.h interface/MCPAnalyzer.h interface/LinkDef.h 
-	@$ rootcling -f $@ -c $^
-	@echo " rootcling $<"
+ROOTCFLAGS    = $(shell root-config --cflags)
+ROOTGLIBS     = $(shell root-config --glibs) -lGenVector -lFoam -lMinuit -lTMVA -lMLP -lXMLIO  -lTreePlayer -lMathMore
 
-lib/H4Dict.so: lib/LinkDef.cxx $(DICT_OBJS)
-	@echo " CXX $<"
-	@$ $(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ $^ $(INCLUDE) $(ROOT_LIB) $(ROOT_FLAGS) $(LIB)
 
-bin/%: main/%.cpp $(DEPS_OBJS) interface/PluginLoader.h CfgManager/lib/libCFGMan.so
-	@echo " CXX $<"
-	@$ $(CXX) $(CXXFLAGS) -ldl -o $@ $^ $(INCLUDE) $(ROOT_LIB) $(ROOT_FLAGS) $(LIB)
 
-CfgManager/lib/libCFGMan.so: cfgManager
+CXX  =  g++
+CXXFLAGS  = -Wall -O2 -fPIC -I$(DIR) $(ROOTCFLAGS) 
 
-dynamicTree:
+CPP  =  g++
+CPPFLAGS  = -Wall -I$(DIR) $(ROOTCFLAGS)
+
+LD       =  g++
+LDFLAGS  =  -rdynamic -shared -O2
+SONAME	 =  libH4Analysis.so
+SOFLAGS  =  -Wl,-soname,
+
+GLIBS   =  -lm -ldl -rdynamic -L./DynamicTTree/lib -L./CfgManager/lib -lDynamicTTree -lCfgManager $(ROOTGLIBS)
+
+
+
+#################################################
+#if mac 64
+ifeq ($(ARCH),macosx64)
+LIBSuf  =  .dylib
+
+CPPFLAGS  =  -Wall -W -Woverloaded-virtual -O2 -pipe -I$(HDR) $(ROOTCFLAGS)
+
+CXXFLAGS  =  -Wall -W -Woverloaded-virtual -O2 -pipe -I$(HDR) $(ROOTCFLAGS)
+
+LDFLAGS  =  -dynamiclib -shared -single_module -undefined dynamic_lookup
+SONAME	 =  libH4Analysis.dylib
+SOFLAGS  =
+endif
+#################################################
+
+
+
+.PHONY: all clean test
+
+
+all: dynTTree cfgMan $(LIB)$(SONAME) $(LIBS)
+
+exe: $(BINS)
+
+test:
+	@echo "HDRS = $(HDRS)"
+	@echo "DICTHDRS = $(DICTHDRS)"
+	@echo "SRCS = $(SRCS)"
+	@echo "PLGS = $(PLGS)"
+	@echo "PRGS = $(PRGS)"
+	@echo "OBJS = $(OBJS)"
+	@echo "PLGOBJS = $(PLGOBJS)"
+	@echo "LIBS = $(LIBS)"
+	@echo "BINS = $(BINS)"
+
+$(BIN)%$(BINSuf): $(PRG)%$(PRGSuf) $(HDRS) $(LIB)$(SONAME)
+	$(CPP) $(CPPFLAGS) $(GLIBS) -L$(LIB) -lH4Analysis -o $@ $<
+
+$(OBJ)%$(OBJSuf): $(SRC)%$(SRCSuf)
+	$(CXX) -c $(CXXFLAGS) -o $@ $< 
+
+$(LIB)mydict.cc: $(DICTHDRS)
+	@echo "Generating dictionary..."
+	rootcling -f $(LIB)mydict.cc -c -p ${CXXFLAGS} $(DICTHDRS)
+
+$(LIB)mydict.o: $(LIB)mydict.cc 
+	$(CXX) -c $(CXXFLAGS) -o $@ $<
+
+$(LIB)$(SONAME): $(OBJS) $(LIB)mydict.o
+	@echo "Linking $(SONAME):"
+	$(LD) $(LDFLAGS) $(OBJS) $(LIB)mydict.o -o $(LIB)$(SONAME) $(SOFLAGS)$(SONAME) 
+
+$(LIB)lib%$(LIBSuf): $(PLG)%$(SRCSuf) $(PLG)%$(HDRSuf) $(OBJS)
+	@echo "Creating plugin library " $@ " and " $<
+	$(LD) $(CXXFLAGS) $(LDFLAGS) -o $@ $< $(SOFLAGS)lib$*.so $(GLIBS)
+
+dynTTree:
 	cd DynamicTTree && $(MAKE)
 
-cfgManager:
+cfgMan:
 	cd CfgManager && $(MAKE)
 
 clean:
-	rm -fr tmp/*
-	rm -fr lib/*
-	rm -fr bin/*
+	@echo "cleaning..."
+	rm -f $(OBJ)*$(OBJSuf) $(LIB)*$(LIBSuf) $(LIB)mydict* $(BIN)*$(BINSuf)
 	cd DynamicTTree && $(MAKE) clean
 	cd CfgManager && $(MAKE) clean

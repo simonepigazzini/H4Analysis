@@ -18,7 +18,7 @@ float WFClassNINO::GetSignalIntegral(int thr, int min=-1)
     //---find pulse borders
     SubtractBaseline();
     int begin=-1, end=-1;
-    for(int iSample=min; iSample<samples_.size(); ++iSample)
+    for(unsigned int iSample=min; iSample<samples_.size(); ++iSample)
     {
         if(begin==-1 && samples_[iSample]>thr)
             begin = iSample;

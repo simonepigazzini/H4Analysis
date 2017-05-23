@@ -24,7 +24,7 @@ TGraphAsymmErrors* MCPAnalyzer::Efficiency(string scan_var, string eff_var, stri
 
     //---creat 2D histo: eff[0,1] vs scan_var
     //---if X binning is not specified creat a TH2F with automatic binning
-    TH2F* h2_eff;
+    TH2F* h2_eff = NULL;
     if(scan_var.find_last_of(">") != string::npos)
     {
         string binning = scan_var.substr(scan_var.find_last_of("(")+1, scan_var.find_last_of(")"));
@@ -43,7 +43,7 @@ TGraphAsymmErrors* MCPAnalyzer::Efficiency(string scan_var, string eff_var, stri
     //---fed the TEfficiency for efficiency computation
     TH1D* h_total = h2_eff->ProjectionX("_total", 1, 2);
     TH1D* h_pass = h2_eff->ProjectionX("_pass", 2, 2);
-    TEfficiency* eff;
+    TEfficiency* eff = NULL;
     if(TEfficiency::CheckConsistency(*h_pass, *h_total))
         eff = new TEfficiency(*h_pass, *h_total);
 
