@@ -4,7 +4,7 @@ HDR = ./interface/
 SRC = ./src/
 PLG = ./plugins/
 PRG = ./main/
-OBJ = ./obj/
+OBJ = ./lib/
 LIB = ./lib/
 BIN = ./bin/
 
@@ -42,17 +42,17 @@ ROOTGLIBS     = $(shell root-config --glibs) -lGenVector -lFoam -lMinuit -lTMVA 
 
 
 CXX  =  g++
-CXXFLAGS  = -Wall -O2 -fPIC -I$(DIR) $(ROOTCFLAGS) 
+CXXFLAGS  = -Wall -Wno-sign-compare -O2 -fPIC -I$(DIR) $(ROOTCFLAGS) 
 
 CPP  =  g++
-CPPFLAGS  = -Wall -I$(DIR) $(ROOTCFLAGS)
+CPPFLAGS  = -Wall -Wno-sign-compare -I$(DIR) $(ROOTCFLAGS)
 
 LD       =  g++
 LDFLAGS  =  -rdynamic -shared -O2
 SONAME	 =  libH4Analysis.so
 SOFLAGS  =  -Wl,-soname,
 
-GLIBS   =  -lm -ldl -rdynamic -L./DynamicTTree/lib -L./CfgManager/lib -lDynamicTTree -lCfgManager $(ROOTGLIBS)
+GLIBS   =  -lm -ldl -rdynamic -L./DynamicTTree/lib -L./CfgManager/lib -lDTT -lCFGMan $(ROOTGLIBS)
 
 
 
@@ -91,26 +91,30 @@ test:
 	@echo "LIBS = $(LIBS)"
 	@echo "BINS = $(BINS)"
 
-$(BIN)%$(BINSuf): $(PRG)%$(PRGSuf) $(HDRS) $(LIB)$(SONAME)
-	$(CPP) $(CPPFLAGS) $(GLIBS) -L$(LIB) -lH4Analysis -o $@ $<
+$(BIN)%$(BINSuf): $(PRG)%$(PRGSuf) $(HDRS) $(LIB)$(SONAME) Makefile
+	@echo " CXX $<"
+	@$ $(CPP) $(CPPFLAGS) $(GLIBS) -L$(LIB) -lH4Analysis -o $@ $<
 
-$(OBJ)%$(OBJSuf): $(SRC)%$(SRCSuf)
-	$(CXX) -c $(CXXFLAGS) -o $@ $< 
+$(OBJ)%$(OBJSuf): $(SRC)%$(SRCSuf) Makefile
+	@echo " CXX $<"
+	@$ $(CXX) -c $(CXXFLAGS) -o $@ $< 
 
 $(LIB)mydict.cc: $(DICTHDRS)
 	@echo "Generating dictionary..."
-	rootcling -f $(LIB)mydict.cc -c -p ${CXXFLAGS} $(DICTHDRS)
+	@$ rootcling -f $(LIB)mydict.cc -c -p ${CXXFLAGS} $(DICTHDRS)
 
-$(LIB)mydict.o: $(LIB)mydict.cc 
-	$(CXX) -c $(CXXFLAGS) -o $@ $<
+$(LIB)mydict.o: $(LIB)mydict.cc
+	@echo " CXX $<"	
+	@$ $(CXX) -c $(CXXFLAGS) -o $@ $<
 
 $(LIB)$(SONAME): $(OBJS) $(LIB)mydict.o
 	@echo "Linking $(SONAME):"
-	$(LD) $(LDFLAGS) $(OBJS) $(LIB)mydict.o -o $(LIB)$(SONAME) $(SOFLAGS)$(SONAME)
+	@$ $(LD) $(LDFLAGS) $(OBJS) $(LIB)mydict.o -o $(LIB)$(SONAME) $(SOFLAGS)$(SONAME)
 
 $(LIB)lib%$(LIBSuf): $(PLG)%$(SRCSuf) $(PLG)%$(HDRSuf) $(OBJS)
-	@echo "Creating plugin library " $@ " and " $<
-	$(LD) $(CXXFLAGS) $(LDFLAGS) -o $@ $< $(SOFLAGS)lib$*.so $(GLIBS)
+	@echo "Creating plugin library " $@
+	@echo " CXX $<"	
+	@$ $(LD) $(CXXFLAGS) $(LDFLAGS) -o $@ $< $(SOFLAGS)lib$*.so $(GLIBS)
 
 dynTTree:
 	cd DynamicTTree && $(MAKE)
