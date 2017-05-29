@@ -42,10 +42,10 @@ ROOTGLIBS     = $(shell root-config --glibs) -lGenVector -lFoam -lMinuit -lTMVA 
 
 
 CXX  =  g++
-CXXFLAGS  = -Wall -Wno-sign-compare -Wno-overloaded-virtual -O2 -fPIC -I$(DIR) $(ROOTCFLAGS) 
+CXXFLAGS  = -Wall -Wno-sign-compare -O2 -fPIC -I$(DIR) $(ROOTCFLAGS) 
 
 CPP  =  g++
-CPPFLAGS  = -Wall -Wno-sign-compare -Wno-overloaded-virtual -I$(DIR) $(ROOTCFLAGS)
+CPPFLAGS  = -Wall -Wno-sign-compare -I$(DIR) $(ROOTCFLAGS)
 
 LD       =  g++
 LDFLAGS  =  -rdynamic -shared -O2
