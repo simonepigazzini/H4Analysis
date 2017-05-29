@@ -33,13 +33,13 @@ void DigiTree::Init(vector<string>& names, vector<string>& timetypes)
     calibration = new float[n_channels];
 
     //---channels branches
-    for(int iCh=0; iCh<n_channels; iCh++)
+    for(unsigned int iCh=0; iCh<n_channels; iCh++)
     {
         channels[iCh]=iCh;
         tree_->Branch(names[iCh].c_str(), &(channels[iCh]), (names[iCh]+"/I").c_str());
     }
     //---time types branches
-    for(int iT=0; iT<timetypes.size(); iT++)
+    for(unsigned int iT=0; iT<timetypes.size(); iT++)
     {
         time_types[iT]=iT*n_channels;
         tree_->Branch(timetypes[iT].c_str(), &(time_types[iT]), (timetypes[iT]+"/I").c_str());

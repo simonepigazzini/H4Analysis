@@ -91,7 +91,7 @@ void WFViewer::Draw(string ref, const char* cut, Long64_t max_entries)
     InterpolatorFunc* interpolator_ = new InterpolatorFunc(MAX_INTERPOLATOR_POINTS,
                                                            ROOT::Math::Interpolation::kCSPLINE,
                                                            1., 0.);
-    float offset = h_template_.GetBinCenter(h_template_.GetMaximumBin());
+    //float offset = h_template_.GetBinCenter(h_template_.GetMaximumBin());
     vector<double> x, y;
     for(int iBin=1; iBin<=h_template_.GetNbinsX(); ++iBin)
     {
@@ -105,6 +105,7 @@ void WFViewer::Draw(string ref, const char* cut, Long64_t max_entries)
 
     //---Draw event WF + fit result + residuals
     TCanvas* cnv = new TCanvas();
+    cnv -> cd();
     TPad* p1 = new TPad("wf", "", 0.0, 0.4, 1.0, 1.0, 21);
     TPad* p2 = new TPad("pull", "", 0.0, 0.0, 1.0, 0.4, 21);
     p1->SetFillColor(kWhite);
@@ -162,8 +163,8 @@ void WFViewer::Draw(unsigned int iEntry, const char* wf_tree)
     int wf_samples=0;
     tree_->SetBranchAddress("WF_samples", &wf_samples);    
     tree_->GetEntry(iEntry);
-    float wf_val[wf_samples]={0};
-    float wf_time[wf_samples]={0};
+    float* wf_val = new float[wf_samples];
+    float* wf_time = new float[wf_samples];
     tree_->SetBranchAddress("WF_val", wf_val);
     tree_->SetBranchAddress("WF_time", wf_time);
     tree_->GetEntry(iEntry);
@@ -188,6 +189,7 @@ void WFViewer::Draw(unsigned int iEntry, const char* wf_tree)
 
     //---Draw event WF + fit result + residuals
     TCanvas* cnv = new TCanvas();
+    cnv -> cd();
     TPad* p1 = new TPad("wf", "", 0.0, 0.4, 1.0, 1.0, 21);
     TPad* p2 = new TPad("pull", "", 0.0, 0.0, 1.0, 0.4, 21);
     p1->SetFillColor(kWhite);

@@ -25,15 +25,15 @@ bool WireChamberReco::ProcessEvent(const H4Tree& h4Tree, map<string, PluginBase*
 {
     //---search the first (in time) hit for each channel
     vector<float> timeL, timeR, timeU, timeD;
-    for(int iCh=0; iCh<h4Tree.nTdcChannels; ++iCh)
+    for(unsigned int iCh=0; iCh<h4Tree.nTdcChannels; ++iCh)
     {
-        if(h4Tree.tdcChannel[iCh]==chXl_)
+        if(int(h4Tree.tdcChannel[iCh])==chXl_)
             timeL.push_back(h4Tree.tdcData[iCh]);
-        if(h4Tree.tdcChannel[iCh]==chXr_)
+        if(int(h4Tree.tdcChannel[iCh])==chXr_)
             timeR.push_back(h4Tree.tdcData[iCh]);
-        if(h4Tree.tdcChannel[iCh]==chYu_)
+        if(int(h4Tree.tdcChannel[iCh])==chYu_)
             timeU.push_back(h4Tree.tdcData[iCh]);
-        if(h4Tree.tdcChannel[iCh]==chYd_)
+        if(int(h4Tree.tdcChannel[iCh])==chYd_)
             timeD.push_back(h4Tree.tdcData[iCh]);
     }
 

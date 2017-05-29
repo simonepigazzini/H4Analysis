@@ -33,8 +33,8 @@ public:
     TGraphAsymmErrors* Efficiency(string scan_var, string eff_var="charge_sig", string cut="");
     
 private:
-    TTree* tree_;
     string channel_;
+    TTree* tree_;
     
     //---ROOT dictionary
     ClassDef(MCPAnalyzer, 1)

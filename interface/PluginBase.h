@@ -28,7 +28,7 @@ public:
     PluginBase(){};
 
     //---dtor---
-    ~PluginBase(){};    
+    virtual ~PluginBase(){};    
 
     //---setters---
     void SetInstanceName(const string& instance){instanceName_=instance;};    
@@ -38,9 +38,9 @@ public:
     vector<SharedData> GetSharedData(string tag="", string type="", bool permanent=true);
     
     //---utils---
-    virtual bool Begin(CfgManager& opts, uint64* index){};
-    virtual bool ProcessEvent(const H4Tree& event, map<string, PluginBase*>& plugins, CfgManager& opts){};
-    virtual bool End(CfgManager& opts){};
+    virtual bool Begin(CfgManager& opts, uint64* index) { return false; };
+    virtual bool ProcessEvent(const H4Tree& event, map<string, PluginBase*>& plugins, CfgManager& opts) { return false; };
+    virtual bool End(CfgManager& opts) { return false; };
 
 protected:
     //---utils---

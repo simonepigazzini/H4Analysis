@@ -199,7 +199,6 @@ int main(int argc, char* argv[])
 
     int maxEvents = opts.GetOpt<int>("global.maxEvents");
     //---channels opts
-    int nCh = opts.GetOpt<int>("global.nCh");
     int nSamples = opts.GetOpt<int>("global.nSamples");
     float tUnit = opts.GetOpt<float>("global.tUnit");
     string refChannel = opts.GetOpt<string>("global.refChannel");
@@ -236,7 +235,6 @@ int main(int argc, char* argv[])
         ++iEvent;
 	if (iEvent%1000==0) std::cout << "Processing event " << iEvent << "/" << nentries << std::endl;
         //---setup output event 
-        int outCh=0;
         bool badEvent=false;
         
         //---read the digitizer
@@ -318,7 +316,7 @@ int main(int argc, char* argv[])
                channelAmpl < 4000)
             {                
 	      const vector<double>* analizedWF = WF.GetSamples();
-	      for(int iSample=0; iSample<analizedWF->size(); ++iSample)
+	      for(unsigned int iSample=0; iSample<analizedWF->size(); ++iSample)
 		templates[channel]->Fill(iSample*tUnit-refTime, analizedWF->at(iSample)/channelAmpl);
 	    }
         }

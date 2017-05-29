@@ -36,7 +36,7 @@ InterpolatorFunc(unsigned int ndata, ROOT::Math::Interpolation::Type type, float
     
     //---ROOT dictionary
     ClassDef(InterpolatorFunc, 0)  
-        };
+      };
 
 class WFViewer: public TObject
 {
@@ -72,6 +72,6 @@ private:
     
     //---ROOT dictionary
     ClassDef(WFViewer, 1)
-        };
+      };
 
 #endif

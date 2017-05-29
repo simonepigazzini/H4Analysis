@@ -18,7 +18,7 @@ float WFClassNINO::GetSignalIntegral(int thr, int min=-1)
     //---find pulse borders
     SubtractBaseline();
     int begin=-1, end=-1;
-    for(int iSample=min; iSample<samples_.size(); ++iSample)
+    for(unsigned int iSample=min; iSample<samples_.size(); ++iSample)
     {
         if(begin==-1 && samples_[iSample]>thr)
             begin = iSample;
@@ -28,18 +28,18 @@ float WFClassNINO::GetSignalIntegral(int thr, int min=-1)
             break;
         }
     }            
-            
-    //---compute integral
-    float integral=0;
-    for(int iSample=begin; iSample<end; ++iSample)
-    {
-        //---if signal window goes out of bound return a bad value
-        if(iSample > samples_.size() || iSample < 0)
-            return -1000;        
-        integral += samples_.at(iSample);
-    }
-
-    return integral;
+    
+    // //---compute integral
+    // float integral=0;
+    // for(int iSample=begin; iSample<end; ++iSample)
+    // {
+    //     //---if signal window goes out of bound return a bad value
+    //     if(iSample > samples_.size() || iSample < 0)
+    //         return -1000;        
+    //     integral += samples_.at(iSample);
+    // }
+    
+    return 1.*(end-begin);
 }
 
 

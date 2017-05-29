@@ -4,7 +4,7 @@ void H4Tree::Init()
 {
     //---fill map< <group, channel>, pointer to first sample>
     tree_->GetEntry(0);
-    int currentDigiGroup=-1, currentDigiChannel=-1;
+    unsigned int currentDigiGroup=-1, currentDigiChannel=-1;
     for(unsigned int iSample=0; iSample<nDigiSamples; ++iSample)
     {
         if(digiChannel[iSample] != currentDigiChannel)

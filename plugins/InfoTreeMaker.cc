@@ -9,7 +9,7 @@ bool InfoTreeMaker::Begin(CfgManager& opts, uint64* index)
     RegisterSharedData(new TTree(opts.GetOpt<string>(instanceName_+".treeName").c_str(), "info_tree"),
                        "info", true);
     info_tree_ = (TTree*)data_.back().obj;
-    info_tree_->Branch("index", index, "index/l");
+    info_tree_->Branch("index", index_, "index/l");
 
     //---get original variable and list of variables to which the first one is remapped to
     trackedVariable_ = opts.GetOpt<string>(instanceName_+".trackedVariable");
@@ -25,7 +25,7 @@ bool InfoTreeMaker::Begin(CfgManager& opts, uint64* index)
         //---seg fault protection: fill the map for as many values as the min between
         //   the orginal variable values and the remapped values.
         vector<float> values = opts.GetOpt<vector<float> >(instanceName_+"."+mappedVar);
-        for(int i=0; i<min(values.size(), originValues.size()); ++i)
+        for(unsigned int i=0; i<min(values.size(), originValues.size()); ++i)
             remap_[mappedVar][originValues[i]] = values[i];
     }
     

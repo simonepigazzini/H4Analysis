@@ -87,8 +87,8 @@ bool HodoReco::ProcessEvent(const H4Tree& h4Tree, map<string, PluginBase*>& plug
 {
     std::map<int,std::map<int,bool> > hodoFiberOn;
     
-    for(unsigned int i=0; i<nPlanes_; ++i)
-        for(unsigned int j=0; j<nFibers_; ++j)
+    for(int i=0; i<nPlanes_; ++i)
+        for(int j=0; j<nFibers_; ++j)
             hodoFiberOn[i][j] = 0;
   
     std::map<int,std::vector<int> > fibersOn;

@@ -46,7 +46,7 @@ bool MakeCovarianceMatrix::End(CfgManager& opts)
     {        
         map<int, float> mean, rms;
         //---compute mean and rms of each sample
-        for(int iSample=0; iSample<sums_[channel].size(); ++iSample)
+        for(unsigned int iSample=0; iSample<sums_[channel].size(); ++iSample)
         {
             mean[iSample] = sums_[channel][iSample]/events_;
             rms[iSample] = sqrt(sum2s_[channel][iSample]/events_ - mean[iSample]*mean[iSample]);
@@ -54,9 +54,9 @@ bool MakeCovarianceMatrix::End(CfgManager& opts)
             // hRMSs.Fill(rms[iSample]);
         }
         //---compute covariances
-        for(int iX=0; iX<sums_[channel].size(); ++iX)
+        for(unsigned int iX=0; iX<sums_[channel].size(); ++iX)
         {
-            for(int iY=0; iY<iX; ++iY)
+            for(unsigned int iY=0; iY<iX; ++iY)
             {
                 float rho=0;
                 for(int iEvt=0; iEvt<events_; ++iEvt)
