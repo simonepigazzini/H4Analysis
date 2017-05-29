@@ -34,6 +34,7 @@ public:
     uint64*      index;
     uint64       start_time;
     uint64       time_stamp;
+    unsigned int evt_flag;
     unsigned int run;
     unsigned int spill;
     unsigned int event;       

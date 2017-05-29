@@ -9,7 +9,7 @@ bool InfoTreeMaker::Begin(CfgManager& opts, uint64* index)
     RegisterSharedData(new TTree(opts.GetOpt<string>(instanceName_+".treeName").c_str(), "info_tree"),
                        "info", true);
     info_tree_ = (TTree*)data_.back().obj;
-    info_tree_->Branch("index", index_);
+    info_tree_->Branch("index", index, "index/l");
 
     //---get original variable and list of variables to which the first one is remapped to
     trackedVariable_ = opts.GetOpt<string>(instanceName_+".trackedVariable");

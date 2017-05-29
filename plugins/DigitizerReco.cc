@@ -35,6 +35,7 @@ bool DigitizerReco::ProcessEvent(const H4Tree& event, map<string, PluginBase*>& 
     }
     
     //---user channels
+    bool evtStatus = true;
     for(auto& channel : channelsNames_)
     {
         //---reset and read new WFs
@@ -48,14 +49,18 @@ bool DigitizerReco::ProcessEvent(const H4Tree& event, map<string, PluginBase*>& 
             //---skip everything if one channel is bad
             if(event.digiSampleValue[iSample] > 10000)
             {
-                cout << ">>>DigiReco WARNING: skipped event" << endl;
-                return false;
+                evtStatus = false;
+                WFs[channel]->AddSample(4095);
             }
-            WFs[channel]->AddSample(event.digiSampleValue[iSample]);
+            else
+                WFs[channel]->AddSample(event.digiSampleValue[iSample]);
         }
         if(opts.OptExist(channel+".useTrigRef") && opts.GetOpt<bool>(channel+".useTrigRef"))
             WFs[channel]->SetTrigRef(trigRef);
     }
+
+    if(!evtStatus)
+        cout << ">>>DigiReco WARNING: bad amplitude detected" << endl;
     
-    return true;
+    return evtStatus;
 }

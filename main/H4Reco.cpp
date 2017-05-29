@@ -227,22 +227,17 @@ int main(int argc, char* argv[])
         bool status=true;
         for(auto& plugin : pluginSequence)
         {
-            if(status)
-            {
-                status = plugin->ProcessEvent(h4Tree, pluginMap, opts);
-            }
+            status &= plugin->ProcessEvent(h4Tree, pluginMap, opts);
         }
         
         //---fill the main tree with info variables and increase event counter
-        if(status)
-        {
-            mainTree.time_stamp = h4Tree.evtTimeStart;
-            mainTree.run = h4Tree.runNumber;
-            mainTree.spill = h4Tree.spillNumber;
-            mainTree.event = h4Tree.evtNumber;
-            mainTree.Fill();
-            ++index;
-        }
+        mainTree.time_stamp = h4Tree.evtTimeStart;
+        mainTree.evt_flag = status;
+        mainTree.run = h4Tree.runNumber;
+        mainTree.spill = h4Tree.spillNumber;
+        mainTree.event = h4Tree.evtNumber;
+        mainTree.Fill();
+        ++index;
     }
 
     //---end
