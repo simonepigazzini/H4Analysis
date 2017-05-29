@@ -8,6 +8,8 @@
 
    =cd H4Analysis=
 
+   =source script/setup.sh(csh)= (only on lxplus, or machine with afs access).
+
    =make=
 
    =bin/H4Reco cfg/Oct2015_timing.cfg 4443=
