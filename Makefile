@@ -13,7 +13,6 @@ SRCSuf = .cc
 PRGSuf = .cpp
 OBJSuf = .o
 LIBSuf = .so
-BINSuf = .exe
 
 HDRS     =  $(wildcard $(HDR)*$(HDRSuf))
 SRCS     =  $(wildcard $(SRC)*$(SRCSuf))
@@ -52,7 +51,7 @@ LDFLAGS  =  -rdynamic -shared -O2
 SONAME	 =  libH4Analysis.so
 SOFLAGS  =  -Wl,-soname,
 
-GLIBS   =  -lm -ldl -rdynamic -L./DynamicTTree/lib -L./CfgManager/lib -lDTT -lCFGMan $(ROOTGLIBS)
+GLIBS   =  -lm -L./DynamicTTree/lib -L./CfgManager/lib -Wl,-rpath=lib/:DynamicTTree/lib/:CfgManager/lib/ -lDTT -lCFGMan $(ROOTGLIBS)
 
 
 
@@ -76,9 +75,7 @@ endif
 .PHONY: all clean test
 
 
-all: dynTTree cfgMan $(LIB)$(SONAME) $(LIBS)
-
-exe: $(BINS)
+all: dynTTree cfgMan $(LIB)$(SONAME) $(LIBS) $(BINS)
 
 test:
 	@echo "HDRS = $(HDRS)"
@@ -91,9 +88,9 @@ test:
 	@echo "LIBS = $(LIBS)"
 	@echo "BINS = $(BINS)"
 
-$(BIN)%$(BINSuf): $(PRG)%$(PRGSuf) $(HDRS) $(LIB)$(SONAME) Makefile
+$(BIN)%: $(PRG)%$(PRGSuf) $(HDRS) $(LIB)$(SONAME) Makefile
 	@echo " CXX $<"
-	@$ $(CPP) $(CPPFLAGS) $(GLIBS) -L$(LIB) -lH4Analysis -o $@ $<
+	$(CPP) $(CPPFLAGS) $(GLIBS) -L$(LIB) -lH4Analysis -o $@ $<
 
 $(OBJ)%$(OBJSuf): $(SRC)%$(SRCSuf) Makefile
 	@echo " CXX $<"
@@ -124,6 +121,6 @@ cfgMan:
 
 clean:
 	@echo "cleaning..."
-	rm -f $(OBJ)*$(OBJSuf) $(LIB)*$(LIBSuf) $(LIB)mydict* $(BIN)*$(BINSuf)
+	rm -f lib/* $(OBJ)*$(OBJSuf) $(LIB)*$(LIBSuf) $(LIB)mydict* $(BIN)*$(BINSuf)
 	cd DynamicTTree && $(MAKE) clean
 	cd CfgManager && $(MAKE) clean

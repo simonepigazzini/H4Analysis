@@ -2,17 +2,19 @@
 
 void H4Tree::Init()
 {
-    //---fill map< <group, channel>, pointer to first sample>
+    //---fill map< <board, group, channel>, pointer to first sample>
     tree_->GetEntry(0);
-    unsigned int currentDigiGroup=-1, currentDigiChannel=-1;
+    unsigned int currentDigiBoard=-1, currentDigiGroup=-1, currentDigiChannel=-1;
     for(unsigned int iSample=0; iSample<nDigiSamples; ++iSample)
     {
-        if(digiChannel[iSample] != currentDigiChannel)
+        if(digiChannel[iSample] != currentDigiChannel ||
+           digiGroup[iSample] != currentDigiGroup ||
+           digiBoard[iSample] != currentDigiBoard)
         {
             currentDigiChannel = digiChannel[iSample];
-            if(digiGroup[iSample] != currentDigiGroup)
-                currentDigiGroup = digiGroup[iSample];
-            digiMap[make_pair(currentDigiGroup, currentDigiChannel)]=iSample;
+            currentDigiGroup = digiGroup[iSample];
+            currentDigiBoard = digiBoard[iSample];            
+            digiMap[make_tuple(currentDigiBoard, currentDigiGroup, currentDigiChannel)] = iSample;
         }
     }
 }

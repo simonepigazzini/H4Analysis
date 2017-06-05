@@ -3,6 +3,8 @@
 
 #include <iostream>
 #include <map>
+#include <unordered_map>
+#include <tuple>
 #include <string>
 
 #include "DynamicTTree/interface/DynamicTTreeBase.h"
@@ -14,6 +16,35 @@ using namespace std;
 typedef unsigned long int uint32;
 typedef unsigned long long int uint64;
  
+//****************************************************************************************
+//----------Helper functions--------------------------------------------------------------
+//---board+group+channel map key
+typedef std::tuple<unsigned int, unsigned int, unsigned int> bgc_key_t;
+
+//---hash functions
+struct key_hash : public std::unary_function<bgc_key_t, size_t>
+{
+    size_t operator()(const bgc_key_t& k) const
+        {
+            return std::get<0>(k) ^ std::get<1>(k) ^ std::get<2>(k);
+        }
+};
+
+struct key_equal : public std::binary_function<bgc_key_t, bgc_key_t, bool>
+{
+   bool operator()(const bgc_key_t& v0, const bgc_key_t& v1) const
+   {
+      return (
+               std::get<0>(v0) == std::get<0>(v1) &&
+               std::get<1>(v0) == std::get<1>(v1) &&
+               std::get<2>(v0) == std::get<2>(v1)
+             );
+   }
+};
+
+//---map type
+typedef std::unordered_map<const bgc_key_t, int, key_hash, key_equal> bgc_map_t;
+
 //****************************************************************************************
 //----------Tree reader class-------------------------------------------------------------
 #define DYNAMIC_TREE_NAME H4TreeBase
@@ -37,9 +68,10 @@ typedef unsigned long long int uint64;
     DATA(unsigned int, pattern, nPatterns)              \
     DATA(unsigned int, patternBoard, nPatterns)         \
     DATA(unsigned int, patternChannel, nPatterns)       \
+    DATA(unsigned int, digiBoard, nDigiSamples)         \
     DATA(unsigned int, digiGroup, nDigiSamples)         \
     DATA(unsigned int, digiChannel, nDigiSamples)       \
-    DATA(float,        digiSampleValue, nDigiSamples)   
+    DATA(uint16_t,     digiSampleValue, nDigiSamples)   
 
 #include "DynamicTTree/interface/DynamicTTreeInterface.h"
 
@@ -64,7 +96,7 @@ public:
     void Init();
     uint64 GetEntries(){ return tree_->GetEntriesFast(); };
     
-    map<pair<int, int>, int> digiMap;
+    bgc_map_t digiMap;
 };
    
 #endif 

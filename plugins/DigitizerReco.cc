@@ -40,14 +40,15 @@ bool DigitizerReco::ProcessEvent(const H4Tree& event, map<string, PluginBase*>& 
     {
         //---reset and read new WFs
         WFs[channel]->Reset();
+        int digiBd = opts.GetOpt<int>(channel+".digiBoard");
         int digiGr = opts.GetOpt<int>(channel+".digiGroup");
         int digiCh = opts.GetOpt<int>(channel+".digiChannel");
-        int offset = event.digiMap.at(make_pair(digiGr, digiCh));
+        int offset = event.digiMap.at(make_tuple(digiBd, digiGr, digiCh));
         for(int iSample=offset; iSample<offset+nSamples_; ++iSample)
         {
             //---H4DAQ bug: sometimes ADC value is out of bound.
             //---skip everything if one channel is bad
-            if(event.digiSampleValue[iSample] > 10000)
+            if(event.digiSampleValue[iSample] > 1e6)
             {
                 evtStatus = false;
                 WFs[channel]->AddSample(4095);
@@ -61,6 +62,6 @@ bool DigitizerReco::ProcessEvent(const H4Tree& event, map<string, PluginBase*>& 
 
     if(!evtStatus)
         cout << ">>>DigiReco WARNING: bad amplitude detected" << endl;
-    
+
     return evtStatus;
 }
