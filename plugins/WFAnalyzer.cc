@@ -95,7 +95,7 @@ bool WFAnalyzer::ProcessEvent(const H4Tree& event, map<string, PluginBase*>& plu
         if(opts.OptExist(channel+".subtractChannel") && WFs_.find(opts.GetOpt<string>(channel+".subtractChannel")) != WFs_.end())
             *WFs_[channel] -= *WFs_[opts.GetOpt<string>(channel+".subtractChannel")];        
         WFs_[channel]->SetBaselineWindow(opts.GetOpt<int>(channel+".baselineWin", 0), 
-                                        opts.GetOpt<int>(channel+".baselineWin", 1));
+                                         opts.GetOpt<int>(channel+".baselineWin", 1));
         WFs_[channel]->SetSignalWindow(opts.GetOpt<int>(channel+".signalWin", 0), 
                                       opts.GetOpt<int>(channel+".signalWin", 1));
         WFBaseline baselineInfo = WFs_[channel]->SubtractBaseline();
@@ -109,14 +109,14 @@ bool WFAnalyzer::ProcessEvent(const H4Tree& event, map<string, PluginBase*>& plu
         digiTree_.amp_max[outCh] = interpolAmpMax.ampl;
         digiTree_.time_max[outCh] = interpolAmpMax.time;
         digiTree_.chi2_max[outCh] = interpolAmpMax.chi2;
-        digiTree_.charge_tot[outCh] = WFs_[channel]->GetModIntegral(opts.GetOpt<int>(channel+".baselineInt", 1), 
-                                                                   WFs_[channel]->GetNSample());
-        digiTree_.charge_sig[outCh] = WFs_[channel]->GetSignalIntegral(opts.GetOpt<int>(channel+".signalInt", 0), 
-                                                                     opts.GetOpt<int>(channel+".signalInt", 1));
+        // digiTree_.charge_tot[outCh] = WFs_[channel]->GetModIntegral(opts.GetOpt<int>(channel+".baselineInt", 1), 
+        //                                                            WFs_[channel]->GetNSample());
+        // digiTree_.charge_sig[outCh] = WFs_[channel]->GetSignalIntegral(opts.GetOpt<int>(channel+".signalInt", 0), 
+        //                                                              opts.GetOpt<int>(channel+".signalInt", 1));
         //---compute time with all the requested time reconstruction method
         for(unsigned int iT=0; iT<timeRecoTypes_.size(); ++iT)
         {
-            //---compute time with selected method or store default value (-99)
+	    //---compute time with selected method or store default value (-99)
             if(timeOpts_.find(channel+"."+timeRecoTypes_[iT]) != timeOpts_.end())
             {
                 pair<float, float> timeInfo = WFs_[channel]->GetTime(timeRecoTypes_[iT], timeOpts_[channel+"."+timeRecoTypes_[iT]]);
@@ -129,7 +129,7 @@ bool WFAnalyzer::ProcessEvent(const H4Tree& event, map<string, PluginBase*>& plu
                 digiTree_.time_chi2[outCh+iT*channelsNames_.size()] = -99;
             }
         }
-        
+
         //---template fit (only specified channels)
         WFFitResults fitResults{-1, -1000, -1};
         if(opts.OptExist(channel+".templateFit.file"))
