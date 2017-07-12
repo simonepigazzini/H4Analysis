@@ -41,10 +41,11 @@ bool DigitizerReco::ProcessEvent(const H4Tree& event, map<string, PluginBase*>& 
     {
         //---reset and read new WFs
         WFs[channel]->Reset();
-        int digiBd = opts.GetOpt<int>(channel+".digiBoard");
-        int digiGr = opts.GetOpt<int>(channel+".digiGroup");
-        int digiCh = opts.GetOpt<int>(channel+".digiChannel");
-        int offset = event.digiMap.at(make_tuple(digiBd, digiGr, digiCh));
+        unsigned int spill = event.spillNumber;
+        unsigned int digiBd = opts.GetOpt<unsigned int>(channel+".digiBoard");
+        unsigned int digiGr = opts.GetOpt<unsigned int>(channel+".digiGroup");
+        unsigned int digiCh = opts.GetOpt<unsigned int>(channel+".digiChannel");
+        int offset = event.digiMap.at(make_tuple(spill, digiBd, digiGr, digiCh));
         for(int iSample=offset; iSample<offset+nSamples_[channel]; ++iSample)
         {
             //---H4DAQ bug: sometimes ADC value is out of bound.

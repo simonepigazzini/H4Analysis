@@ -19,14 +19,14 @@ typedef unsigned long long int uint64;
 //****************************************************************************************
 //----------Helper functions--------------------------------------------------------------
 //---board+group+channel map key
-typedef std::tuple<unsigned int, unsigned int, unsigned int> bgc_key_t;
+typedef std::tuple<unsigned int, unsigned int, unsigned int, unsigned int> bgc_key_t;
 
 //---hash functions
 struct key_hash : public std::unary_function<bgc_key_t, size_t>
 {
     size_t operator()(const bgc_key_t& k) const
         {
-            return std::get<0>(k) ^ std::get<1>(k) ^ std::get<2>(k);
+            return std::get<0>(k) ^ std::get<1>(k) ^ std::get<2>(k) ^ std::get<3>(k);
         }
 };
 
@@ -37,7 +37,8 @@ struct key_equal : public std::binary_function<bgc_key_t, bgc_key_t, bool>
       return (
                std::get<0>(v0) == std::get<0>(v1) &&
                std::get<1>(v0) == std::get<1>(v1) &&
-               std::get<2>(v0) == std::get<2>(v1)
+               std::get<2>(v0) == std::get<2>(v1) &&
+               std::get<3>(v0) == std::get<3>(v1) 
              );
    }
 };
