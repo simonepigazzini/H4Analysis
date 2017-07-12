@@ -25,8 +25,7 @@ public:
     
 private:    
     //---internal data
-    int                         nSamples_;
-    float                       tUnit_;
+    map<string, int>            nSamples_;
     vector<string>              channelsNames_;
     map<string, WFClass*>       WFs;
 };

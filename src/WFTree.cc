@@ -1,12 +1,12 @@
 #include "interface/WFTree.h"
 
-WFTree::WFTree(int nCh, int nSamples, uint64* idx, TTree* tree, string suffix)
+WFTree::WFTree(int nSamples, uint64* idx, TTree* tree, string suffix)
 {
     suffix_= suffix;
     tree_ = tree ? tree : new TTree();
 
     index=idx;
-    WF_samples = nSamples*nCh;
+    WF_samples = nSamples;
 }
 
 void WFTree::Init()

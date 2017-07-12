@@ -19,7 +19,7 @@ class WFTree
 public: 
     //---ctors---
     WFTree(){};
-    WFTree(int nCh, int nSamples, uint64* idx, TTree* tree=NULL, string suffix="");
+    WFTree(int nSamples, uint64* idx, TTree* tree=NULL, string suffix="");
     //---dtor---
     ~WFTree(){};
 

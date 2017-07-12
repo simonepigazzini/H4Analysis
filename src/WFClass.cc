@@ -64,10 +64,13 @@ WFFitResults WFClass::GetInterpolatedAmpMax(int min, int max, int nFitSamples)
         h_max.SetBinError(bin, BaselineRMS());
         ++bin;
     }
-    auto fit_result = h_max.Fit(&f_max, "QRSO");
+
+    //FIXME
+    float fit_chi2 = -1;
+    h_max.Fit(&f_max, "QRSO");
     fitTimeMax_ = -f_max.GetParameter(1)/(2*f_max.GetParameter(2));
     fitAmpMax_ = f_max.Eval(fitTimeMax_);
-    fitChi2Max_ = fit_result->Chi2()/(nFitSamples-3);
+    fitChi2Max_ = fit_chi2/(nFitSamples-3);
         
     return WFFitResults{fitAmpMax_, fitTimeMax_*tUnit_, fitChi2Max_};
 }
@@ -194,7 +197,7 @@ float WFClass::GetSignalIntegral(int riseWin, int fallWin)
     for(int iSample=maxSample_-riseWin; iSample<maxSample_+fallWin; iSample++)
     {
         //---if signal window goes out of bound return a bad value
-      if(iSample > int(samples_.size()) || iSample < 0)
+        if(iSample >= int(samples_.size()) || iSample < 0)
             return -1000;        
         integral += samples_.at(iSample);
     }
@@ -245,7 +248,7 @@ void WFClass::SetTemplate(TH1* templateWF)
 
     //---reset template fit variables
     if(interpolator_)
-      return;
+        return;
 
     interpolator_ = new ROOT::Math::Interpolator(0, ROOT::Math::Interpolation::kCSPLINE);
     tempFitTime_ = templateWF->GetBinCenter(templateWF->GetMaximumBin());
@@ -497,7 +500,7 @@ double WFClass::TemplateChi2(const double* par)
     double delta = 0;
     for(int iSample=fWinMin_; iSample<fWinMax_; ++iSample)
     {
-      if(iSample < 0 || iSample >= int(samples_.size()))
+        if(iSample < 0 || iSample >= int(samples_.size()))
         {
             //cout << ">>>WARNING: template fit out of samples rage (chi2 set to -1)" << endl;
             chi2 += 9999;

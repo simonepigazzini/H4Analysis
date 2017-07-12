@@ -10,9 +10,6 @@ bool WFAnalyzer::Begin(CfgManager& opts, uint64* index)
         return false;
     }
     srcInstance_ = opts.GetOpt<string>(instanceName_+".srcInstanceName");
-    float nSamples = opts.OptExist(srcInstance_+".nSamples") ?
-        opts.GetOpt<int>(srcInstance_+".nSamples") :
-        opts.GetOpt<int>(instanceName_+".nSamples");
     channelsNames_ = opts.GetOpt<vector<string> >(instanceName_+".channelsNames");
     timeRecoTypes_ = opts.GetOpt<vector<string> >(instanceName_+".timeRecoTypes");
 
@@ -24,8 +21,10 @@ bool WFAnalyzer::Begin(CfgManager& opts, uint64* index)
                 if(run == opts.GetOpt<string>("h4reco.run"))
                     templateTag = tag;
 
+    int nSamples = 0;
     for(auto& channel : channelsNames_)
     {        
+        nSamples += opts.GetOpt<int>(channel+".nSamples");
         if(opts.OptExist(channel+".templateFit.file"))
         {            
             TFile* templateFile = TFile::Open(opts.GetOpt<string>(channel+".templateFit.file", 0).c_str(), ".READ");
@@ -56,7 +55,7 @@ bool WFAnalyzer::Begin(CfgManager& opts, uint64* index)
         string wfTreeName = opts.OptExist(instanceName_+".wfTreeName") ?
             opts.GetOpt<string>(instanceName_+".wfTreeName") : "wf";
         RegisterSharedData(new TTree(wfTreeName.c_str(), "wf_tree"), "wf_tree", true);
-        outWFTree_ = WFTree(channelsNames_.size(), nSamples, index, (TTree*)data_.back().obj);
+        outWFTree_ = WFTree(nSamples, index, (TTree*)data_.back().obj);
         outWFTree_.Init();
     }
 
@@ -80,7 +79,7 @@ bool WFAnalyzer::ProcessEvent(const H4Tree& event, map<string, PluginBase*>& plu
         else
             cout << "[WFAnalizer::" << instanceName_ << "]: channels samples not found check DigiReco step" << endl; 
     }
-    
+
     //---compute reco variables
     for(auto& channel : channelsNames_)
     {
