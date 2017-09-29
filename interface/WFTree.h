@@ -25,16 +25,16 @@ public:
 
     //---utils---
     void Init();
-    void Fill() {tree_->Fill();};
+    void Fill();
 
     TTree* tree_; 
     string suffix_;
 
-    uint64* index;
-    int     WF_samples;
-    int*    WF_ch; 
-    float*  WF_time;
-    float*  WF_val;
+    uint64*       index;
+    int           WF_samples;
+    vector<int>   WF_ch; 
+    vector<float> WF_time;
+    vector<float> WF_val;
 };
 
 #endif
