@@ -108,10 +108,10 @@ bool WFAnalyzer::ProcessEvent(const H4Tree& event, map<string, PluginBase*>& plu
         digiTree_.amp_max[outCh] = interpolAmpMax.ampl;
         digiTree_.time_max[outCh] = interpolAmpMax.time;
         digiTree_.chi2_max[outCh] = interpolAmpMax.chi2;
-        // digiTree_.charge_tot[outCh] = WFs_[channel]->GetModIntegral(opts.GetOpt<int>(channel+".baselineInt", 1), 
-        //                                                            WFs_[channel]->GetNSample());
-        // digiTree_.charge_sig[outCh] = WFs_[channel]->GetSignalIntegral(opts.GetOpt<int>(channel+".signalInt", 0), 
-        //                                                              opts.GetOpt<int>(channel+".signalInt", 1));
+        digiTree_.charge_tot[outCh] = WFs_[channel]->GetModIntegral(opts.GetOpt<int>(channel+".baselineInt", 1), 
+                                                                   WFs_[channel]->GetNSample());
+        digiTree_.charge_sig[outCh] = WFs_[channel]->GetSignalIntegral(opts.GetOpt<int>(channel+".signalInt", 0), 
+                                                                     opts.GetOpt<int>(channel+".signalInt", 1));
         //---compute time with all the requested time reconstruction method
         for(unsigned int iT=0; iT<timeRecoTypes_.size(); ++iT)
         {
@@ -151,13 +151,12 @@ bool WFAnalyzer::ProcessEvent(const H4Tree& event, map<string, PluginBase*>& plu
         if(fillWFtree)
         {
             auto analizedWF = WFs_[channel]->GetSamples();
-            int nSamples = analizedWF->size();
             float tUnit = WFs_[channel]->GetTUnit();
             for(unsigned int jSample=0; jSample<analizedWF->size(); ++jSample)
             {
-                outWFTree_.WF_ch[jSample+outCh*nSamples] = outCh;
-                outWFTree_.WF_time[jSample+outCh*nSamples] = jSample*tUnit;
-                outWFTree_.WF_val[jSample+outCh*nSamples] = analizedWF->at(jSample);
+                outWFTree_.WF_ch.push_back(outCh);
+                outWFTree_.WF_time.push_back(jSample*tUnit);
+                outWFTree_.WF_val.push_back(analizedWF->at(jSample));
             }
         }
         //---increase output tree channel counter
