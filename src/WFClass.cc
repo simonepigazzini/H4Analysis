@@ -29,8 +29,12 @@ float WFClass::GetAmpMax(int min, int max)
 
     //---find the max
     maxSample_=sWinMin_;
-    for(int iSample=sWinMin_; iSample<sWinMax_; iSample++)
+    for(int iSample=sWinMin_; iSample<sWinMax_; ++iSample)
     {
+        if(iSample < 0)
+            continue;
+        if(iSample >= samples_.size())
+            break;
         if(samples_.at(iSample) > samples_.at(maxSample_)) 
             maxSample_ = iSample;
     }    
@@ -65,12 +69,10 @@ WFFitResults WFClass::GetInterpolatedAmpMax(int min, int max, int nFitSamples)
         ++bin;
     }
 
-    //FIXME
-    float fit_chi2 = -1;
-    h_max.Fit(&f_max, "QRSO");
+    auto fit_result = h_max.Fit(&f_max, "QRSO");
     fitTimeMax_ = -f_max.GetParameter(1)/(2*f_max.GetParameter(2));
     fitAmpMax_ = f_max.Eval(fitTimeMax_);
-    fitChi2Max_ = fit_chi2/(nFitSamples-3);
+    fitChi2Max_ = nFitSamples > 3 ? fit_result->Chi2()/(nFitSamples-3) : -1;
         
     return WFFitResults{fitAmpMax_, fitTimeMax_*tUnit_, fitChi2Max_};
 }
@@ -179,8 +181,14 @@ float WFClass::GetIntegral(int min, int max)
 {
     //---compute integral
     float integral=0;
-    for(int iSample=min; iSample<max; iSample++)
+    for(int iSample=min; iSample<max; ++iSample)
+    {
+        if(iSample < 0)
+            continue;
+        if(iSample >= samples_.size())
+            break;
         integral += samples_.at(iSample);
+    }
 
     return integral;
 }
@@ -194,7 +202,7 @@ float WFClass::GetSignalIntegral(int riseWin, int fallWin)
 
     //---compute integral
     float integral=0;
-    for(int iSample=maxSample_-riseWin; iSample<maxSample_+fallWin; iSample++)
+    for(int iSample=maxSample_-riseWin; iSample<maxSample_+fallWin; ++iSample)
     {
         //---if signal window goes out of bound return a bad value
         if(iSample >= int(samples_.size()) || iSample < 0)
@@ -210,8 +218,12 @@ float WFClass::GetSignalIntegral(int riseWin, int fallWin)
 float WFClass::GetModIntegral(int min, int max)
 {   
     float integral=0;
-    for(int iSample=min; iSample<max; iSample++)
+    for(int iSample=min; iSample<max; ++iSample)
     {
+        if(iSample < 0)
+            continue;
+        if(iSample >= samples_.size())
+            break;
         if(samples_.at(iSample) < 0)
             integral -= samples_.at(iSample);
         else
@@ -225,15 +237,15 @@ float WFClass::GetModIntegral(int min, int max)
 //----------Set the signal window---------------------------------------------------------
 void WFClass::SetSignalWindow(int min, int max)
 {
-    sWinMin_ = min + trigRef_;
-    sWinMax_ = max + trigRef_;
+    sWinMin_ = std::max(int(min + trigRef_), 0);
+    sWinMax_ = std::min(int(max + trigRef_), int(samples_.size()));
 }
 
 //----------Set the baseline window-------------------------------------------------------
 void WFClass::SetBaselineWindow(int min, int max)
 {
-    bWinMin_ = min;
-    bWinMax_ = max;
+    bWinMin_ = std::max(min, 0);
+    bWinMax_ = std::min(max, int(samples_.size()));
 }
 
 //----------Set the fit template----------------------------------------------------------
@@ -307,13 +319,17 @@ WFBaseline WFClass::SubtractBaseline(int min, int max)
     }
     //---compute baseline
     float baseline_=0;
-    for(int iSample=bWinMin_; iSample<bWinMax_; iSample++)
+    for(int iSample=bWinMin_; iSample<bWinMax_; ++iSample)
     {
+        if(iSample < 0)
+            continue;
+        if(iSample >= samples_.size())
+            break;
         baseline_ += samples_.at(iSample);
     }
     baseline_ = baseline_/((float)(bWinMax_-bWinMin_));
     //---subtract baseline
-    for(unsigned int iSample=0; iSample<samples_.size(); iSample++)
+    for(unsigned int iSample=0; iSample<samples_.size(); ++iSample)
         samples_.at(iSample) = (samples_.at(iSample) - baseline_);    
     //---interpolate baseline
     BaselineRMS();
@@ -439,7 +455,7 @@ float WFClass::BaselineRMS()
 
     int nSample=0;
     float sum=0, sum2=0;
-    for(int iSample=bWinMin_; iSample<bWinMax_; iSample++)
+    for(int iSample=bWinMin_; iSample<bWinMax_; ++iSample)
     {
         ++nSample;
         sum += samples_[iSample];
