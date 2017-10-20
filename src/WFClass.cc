@@ -69,10 +69,19 @@ WFFitResults WFClass::GetInterpolatedAmpMax(int min, int max, int nFitSamples)
         ++bin;
     }
 
-    auto fit_result = h_max.Fit(&f_max, "QRSO");
-    fitTimeMax_ = -f_max.GetParameter(1)/(2*f_max.GetParameter(2));
-    fitAmpMax_ = f_max.Eval(fitTimeMax_);
-    fitChi2Max_ = nFitSamples > 3 ? fit_result->Chi2()/(nFitSamples-3) : -1;
+    if(h_max.GetMaximum() != 0)
+    {
+        auto fit_result = h_max.Fit(&f_max, "QRSO");
+        fitTimeMax_ = -f_max.GetParameter(1)/(2*f_max.GetParameter(2));
+        fitAmpMax_ = f_max.Eval(fitTimeMax_);
+        fitChi2Max_ = nFitSamples > 3 ? fit_result->Chi2()/(nFitSamples-3) : -1;
+    }
+    else
+    {
+        fitTimeMax_ = -1;
+        fitAmpMax_ = 1000;
+        fitChi2Max_ = -1;
+    }
         
     return WFFitResults{fitAmpMax_, fitTimeMax_*tUnit_, fitChi2Max_};
 }
