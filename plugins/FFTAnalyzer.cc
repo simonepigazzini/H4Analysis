@@ -33,7 +33,7 @@ bool FFTAnalyzer::Begin(CfgManager& opts, uint64* index)
     nChannels = srcChannels.size();
 
     //---register shared FFTs
-    //   nSamples is divided by to if FFT is from time to frequency domain
+    //   nSamples is divided by two if FFT is from time to frequency domain
     channelsNames_ = opts.GetOpt<vector<string> >(instanceName_+".channelsNames");
     fftType_ = opts.OptExist(instanceName_+".FFTType") ?
         opts.GetOpt<string>(instanceName_+".FFTType") : "T2F";
@@ -51,38 +51,37 @@ bool FFTAnalyzer::Begin(CfgManager& opts, uint64* index)
             WFs_[channel] = new WFClass(1, tUnit);
             RegisterSharedData(WFs_[channel], channel, storeFFT);
             if(opts.OptExist(instanceName_+".subtractFFTNoise")){
-	      noiseTemplateFile_= TFile::Open(opts.GetOpt<string>(instanceName_+".noiseTemplateFile").c_str());
-	      TString noiseTemplateHistoName (opts.GetOpt<string>(instanceName_+".noiseTemplateHisto"));
-	      noiseTemplateHistoRe_ = (TH1F*) noiseTemplateFile_->Get(noiseTemplateHistoName+"_Re_tmpl");
-	      noiseTemplateHistoIm_ = (TH1F*) noiseTemplateFile_->Get(noiseTemplateHistoName+"_Im_tmpl");
-	      if (!noiseTemplateFile_)
-		{
-		  cout << ">>> FFTAnalyzer ERROR: noiseTemplateFile not open " << endl;
-		  return false;
-		}
-
-	    }
-
+                noiseTemplateFile_= TFile::Open(opts.GetOpt<string>(instanceName_+".noiseTemplateFile").c_str());
+                TString noiseTemplateHistoName (opts.GetOpt<string>(instanceName_+".noiseTemplateHisto"));
+                noiseTemplateHistoRe_ = (TH1F*) noiseTemplateFile_->Get(noiseTemplateHistoName+"_Re_tmpl");
+                noiseTemplateHistoIm_ = (TH1F*) noiseTemplateFile_->Get(noiseTemplateHistoName+"_Im_tmpl");
+                if (!noiseTemplateFile_)
+                {
+                    cout << ">>> FFTAnalyzer ERROR: noiseTemplateFile not open " << endl;
+                    return false;
+                }
+            }
         }
     }
 
     //---create and register templates istograms
     //   histograms are created with automatic binning alog Y axis
-    if(fftType_ == "T2F" && opts.OptExist(instanceName_+".makeTemplates")){
-      templatesNames_ =  opts.GetOpt<vector<string> >(instanceName_+".makeTemplates");
-    }
+    if(fftType_ == "T2F" && opts.OptExist(instanceName_+".makeTemplates"))
+        templatesNames_ =  opts.GetOpt<vector<string> >(instanceName_+".makeTemplates");
     for(auto& channel : channelsNames_)
+    {
         for(auto& tmpl : templatesNames_)
         {
             templates2dHistos_[channel+tmpl] = new TH2F((channel+tmpl).c_str(),
-                                                      ("Template "+channel+" "+tmpl).c_str(),
-                                                      nSamples_/2, 0, nSamples_/2,
-                                                      10000, 0, 0);
+                                                        ("Template "+channel+" "+tmpl).c_str(),
+                                                        nSamples_/2, 0, nSamples_/2,
+                                                        10000, 0, 0);
             templatesHistos_[channel+tmpl] = new TH1F((channel+"_"+tmpl+"_tmpl").c_str(),
                                                       ("Template "+channel+" "+tmpl).c_str(),
                                                       nSamples_/2, 0, nSamples_/2);
             RegisterSharedData(templatesHistos_[channel+tmpl], channel+"_"+tmpl+"_tmpl", true);
         }
+    }
     
     //---register output data tree if requested (default true)
     bool storeTree = opts.OptExist(instanceName_+".storeTree") && fftType_ == "T2F" ?
@@ -121,8 +120,8 @@ bool FFTAnalyzer::Begin(CfgManager& opts, uint64* index)
         //---set default values
         for(unsigned int i=0; i<n_tot_; ++i)
         {
-	  current_ch_[i]=-1;
-            freqs_[i] = (i%nSamples_);
+            current_ch_[i]=-1;
+            freqs_[i] = (i%(nSamples_/2));
             re_[i] = -10;
             im_[i] = -10;
             amplitudes_[i]=-1;
@@ -169,17 +168,17 @@ bool FFTAnalyzer::ProcessEvent(const H4Tree& event, map<string, PluginBase*>& pl
             {
                 for(int k=0; k<nSamples_/2; ++k)
                 {
-		  for(auto& tmpl : templatesNames_){
+                    for(auto& tmpl : templatesNames_){
                         templates2dHistos_[channel+tmpl]->Fill(k, var_map[tmpl][k]);
-		  }
+                    }
                     if(fftTree_)
                     {
                         int index =  channelsMap_[channel] * nSamples_/2 + k;
                         current_ch_[index] = channelsMap_[channel];
-                        re_[index] = Re[k];
-                        im_[index] = Im[k];
-                        amplitudes_[index] = var_map["Ampl"][index];
-                        phases_[index] = var_map["Phase"][index];
+                        re_[index] = Re[index];
+                        im_[index] = Im[index];
+                        amplitudes_[index] = var_map["Ampl"][k];
+                        phases_[index] = var_map["Phase"][k];
                     }
                 }
             }
@@ -197,31 +196,32 @@ bool FFTAnalyzer::ProcessEvent(const H4Tree& event, map<string, PluginBase*>& pl
             auto Re = fft->GetRe();
             auto Im = fft->GetIm();
             auto fftc2r = TVirtualFFT::FFT(1, &nSamples_, "C2R");
-	    //---subtract FFT of noise from template before going back to time domain
-            if(opts.OptExist(instanceName_+".subtractFFTNoise")){
-	      double noiseRe=0,noiseIm=0,newRe=0, newIm=0;
-	      for(int i=0;i<nSamples_/2;++i){
-		noiseRe = noiseTemplateHistoRe_->GetBinContent(i);
-		newRe = *(Re->data()+i) - noiseRe; 
-		noiseIm = noiseTemplateHistoIm_->GetBinContent(i);
-		newIm = *(Im->data()+i) - noiseIm; 
-		fftc2r->SetPoint(i,newRe,newIm);
-		//		std::cout<<i<<" "<< *(Re->data()+i)<<" "<<noiseRe<<" "<<newRe<<std::endl;
-	      }
-	    } 
-	    else if(opts.OptExist(instanceName_+".frequencyCut")){
-	      for(int i=0;i<nSamples_/2;++i){
-		if(opts.OptExist(instanceName_+".frequencyCut")){
-		  if(i<opts.GetOpt<float>(instanceName_+".frequencyCut"))
-		    fftc2r->SetPoint(i,*(Re->data()+i),*(Im->data()+i));
-		  else
-		    fftc2r->SetPoint(i,0,0);
-		}
-	      }
-	    }
-	    else{
-	      fftc2r->SetPointsComplex(Re->data(), Im->data());
-	    }
+            //---subtract FFT of noise from template before going back to time domain
+            if(opts.OptExist(instanceName_+".subtractFFTNoise"))
+            {
+                double noiseRe=0,noiseIm=0,newRe=0, newIm=0;
+                for(int i=0;i<nSamples_/2;++i)
+                {
+                    noiseRe = noiseTemplateHistoRe_->GetBinContent(i);
+                    newRe = *(Re->data()+i) - noiseRe; 
+                    noiseIm = noiseTemplateHistoIm_->GetBinContent(i);
+                    newIm = *(Im->data()+i) - noiseIm; 
+                    fftc2r->SetPoint(i,newRe,newIm);
+                }
+            } 
+            else if(opts.OptExist(instanceName_+".frequencyCut"))
+            {
+                for(int i=0;i<nSamples_/2;++i)
+                {
+                    if(opts.OptExist(instanceName_+".frequencyCut"))
+                        if(i<opts.GetOpt<float>(instanceName_+".frequencyCut"))
+                            fftc2r->SetPoint(i,*(Re->data()+i),*(Im->data()+i));
+                        else
+                            fftc2r->SetPoint(i,0,0);
+                }
+            }
+            else
+                fftc2r->SetPointsComplex(Re->data(), Im->data());
             fftc2r->Transform();
             fftc2r->GetPoints(data);
 

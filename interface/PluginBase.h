@@ -53,8 +53,8 @@ protected:
     vector<SharedData> data_;
 };
 
-#define DEFINE_PLUGIN(NAME) \
-    extern "C" PluginBase* create() {return new NAME;} \
+#define DEFINE_PLUGIN(NAME)                                         \
+    extern "C" PluginBase* create() {return new NAME;}              \
     extern "C" void destroy(PluginBase* plugin) {delete plugin;}
 
 #endif

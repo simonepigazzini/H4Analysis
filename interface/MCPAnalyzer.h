@@ -38,6 +38,6 @@ private:
     
     //---ROOT dictionary
     ClassDef(MCPAnalyzer, 1)
-};
+        };
 
 #endif

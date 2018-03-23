@@ -161,12 +161,12 @@ bool HodoBTFReco::ProcessEvent(const H4Tree& h4Tree, map<string, PluginBase*>& p
             int tmpPAD = ADC_to_PMT_map[h4Tree.adcChannel[iCh]];
             if(tmpPAD >= 0 && tmpPAD < 32)
             {
-              if(int(h4Tree.adcData[iCh]) > opts.GetOpt<int>(instanceName_+".threshold"))
+                if(int(h4Tree.adcData[iCh]) > opts.GetOpt<int>(instanceName_+".threshold"))
                     hodoXpos.push_back(PMT_to_hodoX_map[tmpPAD]);
             }
             else if(tmpPAD >= 32 && tmpPAD < 64)
             {
-              if(int(h4Tree.adcData[iCh]) > opts.GetOpt<int>(instanceName_+".threshold"))
+                if(int(h4Tree.adcData[iCh]) > opts.GetOpt<int>(instanceName_+".threshold"))
                     hodoYpos.push_back(PMT_to_hodoY_map[tmpPAD]);
             }
         }	

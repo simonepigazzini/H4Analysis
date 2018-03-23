@@ -33,8 +33,8 @@ bool ADCReco::ProcessEvent(const H4Tree& event, map<string, PluginBase*>& plugin
     {
         for(int iCh=0; iCh<nChannels_; ++iCh)
         {
-          if(opts.GetOpt<int>(chNames_[iCh]+".boardNum") == int(event.adcBoard[iADC]) &&
-             opts.GetOpt<int>(chNames_[iCh]+".channelNum") == int(event.adcChannel[iADC]))
+            if(opts.GetOpt<int>(chNames_[iCh]+".boardNum") == int(event.adcBoard[iADC]) &&
+               opts.GetOpt<int>(chNames_[iCh]+".channelNum") == int(event.adcChannel[iADC]))
             {
                 values_->at(iCh) = event.adcData[iADC];
                 break;
