@@ -96,17 +96,17 @@ $(OBJ)%$(OBJSuf): $(SRC)%$(SRCSuf) Makefile
 	@echo " CXX $<"
 	@$ $(CXX) -c $(CXXFLAGS) -o $@ $< 
 
-$(LIB)mydict.cc: $(DICTHDRS)
+$(LIB)libH4Analysis.cc: $(DICTHDRS)
 	@echo "Generating dictionary..."
-	@$ rootcling -f $(LIB)mydict.cc -c -p ${CXXFLAGS} $(DICTHDRS)
+	@$ rootcling -f $(LIB)libH4Analysis.cc -c -p ${CXXFLAGS} $(DICTHDRS)
 
-$(LIB)mydict.o: $(LIB)mydict.cc
+$(LIB)libH4Analysis.o: $(LIB)libH4Analysis.cc
 	@echo " CXX $<"	
 	@$ $(CXX) -c $(CXXFLAGS) -o $@ $<
 
-$(LIB)$(SONAME): $(OBJS) $(LIB)mydict.o
+$(LIB)$(SONAME): $(OBJS) $(LIB)libH4Analysis.o
 	@echo "Linking $(SONAME):"
-	@$ $(LD) $(LDFLAGS) $(OBJS) $(LIB)mydict.o -o $(LIB)$(SONAME) $(SOFLAGS)$(SONAME)
+	@$ $(LD) $(LDFLAGS) $(OBJS) $(LIB)libH4Analysis.o -o $(LIB)$(SONAME) $(SOFLAGS)$(SONAME)
 
 $(LIB)lib%$(LIBSuf): $(PLG)%$(SRCSuf) $(PLG)%$(HDRSuf) $(OBJS)
 	@echo "Creating plugin library " $@
@@ -121,6 +121,6 @@ cfgMan:
 
 clean:
 	@echo "cleaning..."
-	rm -f lib/* $(OBJ)*$(OBJSuf) $(LIB)*$(LIBSuf) $(LIB)mydict* $(BIN)*$(BINSuf)
+	rm -f lib/* $(OBJ)*$(OBJSuf) $(LIB)*$(LIBSuf) $(LIB)libH4Analysis* $(BIN)*$(BINSuf)
 	cd DynamicTTree && $(MAKE) clean
 	cd CfgManager && $(MAKE) clean

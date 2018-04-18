@@ -4,43 +4,20 @@
 bool FFTAnalyzer::Begin(CfgManager& opts, uint64* index)
 {
 
-    //---get all needed information from DigitizerReco
-    //   n_channels is fixed by DigiReco since we want to use
-    //   the same channel number <-> name mapping
-    //   NB: if src is FFTAnalyzer search keep searching for the DigiReco instance    
-    vector<string> srcChannels;
-    int nChannels;
-    float tUnit;
-    if(!opts.OptExist(instanceName_+".srcInstanceName"))
-    {
-        cout << ">>> FFTAnalyzer ERROR: no DigitizerReco plugin specified" << endl;
-        return false;
-    }    
-    srcInstance_ = opts.GetOpt<string>(instanceName_+".srcInstanceName");
-    if(opts.GetOpt<string>(srcInstance_+".pluginType") != "DigitizerReco")
-    {
-        string digiInstance = opts.GetOpt<string>(srcInstance_+".srcInstanceName");
-        nSamples_ = (opts.GetOpt<int>(digiInstance+".nSamples"));
-        tUnit = (opts.GetOpt<float>(digiInstance+".tUnit"));
-    }
-    else
-    {
-        nSamples_ = (opts.GetOpt<int>(srcInstance_+".nSamples"));
-        tUnit = (opts.GetOpt<float>(srcInstance_+".tUnit"));
-    }
-
-    srcChannels = opts.GetOpt<vector<string> >(instanceName_+".channelsNames");
-    nChannels = srcChannels.size();
-
     //---register shared FFTs
     //   nSamples is divided by two if FFT is from time to frequency domain
-    channelsNames_ = opts.GetOpt<vector<string> >(instanceName_+".channelsNames");
+    channelsNames_ = opts.GetOpt<vector<string> >(instanceName_+".channelsNames");    
     fftType_ = opts.OptExist(instanceName_+".FFTType") ?
         opts.GetOpt<string>(instanceName_+".FFTType") : "T2F";
     bool storeFFT = opts.OptExist(instanceName_+".storeFFToutput") ?
         opts.GetOpt<bool>(instanceName_+".storeFFToutput") : false;
     for(auto& channel : channelsNames_)
     {
+        if(!opts.OptExist(channel))
+        {
+            cout << ">>> FFTAnalyzer ERROR: configuration for channel < " << channel << " > not found." << endl;
+            return false;
+        }
         if(fftType_ == "T2F")
         {
             FFTs_[channel] = new FFTClass();
@@ -48,7 +25,7 @@ bool FFTAnalyzer::Begin(CfgManager& opts, uint64* index)
         }
         else
         {
-            WFs_[channel] = new WFClass(1, tUnit);
+            WFs_[channel] = new WFClass(1, opts.GetOpt<float>(channel+".tUnit"));
             RegisterSharedData(WFs_[channel], channel, storeFFT);
             if(opts.OptExist(instanceName_+".subtractFFTNoise")){
                 noiseTemplateFile_= TFile::Open(opts.GetOpt<string>(instanceName_+".noiseTemplateFile").c_str());
@@ -72,13 +49,14 @@ bool FFTAnalyzer::Begin(CfgManager& opts, uint64* index)
     {
         for(auto& tmpl : templatesNames_)
         {
+            auto nSamples = opts_.GetOpt<int>(channel+".nSamples");
             templates2dHistos_[channel+tmpl] = new TH2F((channel+tmpl).c_str(),
                                                         ("Template "+channel+" "+tmpl).c_str(),
-                                                        nSamples_/2, 0, nSamples_/2,
+                                                        nSamples/2, 0, nSamples/2,
                                                         10000, 0, 0);
             templatesHistos_[channel+tmpl] = new TH1F((channel+"_"+tmpl+"_tmpl").c_str(),
                                                       ("Template "+channel+" "+tmpl).c_str(),
-                                                      nSamples_/2, 0, nSamples_/2);
+                                                      nSamples/2, 0, nSamples/2);
             RegisterSharedData(templatesHistos_[channel+tmpl], channel+"_"+tmpl+"_tmpl", true);
         }
     }
