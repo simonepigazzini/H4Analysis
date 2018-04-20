@@ -168,8 +168,12 @@ int main(int argc, char* argv[])
     H4Tree h4Tree(inTree);
 
     //-----output setup-----
-    uint64 index=stoul(run)*1e9;
-    TFile* outROOT = new TFile(outSuffix+TString(run)+"_"+to_string(spill).c_str()+".root", "RECREATE");
+    uint64 index=stoul(run)*1e9;    
+    TFile* outROOT;
+    if(spill == -1)
+      outROOT = new TFile(outSuffix+TString(run)+".root", "RECREATE");
+    else
+      outROOT = new TFile(outSuffix+"/"+TString(run)+"/"+to_string(spill).c_str()+".root", "RECREATE");
     outROOT->cd();
     RecoTree mainTree(&index);
 
