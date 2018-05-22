@@ -8,6 +8,7 @@
 #include "interface/WFTree.h"
 #include "interface/WFClass.h"
 #include "interface/WFClassNINO.h"
+#include "interface/WFClassClock.h"
 #include "interface/WFViewer.h"
 
 class WFAnalyzer: public PluginBase

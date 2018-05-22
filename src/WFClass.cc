@@ -93,7 +93,7 @@ pair<float, float> WFClass::GetTime(string method, vector<float>& params)
     if(method.find("CFD") != string::npos)
     {
         if(params.size()<1)
-            cout << ">>>ERROR: to few arguments passed for CFD time computation" << endl;
+            cout << ">>>ERROR, WFClass: to few arguments passed for CFD time computation" << endl;
         else if(params.size()<2)
             return GetTimeCF(params[0]);
         else if(params.size()<3)
@@ -106,7 +106,7 @@ pair<float, float> WFClass::GetTime(string method, vector<float>& params)
     else if(method.find("LED") != string::npos)
     {
         if(params.size()<1)
-            cout << ">>>ERROR: to few arguments passed for LED time computation" << endl;
+            cout << ">>>ERROR, WFClass: to few arguments passed for LED time computation" << endl;
         else if(params.size()<2)
             return GetTimeLE(params[0]);
         else if(params.size()<4)
@@ -116,7 +116,7 @@ pair<float, float> WFClass::GetTime(string method, vector<float>& params)
 
     }
     
-    cout << ">>>ERROR: time reconstruction method <" << method << "> not supported" << endl;
+    cout << ">>>ERROR, WFClass: time reconstruction method <" << method << "> not supported" << endl;
     return make_pair(-1000, -1);
 }
 

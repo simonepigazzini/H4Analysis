@@ -10,8 +10,13 @@ bool DigitizerReco::Begin(CfgManager& opts, uint64* index)
     {
         nSamples_[channel] = opts.GetOpt<int>(channel+".nSamples");
         auto tUnit = opts.GetOpt<float>(channel+".tUnit");
-        if(opts.OptExist(channel+".type") && opts.GetOpt<string>(channel+".type") == "NINO")
-            WFs[channel] = new WFClassNINO(opts.GetOpt<int>(channel+".polarity"), tUnit);
+        if(opts.OptExist(channel+".type"))
+        {
+            if(opts.GetOpt<string>(channel+".type") == "NINO")
+                WFs[channel] = new WFClassNINO(opts.GetOpt<int>(channel+".polarity"), tUnit);
+            else if(opts.GetOpt<string>(channel+".type") == "Clock")
+                WFs[channel] = new WFClassClock(tUnit);
+        }
         else
             WFs[channel] = new WFClass(opts.GetOpt<int>(channel+".polarity"), tUnit);
         RegisterSharedData(WFs[channel], channel, false);
