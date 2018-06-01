@@ -1,11 +1,17 @@
 #include "FFTAnalyzer.h"
 
+//----------Constructor-------------------------------------------------------------------
+FFTAnalyzer::FFTAnalyzer():
+    n_tot_(0)
+{}
+
 //----------Utils-------------------------------------------------------------------------
 bool FFTAnalyzer::Begin(CfgManager& opts, uint64* index)
 {
 
     //---register shared FFTs
     //   nSamples is divided by two if FFT is from time to frequency domain
+    srcInstance_ = opts.GetOpt<string>(instanceName_+".srcInstanceName");    
     channelsNames_ = opts.GetOpt<vector<string> >(instanceName_+".channelsNames");    
     fftType_ = opts.OptExist(instanceName_+".FFTType") ?
         opts.GetOpt<string>(instanceName_+".FFTType") : "T2F";
@@ -13,7 +19,7 @@ bool FFTAnalyzer::Begin(CfgManager& opts, uint64* index)
         opts.GetOpt<bool>(instanceName_+".storeFFToutput") : false;
     for(auto& channel : channelsNames_)
     {
-        if(!opts.OptExist(channel))
+        if(!opts.OptExist(channel+".tUnit"))
         {
             cout << ">>> FFTAnalyzer ERROR: configuration for channel < " << channel << " > not found." << endl;
             return false;
@@ -49,7 +55,7 @@ bool FFTAnalyzer::Begin(CfgManager& opts, uint64* index)
     {
         for(auto& tmpl : templatesNames_)
         {
-            auto nSamples = opts_.GetOpt<int>(channel+".nSamples");
+            auto nSamples = opts.GetOpt<int>(channel+".nSamples");
             templates2dHistos_[channel+tmpl] = new TH2F((channel+tmpl).c_str(),
                                                         ("Template "+channel+" "+tmpl).c_str(),
                                                         nSamples/2, 0, nSamples/2,
@@ -68,9 +74,12 @@ bool FFTAnalyzer::Begin(CfgManager& opts, uint64* index)
     {
         for(auto& channel : channelsNames_)
         {
-            auto point = std::find(srcChannels.begin(), srcChannels.end(), channel);
-            if(point != srcChannels.end())
-                channelsMap_[channel] = point-srcChannels.begin();            
+            auto point = std::find(channelsNames_.begin(), channelsNames_.end(), channel);
+            if(point != channelsNames_.end())
+            {
+                channelsMap_[channel] = point-channelsNames_.begin();
+                n_tot_ += opts.GetOpt<int>(channel+".nSamples")/2;
+            }
         }
             
         string fftTreeName = opts.OptExist(instanceName_+".fftTreeName") ?
@@ -79,7 +88,6 @@ bool FFTAnalyzer::Begin(CfgManager& opts, uint64* index)
         //---create tree branches:
         //   array size is determined by DigitizerReco channels
         index_ = index;
-        n_tot_ = nChannels*nSamples_/2;
         current_ch_ = new int[n_tot_];
         freqs_ = new float[n_tot_];
         re_ = new float[n_tot_];
@@ -99,7 +107,7 @@ bool FFTAnalyzer::Begin(CfgManager& opts, uint64* index)
         for(unsigned int i=0; i<n_tot_; ++i)
         {
             current_ch_[i]=-1;
-            freqs_[i] = (i%(nSamples_/2));
+            freqs_[i] = -1;
             re_[i] = -10;
             im_[i] = -10;
             amplitudes_[i]=-1;
@@ -124,6 +132,7 @@ bool FFTAnalyzer::ProcessEvent(const H4Tree& event, map<string, PluginBase*>& pl
             auto wf = (WFClass*)plugins[srcInstance_]->GetSharedData(srcInstance_+"_"+channel, "", false).at(0).obj;
             auto samples = wf->GetSamples();
             auto samples_norm = *samples;
+            int n_samples = samples->size();
             if(opts.OptExist(instanceName_+".normalizeInput") && opts.GetOpt<bool>(instanceName_+".normalizeInput"))
             {
                 float max = *std::max_element(samples_norm.begin(), samples_norm.end());
@@ -131,12 +140,12 @@ bool FFTAnalyzer::ProcessEvent(const H4Tree& event, map<string, PluginBase*>& pl
                     sample /= max;
             }
             //---build the FFT
-            double Re[nSamples_], Im[nSamples_];
-            auto fftr2c = TVirtualFFT::FFT(1, &nSamples_, "R2C");
+            double Re[n_samples], Im[n_samples];
+            auto fftr2c = TVirtualFFT::FFT(1, &n_samples, "R2C");
             fftr2c->SetPoints(samples_norm.data());
             fftr2c->Transform();
             fftr2c->GetPointsComplex(Re, Im);
-            FFTs_[channel]->SetPointsComplex(nSamples_/2, Re, Im);
+            FFTs_[channel]->SetPointsComplex(n_samples/2, Re, Im);
             map<string, const double*> var_map;
             var_map["Re"] = Re;
             var_map["Im"] = Im;
@@ -144,15 +153,16 @@ bool FFTAnalyzer::ProcessEvent(const H4Tree& event, map<string, PluginBase*>& pl
             var_map["Phase"] = FFTs_[channel]->GetPhases()->data();
             if(fftTree_ || templatesNames_.size() != 0)
             {
-                for(int k=0; k<nSamples_/2; ++k)
+                for(int k=0; k<n_samples/2; ++k)
                 {
                     for(auto& tmpl : templatesNames_){
                         templates2dHistos_[channel+tmpl]->Fill(k, var_map[tmpl][k]);
                     }
                     if(fftTree_)
                     {
-                        int index =  channelsMap_[channel] * nSamples_/2 + k;
+                        int index =  channelsMap_[channel] * n_samples/2 + k;
                         current_ch_[index] = channelsMap_[channel];
+                        freqs_[index] = (k%(n_samples/2));
                         re_[index] = Re[index];
                         im_[index] = Im[index];
                         amplitudes_[index] = var_map["Ampl"][k];
@@ -170,15 +180,17 @@ bool FFTAnalyzer::ProcessEvent(const H4Tree& event, map<string, PluginBase*>& pl
             auto fft = (FFTClass*)plugins[srcInstance_]->GetSharedData(srcInstance_+"_"+channel, "", false).at(0).obj;
 
             //---build the FFT
-            double data[nSamples_];
+            int n_samples = fft->GetAmplitudes()->size()*2;
+            double data[n_samples];
             auto Re = fft->GetRe();
             auto Im = fft->GetIm();
-            auto fftc2r = TVirtualFFT::FFT(1, &nSamples_, "C2R");
+            auto fftc2r = TVirtualFFT::FFT(1, &n_samples, "C2R");
+            
             //---subtract FFT of noise from template before going back to time domain
             if(opts.OptExist(instanceName_+".subtractFFTNoise"))
             {
                 double noiseRe=0,noiseIm=0,newRe=0, newIm=0;
-                for(int i=0;i<nSamples_/2;++i)
+                for(int i=0;i<n_samples/2;++i)
                 {
                     noiseRe = noiseTemplateHistoRe_->GetBinContent(i);
                     newRe = *(Re->data()+i) - noiseRe; 
@@ -189,13 +201,15 @@ bool FFTAnalyzer::ProcessEvent(const H4Tree& event, map<string, PluginBase*>& pl
             } 
             else if(opts.OptExist(instanceName_+".frequencyCut"))
             {
-                for(int i=0;i<nSamples_/2;++i)
+                for(int i=0;i<n_samples/2;++i)
                 {
                     if(opts.OptExist(instanceName_+".frequencyCut"))
+                    {
                         if(i<opts.GetOpt<float>(instanceName_+".frequencyCut"))
                             fftc2r->SetPoint(i,*(Re->data()+i),*(Im->data()+i));
                         else
                             fftc2r->SetPoint(i,0,0);
+                    }
                 }
             }
             else
@@ -204,8 +218,8 @@ bool FFTAnalyzer::ProcessEvent(const H4Tree& event, map<string, PluginBase*>& pl
             fftc2r->GetPoints(data);
 
             //---fill new WF
-            for(int iSample=0; iSample<nSamples_; ++iSample)
-                WFs_[channel]->AddSample(data[iSample]/nSamples_);
+            for(int iSample=0; iSample<n_samples; ++iSample)
+                WFs_[channel]->AddSample(data[iSample]/n_samples);
 
             delete fftc2r;
         }
