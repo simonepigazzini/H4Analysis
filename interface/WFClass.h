@@ -52,7 +52,7 @@ public:
     inline int                   GetNSample() {return samples_.size();};
     inline float                 GetTUnit() {return tUnit_;};
     float                        GetAmpMax(int min=-1, int max=-1);
-    WFFitResults                 GetInterpolatedAmpMax(int min=-1, int max=-1, int nFitSamples=7);
+    WFFitResults                 GetInterpolatedAmpMax(int min=-1, int max=-1, int nFitSamples=7, string function="pol2");
     virtual pair<float, float>   GetTime(string method, vector<float>& params); 
     virtual pair<float, float>   GetTimeCF(float frac, int nFitSamples=5, int min=-1, int max=-1);
     virtual pair<float, float>   GetTimeLE(float thr, int nmFitSamples=1, int npFitSamples=3, int min=-1, int max=-1);
