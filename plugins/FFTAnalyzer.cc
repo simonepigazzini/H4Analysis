@@ -78,7 +78,7 @@ bool FFTAnalyzer::Begin(CfgManager& opts, uint64* index)
             if(point != channelsNames_.end())
             {
                 channelsMap_[channel] = point-channelsNames_.begin();
-                n_tot_ += opts.GetOpt<int>(channel+".nSamples")/2;
+                n_tot_ += opts.GetOpt<int>(channel+".nSamples");
             }
         }
             
@@ -132,7 +132,9 @@ bool FFTAnalyzer::ProcessEvent(const H4Tree& event, map<string, PluginBase*>& pl
             auto wf = (WFClass*)plugins[srcInstance_]->GetSharedData(srcInstance_+"_"+channel, "", false).at(0).obj;
             auto samples = wf->GetSamples();
             auto samples_norm = *samples;
-            int n_samples = samples->size();
+            int n_samples = opts.OptExist(channel+".signalWin") ?
+                opts.GetOpt<int>(channel+".signalWin", 1) - opts.GetOpt<int>(channel+".signalWin", 0) :
+                samples->size();
             if(opts.OptExist(instanceName_+".normalizeInput") && opts.GetOpt<bool>(instanceName_+".normalizeInput"))
             {
                 float max = *std::max_element(samples_norm.begin(), samples_norm.end());
@@ -140,31 +142,43 @@ bool FFTAnalyzer::ProcessEvent(const H4Tree& event, map<string, PluginBase*>& pl
                     sample /= max;
             }
             //---build the FFT
-            double Re[n_samples], Im[n_samples];
-            auto fftr2c = TVirtualFFT::FFT(1, &n_samples, "R2C");
-            fftr2c->SetPoints(samples_norm.data());
+            double iRe[n_samples], iIm[n_samples], oRe[n_samples], oIm[n_samples];
+            int first_sample = opts.GetOpt<int>(channel+".signalWin", 0);
+            int last_sample = opts.GetOpt<int>(channel+".signalWin", 1);
+            auto fftr2c = TVirtualFFT::FFT(1, &n_samples, "C2CF M");
+            for(unsigned int i=first_sample; i<last_sample; ++i)
+            {
+                iRe[i-first_sample] = samples_norm[i];
+                iIm[i-first_sample] = 0.;
+            }
+            fftr2c->SetPointsComplex(iRe, iIm);
             fftr2c->Transform();
-            fftr2c->GetPointsComplex(Re, Im);
-            FFTs_[channel]->SetPointsComplex(n_samples/2, Re, Im);
+            fftr2c->GetPointsComplex(oRe, oIm);
+            for(int i=0; i<n_samples; ++i)
+            {
+                oRe[i] /= n_samples;
+                oIm[i] /= n_samples;
+            }
+            FFTs_[channel]->SetPointsComplex(n_samples, oRe, oIm);
             map<string, const double*> var_map;
-            var_map["Re"] = Re;
-            var_map["Im"] = Im;
+            var_map["Re"] = oRe;
+            var_map["Im"] = oIm;
             var_map["Ampl"] = FFTs_[channel]->GetAmplitudes()->data();
             var_map["Phase"] = FFTs_[channel]->GetPhases()->data();
             if(fftTree_ || templatesNames_.size() != 0)
             {
-                for(int k=0; k<n_samples/2; ++k)
+                for(int k=0; k<n_samples; ++k)
                 {
                     for(auto& tmpl : templatesNames_){
                         templates2dHistos_[channel+tmpl]->Fill(k, var_map[tmpl][k]);
                     }
                     if(fftTree_)
                     {
-                        int index =  channelsMap_[channel] * n_samples/2 + k;
+                        int index =  channelsMap_[channel] * n_samples + k;
                         current_ch_[index] = channelsMap_[channel];
-                        freqs_[index] = (k%(n_samples/2));
-                        re_[index] = Re[index];
-                        im_[index] = Im[index];
+                        freqs_[index] = (k%(n_samples));
+                        re_[index] = oRe[index];
+                        im_[index] = oIm[index];
                         amplitudes_[index] = var_map["Ampl"][k];
                         phases_[index] = var_map["Phase"][k];
                     }
