@@ -24,8 +24,18 @@ bool DFTTemplate::Begin(CfgManager& opts, uint64* index)
             opts.GetOpt<float>(channel+".nSamples");
         oversamplingMap_[channel] = make_pair(fOversampling,
                                               opts.GetOpt<float>(channel+".tUnit")*orig_n_sample);
+        
+        //---Register oversampled WF
+        auto oversampledName = channel+opts.GetOpt<string>(instanceName_+".outWFSuffix");
         WFs_[channel] = new WFClass(1, tOversampling);
-        RegisterSharedData(WFs_[channel], channel+opts.GetOpt<string>(instanceName_+".outWFSuffix"), false);
+        RegisterSharedData(WFs_[channel], oversampledName, false);
+        
+        //---Generate automatic cfg info for the oversampled "channel"
+        vector<string> newOpts={""};
+        newOpts[0] = to_string(tOversampling);
+        opts.SetOpt(oversampledName+".tUnit", newOpts);
+        newOpts[0] = to_string(orig_n_sample*opts.GetOpt<float>(channel+".tUnit")/tOversampling);
+        opts.SetOpt(oversampledName+".nSamples", newOpts);                
     }
 
     return true;
