@@ -368,8 +368,8 @@ WFFitResults WFClass::TemplateFit(float offset, int lW, int hW)
         minimizer->SetTolerance(1e-3);
         minimizer->SetPrintLevel(0);
         minimizer->SetFunction(chi2);
-        minimizer->SetLimitedVariable(0, "amplitude", GetAmpMax(), 1e-2, -4000., 4000.);
-        minimizer->SetLimitedVariable(1, "deltaT", maxSample_*tUnit_, 1e-2, -1024.*tUnit_, 1024.*tUnit_);
+        minimizer->SetLimitedVariable(0, "amplitude", GetAmpMax(), 1e-2, 0., GetAmpMax()*2.);
+        minimizer->SetLimitedVariable(1, "deltaT", maxSample_*tUnit_, 1e-2, fWinMin_*tUnit_, fWinMax_*tUnit_);
         //---fit
         minimizer->Minimize();
         tempFitAmp_ = minimizer->X()[0];
