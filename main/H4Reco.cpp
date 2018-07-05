@@ -169,7 +169,7 @@ int main(int argc, char* argv[])
     H4Tree h4Tree(inTree);
 
     //-----output setup-----
-    uint64 index=stoul(run)*1e9;    
+    uint64 index=0;    
     TFile* outROOT;
     if(spill == -1)
       outROOT = new TFile(outSuffix+TString(run)+".root", "RECREATE");
@@ -228,28 +228,30 @@ int main(int argc, char* argv[])
     }
             
     //---events loop
+    int nEvents = 0;
     int maxEvents = opts.OptExist("h4reco.maxEvents") ? opts.GetOpt<int>("h4reco.maxEvents") : -1;
     bool isSim = opts.OptExist("h4reco.generateEvents") ? opts.GetOpt<bool>("h4reco.generateEvents") : false;
     if(isSim)
         cout << ">>> Processing H4DAQ simulation <<<" << endl;
     else
         cout << ">>> Processing H4DAQ run #" << run << " <<<" << endl;
-    while((h4Tree.NextEntry() && (index-stoul(run)*1e9<maxEvents || maxEvents==-1)) ||
-          (isSim && (index-stoul(run)*1e9<maxEvents))
-        )
+    while((h4Tree.NextEntry() && (nEvents < maxEvents || maxEvents == -1)) || (isSim && (nEvents < maxEvents)))
     {
-        if(index % 1000 == 0)
+        if(nEvents % 1000 == 0)
         {
             if(isSim)
-                cout << ">>> Generated events: " << index-stoul(run)*1e9 << "/"
+                cout << ">>> Generated events: " << nEvents << "/"
                      << maxEvents 
                      << endl;
             else                
-                cout << ">>> Processed events: " << index-stoul(run)*1e9 << "/"
+                cout << ">>> Processed events: " << nEvents << "/"
                      << (maxEvents<0 ? h4Tree.GetEntries() : min(h4Tree.GetEntries(), (uint64)maxEvents))
                      << endl;
             TrackProcess(cpu, mem, vsz, rss);
         }
+        
+        //---set index value run*1e12+spill*1e6+event
+        index = h4Tree.runNumber*1e12 + h4Tree.spillNumber*1e6 + h4Tree.evtNumber;
         
         //---call ProcessEvent for each plugin and check the return status
         bool status=true;
@@ -265,7 +267,7 @@ int main(int argc, char* argv[])
         mainTree.spill = h4Tree.spillNumber;
         mainTree.event = h4Tree.evtNumber;
         mainTree.Fill();
-        ++index;
+        ++nEvents;
     }
 
     //---end
