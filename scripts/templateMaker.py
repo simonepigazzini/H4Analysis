@@ -35,6 +35,7 @@ def IterativeProfiling(wf):
             oldMean = newMean
             oldRMS = newRMS
 
+        #prof.SetBinContent(ibin, max(h.GetMean(), 0.))
         prof.SetBinContent(ibin, h.GetMean())
         prof.SetBinError(ibin, h.GetMeanError())
 
@@ -75,7 +76,7 @@ if __name__ == '__main__':
 
         print('>>> Running reconstruction on run', run, '...')
         cmd = base_dir+'bin/H4Reco '+new_cfg_file+' '+run
-        #ret = subprocess.getstatusoutput(cmd)
+        ret = subprocess.getstatusoutput(cmd)
         if args.debug:
             print("Cmd:", cmd)
             print("Return:", ret)
