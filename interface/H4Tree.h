@@ -25,22 +25,22 @@ typedef std::tuple<unsigned int, unsigned int, unsigned int, unsigned int> bgc_k
 struct key_hash : public std::unary_function<bgc_key_t, size_t>
 {
     size_t operator()(const bgc_key_t& k) const
-    {
-        return std::get<0>(k) ^ std::get<1>(k) ^ std::get<2>(k) ^ std::get<3>(k);
-    }
+        {
+            return std::get<0>(k) ^ std::get<1>(k) ^ std::get<2>(k) ^ std::get<3>(k);
+        }
 };
 
 struct key_equal : public std::binary_function<bgc_key_t, bgc_key_t, bool>
 {
     bool operator()(const bgc_key_t& v0, const bgc_key_t& v1) const
-    {
-        return (
-            std::get<0>(v0) == std::get<0>(v1) &&
-            std::get<1>(v0) == std::get<1>(v1) &&
-            std::get<2>(v0) == std::get<2>(v1) &&
-            std::get<3>(v0) == std::get<3>(v1) 
-            );
-    }
+        {
+            return (
+                std::get<0>(v0) == std::get<0>(v1) &&
+                std::get<1>(v0) == std::get<1>(v1) &&
+                std::get<2>(v0) == std::get<2>(v1) &&
+                std::get<3>(v0) == std::get<3>(v1) 
+                );
+        }
 };
 
 //---map type
@@ -80,16 +80,16 @@ class H4Tree : public H4TreeBase
 {
 public:
     //---ctors
-H4Tree(TChain* t):
-    H4TreeBase(t)
-    {
-        Init();
-    }
-H4Tree(TTree* t):
-    H4TreeBase(t)
-    {
-        Init();
-    }    
+    H4Tree(TChain* t):
+        H4TreeBase(t)
+        {
+            Init();
+        }
+    H4Tree(TTree* t):
+        H4TreeBase(t)
+        {
+            Init();
+        }    
     //---dtor
     ~H4Tree();
     

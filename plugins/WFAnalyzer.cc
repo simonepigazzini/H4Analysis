@@ -14,7 +14,7 @@ bool WFAnalyzer::Begin(CfgManager& opts, uint64* index)
     timeRecoTypes_ = opts.GetOpt<vector<string> >(instanceName_+".timeRecoTypes");
 
     //---channels setup
-    string templateTag="prof";
+    string templateTag="";
     if(opts.OptExist(instanceName_+".templateTags"))
         for(auto& tag : opts.GetOpt<vector<string> >(instanceName_+".templateTags"))
             for(auto& run : opts.GetOpt<vector<string> >(tag+".runList"))
@@ -28,8 +28,7 @@ bool WFAnalyzer::Begin(CfgManager& opts, uint64* index)
         if(opts.OptExist(channel+".templateFit.file"))
         {            
             TFile* templateFile = TFile::Open(opts.GetOpt<string>(channel+".templateFit.file", 0).c_str(), ".READ");
-            TH1* wfTemplate=(TH1*)templateFile->Get((opts.GetOpt<string>(channel+".templateFit.file", 1)+
-                                                     +"_"+templateTag).c_str());
+            TH1* wfTemplate=(TH1*)templateFile->Get((opts.GetOpt<string>(channel+".templateFit.file", 1)+templateTag).c_str());
             templates_[channel] = (TH1F*) wfTemplate->Clone();
             templates_[channel] -> SetDirectory(0);
             templateFile->Close();
