@@ -377,7 +377,7 @@ WFFitResults WFClass::TemplateFit(float offset, int lW, int hW)
 
         delete minimizer;        
     }
-    
+
     return WFFitResults{tempFitAmp_, tempFitTime_, TemplateChi2()/(fWinMax_-fWinMin_-2)};
 }
 
@@ -525,7 +525,7 @@ double WFClass::TemplateChi2(const double* par)
 {
     double chi2 = 0;
     double delta = 0;
-    for(int iSample=fWinMin_; iSample<fWinMax_; ++iSample)
+    for(int iSample=fWinMin_; iSample<=fWinMax_; ++iSample)
     {
         if(iSample < 0 || iSample >= int(samples_.size()))
         {
