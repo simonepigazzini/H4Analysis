@@ -22,10 +22,7 @@ def lxbatchSubmitJob (run, path, cfg, outdir, queue, job_dir, dryrun):
     f.write ('make -j 2 \n')
     f.write ('cp '+path+'/'+cfg+' job.cfg \n\n')
     f.write ('bin/H4Reco job.cfg '+run+'\n\n')
-    if "/eos/cms/" in outdir:
-        f.write ('for file in ntuples/*'+run+'.root; do /afs/cern.ch/project/eos/installation/0.3.84-aquamarine/bin/eos.select cp $file '+outdir+'/$file; done\n')
-    else:
-        f.write ('cp ntuples/*'+run+'.root '+outdir+'\n')
+    f.write ('cp ntuples/*'+run+'.root '+outdir+'\n')
     f.close ()
     getstatusoutput ('chmod 755 ' + jobname)
     if not dryrun:
@@ -74,12 +71,10 @@ if __name__ == '__main__':
     stageOutDir = args.storage+'ntuples_'+args.version+'/'
     
     if args.batch == 'lxbatch':
-        if getoutput('gfal-ls root://eoscms/'+stageOutDir) == "":
+        if getoutput('ls '+stageOutDir) == "":
             print "ntuples version "+args.version+" directory on eos already exist! no jobs created."
             exit(0)
-        getstatusoutput('cmsMkdir '+stageOutDir)    
-    else:
-        getstatusoutput('mkdir -p '+stageOutDir)    
+    getstatusoutput('mkdir -p '+stageOutDir)    
     
     ## job setup
     local_path = getoutput('pwd')
