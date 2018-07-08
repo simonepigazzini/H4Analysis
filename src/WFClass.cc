@@ -216,8 +216,10 @@ float WFClass::GetSignalIntegral(int riseWin, int fallWin)
     for(int iSample=maxSample_-riseWin; iSample<maxSample_+fallWin; ++iSample)
     {
         //---if signal window goes out of bound return a bad value
-        if(iSample >= int(samples_.size()) || iSample < 0)
-            return -1000;        
+        if(iSample < 0)
+            continue;
+        if(iSample >= samples_.size())
+	    break;
         integral += samples_.at(iSample);
     }
 
