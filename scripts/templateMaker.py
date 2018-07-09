@@ -70,16 +70,18 @@ if __name__ == '__main__':
         cfg.SetOpt(args.dftt_instance+'.channelsNames', vstring(1, ch))
         cfg.SetOpt(args.dftt_instance+'.outWFSuffix', vstring(1, '_T'))
         if args.debug:            
-            template_cfg.Print(args.dftt_instance)
+            cfg.Print(args.dftt_instance)
         new_cfg_file = base_dir+'tmp/'+args.template_cfg.strip('.cfg')+'_'+ch+'_TMPL.cfg'
         cfg.WriteToFile(new_cfg_file, True)
 
         print('>>> Running reconstruction on run', run, '...')
         cmd = base_dir+'bin/H4Reco '+new_cfg_file+' '+run
-        ret = subprocess.getstatusoutput(cmd)
+        ret, err = subprocess.getstatusoutput(cmd)
+        if ret != 0:
+            print(err)
         if args.debug:
             print("Cmd:", cmd)
-            print("Return:", ret)
+            print("Return:", ret, err)
 
         print('>>> Building the template for ', ch, '...')
         reco_file = ROOT.TFile.Open(base_dir+"/"+cfg.GetOpt('h4reco.outNameSuffix')+run+'.root')
