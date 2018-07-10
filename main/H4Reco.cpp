@@ -84,10 +84,10 @@ void ReadInputFiles(CfgManager& opts, int& firstSpill, TChain* inTree)
     //---Get file list searching in specified path (eos or locally)
     if(path.find("/eos/cms") != string::npos)
     {
-	if ( getMachineDomain() != "cern.ch" )
-            ls_command = string("gfal-ls root://eoscms/"+path+run+" | grep 'root' > /tmp/"+run+".list");
-	else
-            ls_command = string("ls "+path+run+" | grep 'root' > /tmp/"+run+".list");
+	// if ( getMachineDomain() != "cern.ch" )
+        //     ls_command = string("gfal-ls root://eoscms/"+path+run+" | grep 'root' > /tmp/"+run+".list");
+	// else
+        ls_command = string("ls "+path+run+" | grep 'root' > /tmp/"+run+".list");
     }
     else if(path.find("srm://") != string::npos)
         ls_command = string("echo "+path+run+"/`gfal-ls "+path+run+
@@ -105,16 +105,16 @@ void ReadInputFiles(CfgManager& opts, int& firstSpill, TChain* inTree)
         {
             if(path.find("/eos/cms") != string::npos)
             {
-                if ( getMachineDomain() != "cern.ch" )
-                {
-                    std::cout << "+++ Adding file " << ("root://eoscms/"+path+run+"/"+file).c_str() << std::endl;
-                    inTree->AddFile(("root://eoscms/"+path+run+"/"+file).c_str());
-                }
-                else
-                {
-                    std::cout << "+++ Adding file " << (path+run+"/"+file).c_str() << std::endl;
-                    inTree->AddFile((path+run+"/"+file).c_str());
-                }
+                // if ( getMachineDomain() != "cern.ch" )
+                // {
+                //     std::cout << "+++ Adding file " << ("root://eoscms/"+path+run+"/"+file).c_str() << std::endl;
+                //     inTree->AddFile(("root://eoscms/"+path+run+"/"+file).c_str());
+                // }
+                // else
+                // {
+                std::cout << "+++ Adding file " << (path+run+"/"+file).c_str() << std::endl;
+                inTree->AddFile((path+run+"/"+file).c_str());
+                // }
             }
             else if(path.find("srm://") != string::npos)
             {
@@ -250,8 +250,8 @@ int main(int argc, char* argv[])
             TrackProcess(cpu, mem, vsz, rss);
         }
         
-        //---set index value run*1e12+spill*1e6+event
-        index = h4Tree.runNumber*1e12 + h4Tree.spillNumber*1e6 + h4Tree.evtNumber;
+        //---set index value run*1e10+spill*1e4+event
+        index = h4Tree.runNumber*1e9 + h4Tree.spillNumber*1e5 + h4Tree.evtNumber;
         
         //---call ProcessEvent for each plugin and check the return status
         bool status=true;
