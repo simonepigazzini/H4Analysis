@@ -1,7 +1,7 @@
 #!/bin/python3
 
 import os
-import subprocess
+import commands
 
 import ROOT
 
@@ -81,7 +81,7 @@ if __name__ == '__main__':
 
             print('>>> Running reconstruction on run', run, '...')
             cmd = base_dir+'bin/H4Reco '+new_cfg_file+' '+run
-            ret, err = subprocess.getstatusoutput(cmd)
+            ret, err = commands.getstatusoutput(cmd)
             if ret != 0:
                 print(err)
             if args.debug:
