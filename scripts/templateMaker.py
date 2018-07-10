@@ -27,7 +27,7 @@ def IterativeProfiling(wf):
         oldMean = h.GetMean()
         oldRMS = h.GetRMS()
         while(deltaMean>1E-4 or deltaRMS>1E-5):
-            h.GetXaxis().SetRangeUser(oldMean-3*oldRMS, oldMean+3*oldRMS)
+            h.GetXaxis().SetRangeUser(oldMean-2*oldRMS, oldMean+2*oldRMS)
             newMean = h.GetMean()
             newRMS = h.GetRMS()
             deltaMean = abs(newMean-oldMean)
@@ -54,51 +54,62 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--output' , default='templates_file.root', help='output file path')
     parser.add_argument('-m', '--max-events' , default='2000', help='maximum number of events')
     parser.add_argument('-t', '--template-cfg' , dest='template_cfg', default='../cfg/H4DAQ_base.cfg', help='Template cfg file')
+    parser.add_argument('-f', '--input-file', dest='input_file', help='Reco file path')
     parser.add_argument('--cut', default='1', help='Selection on input waveform')
     parser.add_argument('--bins', action=customAction, default=[1000, 0., 0.], help='Template histogram time binning')
+    parser.add_argument('--t2f-instance', dest='t2f_instance', default='T2F', help='Instance name of the FFT plugin')        
     parser.add_argument('--dftt-instance', dest='dftt_instance', default='DFTTmpl', help='Instance name of the DFTTemplate plugin')
-    parser.add_argument('--dryrun' , action="store_true", default=False, help='do not submit the jobs, just create them')
+    parser.add_argument('--wfr-instance', dest='wfr_instance', default='WFRecoFFT', help='Instance name of the WFReco plugin')
     parser.add_argument('--debug' , action="store_true", default=False, help='print debug messages')    
     
     args = parser.parse_args ()
 
-    cfg = ROOT.CfgManager(args.template_cfg)
+    cfg = ROOT.CfgManager(args.template_cfg)    
 
     for ch, run in zip(args.channels, args.runs):
-        print('>>> Generating cfg for channel', ch, '...')
-        base_dir = os.path.abspath(__file__)[:os.path.abspath(__file__).find('H4Analysis/')+len('H4Analysis/')]
-        cfg.SetOpt(args.dftt_instance+'.channelsNames', vstring(1, ch))
-        cfg.SetOpt(args.dftt_instance+'.outWFSuffix', vstring(1, '_T'))
-        if args.debug:            
-            cfg.Print(args.dftt_instance)
-        new_cfg_file = base_dir+'tmp/'+args.template_cfg.strip('.cfg')+'_'+ch+'_TMPL.cfg'
-        cfg.WriteToFile(new_cfg_file, True)
+        if not args.input_file:
+            print('>>> Generating cfg for channel', ch, '...')
+            base_dir = os.path.abspath(__file__)[:os.path.abspath(__file__).find('H4Analysis/')+len('H4Analysis/')]
+            cfg.SetOpt(args.t2f_instance+'.channelsNames', vstring(1, ch))            
+            cfg.SetOpt(args.dftt_instance+'.channelsNames', vstring(1, ch))
+            cfg.SetOpt(args.dftt_instance+'.outWFSuffix', vstring(1, '_T'))
+            cfg.SetOpt(args.wfr_instance+'.channelsNames', vstring(1, ch+'_T'))            
+            if args.debug:            
+                cfg.Print(args.dftt_instance)
+            new_cfg_file = base_dir+'tmp/'+args.template_cfg.strip('.cfg')+'_'+ch+'_TMPL.cfg'
+            cfg.WriteToFile(new_cfg_file, True)
 
-        print('>>> Running reconstruction on run', run, '...')
-        cmd = base_dir+'bin/H4Reco '+new_cfg_file+' '+run
-        ret, err = subprocess.getstatusoutput(cmd)
-        if ret != 0:
-            print(err)
-        if args.debug:
-            print("Cmd:", cmd)
-            print("Return:", ret, err)
+            print('>>> Running reconstruction on run', run, '...')
+            cmd = base_dir+'bin/H4Reco '+new_cfg_file+' '+run
+            ret, err = subprocess.getstatusoutput(cmd)
+            if ret != 0:
+                print(err)
+            if args.debug:
+                print("Cmd:", cmd)
+                print("Return:", ret, err)
+
+            args.input_file = base_dir+"/"+cfg.GetOpt('h4reco.outNameSuffix')+run+'.root'
 
         print('>>> Building the template for ', ch, '...')
-        reco_file = ROOT.TFile.Open(base_dir+"/"+cfg.GetOpt('h4reco.outNameSuffix')+run+'.root')
+        reco_file = ROOT.TFile.Open(args.input_file)
         reco_tree = reco_file.Get("h4")
 
         tmpl_file = ROOT.TFile.Open(args.output, 'UPDATE')
         tmpl_file.Delete('tmpl_'+ch+';*')
+        tmpl_file.Delete('cfg_tmpl_'+ch+';*')
         #h_tmpl = ROOT.TProfile('tmpl_'+ch, '', int(args.bins[0]), float(args.bins[1]), float(args.bins[2]), -0.1, 1.1)
         h_wf_2d = ROOT.TH2D('wf_2d_'+ch, '', int(args.bins[0]), float(args.bins[1]), float(args.bins[2]), 10000, -0.1, 1.1)
         
         var = 'wf_t.WF_val/digi_t.amp_max[%s]:wf_t.WF_time-digi_t.time[%s+CFD]' % (ch+'_T', ch+'_T')
         cut = 'wf_t.WF_ch=='+ch+'_T'+' && '+args.cut
-        entries = reco_tree.Draw(var+'>>wf_2d_'+ch, cut)
+        cfg.SetOpt('selection_'+ch, vstring(1, cut))
+        entries = reco_tree.Draw(var+'>>wf_2d_'+ch, cut, "COLZ")
+        print('>>> Number of events used:', entries/cfg.GetOpt(int)(ch+'.nSamples'))
         
         h_tmpl = IterativeProfiling(h_wf_2d)
         h_tmpl.Scale(1/h_tmpl.GetMaximum())        
         h_tmpl.Write('tmpl_'+ch)
+        cfg.Write('cfg_tmpl_'+ch)
         tmpl_file.Close()
         reco_file.Close()
         
