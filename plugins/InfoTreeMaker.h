@@ -21,9 +21,11 @@ private:
     //---internal data
     uint64* index_;
     TTree*  info_tree_;
-    string                           trackedVariable_;
-    map<string, float*>              mappedVariables_;
-    map<string, map<string, float> > remap_;    
+    string                            trackedVariable_;
+    map<string, float*>               mappedVariablesNum_;
+    map<string, string*>              mappedVariablesStr_;    
+    map<string, map<string, float> >  remapNum_;
+    map<string, map<string, string> > remapStr_;    
 };
 
 DEFINE_PLUGIN(InfoTreeMaker);
