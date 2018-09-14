@@ -12,6 +12,9 @@ typedef unsigned long long int uint64;
 
 using namespace std;
 
+#define FITPIX_MAX_HITS 1000
+#define FITPIX_MAX_CLUSTERS 1000
+
 class FitpixTree
 {
 public: 
@@ -25,14 +28,14 @@ public:
     void Init();
     void Clear() 
     {
-      hitX.clear();
-      hitY.clear();
-      hitCharge.clear();
+      /* hitX.clear(); */
+      /* hitY.clear(); */
+      /* hitCharge.clear(); */
 
-      clusterX.clear();
-      clusterY.clear();
-      clusterCharge.clear();
-      clusterSize.clear();
+      /* clusterX.clear(); */
+      /* clusterY.clear(); */
+      /* clusterCharge.clear(); */
+      /* clusterSize.clear(); */
     };
 
     void Fill() {tree_->Fill();};
@@ -41,15 +44,15 @@ public:
 
     uint64* index;
     int n_hits;
-    std::vector<float> hitX;
-    std::vector<float> hitY;
-    std::vector<float> hitCharge;
+    float* hitX;
+    float* hitY;
+    float* hitCharge;
 
     int n_clusters;
-    std::vector<float> clusterX;
-    std::vector<float> clusterY;
-    std::vector<float> clusterCharge;
-    std::vector<int> clusterSize;
+    float* clusterX;
+    float* clusterY;
+    float* clusterCharge;
+    int* clusterSize;
 };
 
 #endif

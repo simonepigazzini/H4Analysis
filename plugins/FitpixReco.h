@@ -228,7 +228,7 @@ private:
     long int        boardId_;
     std::vector<FPHit> hits_;
     std::vector<FPCluster> clusters_;
-    FitpixTree     fitpixTree_;
+    FitpixTree*     fitpixTree_;
 };
 
 DEFINE_PLUGIN(FitpixReco);
