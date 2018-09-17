@@ -23,8 +23,13 @@ bool SpikeTagger::Begin(CfgManager& opts, uint64* index)
     if(opts.GetOpt<int>(instanceName_+".fillWFtree"))
     {
         int nSamples = 0;
-        for(auto& channel : channelsNames_)
-            nSamples += opts.GetOpt<int>(channel+".nSamples");
+        if(opts.OptExist(instanceName_+".storeNSampleAroundMax"))
+            nSamples = channelsNames_.size() * opts.GetOpt<int>(instanceName_+".storeNSampleAroundMax");
+        else
+        {
+            for(auto& channel : channelsNames_)
+                nSamples += opts.GetOpt<int>(channel+".nSamples");
+        }
         
         string wfTreeName = opts.OptExist(instanceName_+".wfTreeName") ?
             opts.GetOpt<string>(instanceName_+".wfTreeName") : "spikes_wf";
@@ -85,20 +90,44 @@ bool SpikeTagger::ProcessEvent(const H4Tree& event, map<string, PluginBase*>& pl
             matrix_A_sum += WFs_[other_ch]->GetSamples()->at(max_sample);
 
         spikesTree_.amp_sum_matrix[outCh] = matrix_A_sum;
-        
-        //---WFs---
-        if(fillWFtree)
+
+        //---increase output tree channel counter
+        ++outCh;        
+    }
+
+
+    //---WFs---
+    if(fillWFtree)
+    {
+        outCh = 0;
+        //---fix WF window around maximum sample of largest hit in the event.
+        //   also assuming all channels have the same sampling frequency (i.e. don't mix VFEs with V1742 channels)
+        float tUnit = WFs_[channelsNames_[spikesTree_.max_hit]]->GetTUnit();
+        int max_sample = WFs_[channelsNames_[spikesTree_.max_hit]]->GetTimeCF(1).first/tUnit;            
+        for(auto& channel : channelsNames_)
         {
-            float tUnit = WFs_[channel]->GetTUnit();
-            for(unsigned int jSample=0; jSample<analizedWF->size(); ++jSample)
+            //---skip dead channels
+            if(WFs_.find(channel) == WFs_.end())
+            {
+                ++outCh;
+                continue;
+            }
+            auto analizedWF = WFs_[channel]->GetSamples();
+            //---symmetric window (FIXME: odd windows)
+            unsigned int firstSample = max_sample - opts.GetOpt<int>(instanceName_+".storeNSampleAroundMax")/2;
+            unsigned int lastSample = max_sample + opts.GetOpt<int>(instanceName_+".storeNSampleAroundMax")/2;
+            for(unsigned int jSample=firstSample; jSample<lastSample; ++jSample)
             {
                 outWFTree_.WF_ch.push_back(outCh);
                 outWFTree_.WF_time.push_back(jSample*tUnit);
-                outWFTree_.WF_val.push_back(analizedWF->at(jSample));
+                if(jSample>=0 && jSample<analizedWF->size())
+                    outWFTree_.WF_val.push_back(analizedWF->at(jSample));
+                else
+                    outWFTree_.WF_val.push_back(0.);
             }
+            //---increase output tree channel counter
+            ++outCh;        
         }
-        //---increase output tree channel counter
-        ++outCh;
     }
 
     //---fill the output trees and clean
