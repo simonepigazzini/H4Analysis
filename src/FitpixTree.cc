@@ -25,12 +25,12 @@ void FitpixTree::Init()
 
     tree_->Branch("n_hits", &n_hits, "n_hits/I");
     tree_->Branch("n_clusters", &n_clusters, "n_clusters/I");
-    tree_->Branch("hitX[n_hits]/F", hitX);
-    tree_->Branch("hitY[n_hits]/F", hitY);
-    tree_->Branch("hitCharge[n_hits]/F", hitCharge);
+    tree_->Branch("hitX", hitX ,"hitX[n_hits]/F");
+    tree_->Branch("hitY", hitY ,"hitY[n_hits]/F");
+    tree_->Branch("hitCharge", hitCharge ,"hitCharge[n_hits]/F");
 
-    tree_->Branch("clusterX[n_clusters]/F", clusterX);
-    tree_->Branch("clusterY[n_clusters]/F", clusterY);
-    tree_->Branch("clusterCharge[n_clusters]/F", clusterCharge);
-    tree_->Branch("clusterSize[n_clusters]/I", clusterSize);
+    tree_->Branch("clusterX", clusterX, "clusterX[n_clusters]/F");
+    tree_->Branch("clusterY", clusterY, "clusterY[n_clusters]/F");
+    tree_->Branch("clusterCharge", clusterCharge, "clusterCharge[n_clusters]/F");
+    tree_->Branch("clusterSize", clusterSize, "clusterSize[n_clusters]/I");
 }
