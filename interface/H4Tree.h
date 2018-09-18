@@ -11,6 +11,7 @@
 
 using namespace std;
 
+#define MAX_ADC_CHANNELS 5000
 #define MAX_TDC_CHANNELS 200
 
 typedef unsigned long int uint32;
@@ -61,9 +62,9 @@ typedef std::unordered_map<const bgc_key_t, int, key_hash, key_equal> bgc_map_t;
     DATA(unsigned int,  nDigiSamples)               
 
 #define DATA_VECT_TABLE                                 \
-    DATA(unsigned int, adcBoard, nAdcChannels)          \
-    DATA(unsigned int, adcChannel, nAdcChannels)        \
-    DATA(unsigned int, adcData, nAdcChannels)           \
+    DATA(unsigned int, adcBoard, MAX_ADC_CHANNELS)          \
+    DATA(unsigned int, adcChannel, MAX_ADC_CHANNELS)        \
+    DATA(unsigned int, adcData, MAX_ADC_CHANNELS)           \
     DATA(unsigned int, tdcChannel, MAX_TDC_CHANNELS)    \
     DATA(unsigned int, tdcData, MAX_TDC_CHANNELS)       \
     DATA(unsigned int, pattern, nPatterns)              \
