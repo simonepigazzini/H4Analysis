@@ -1,8 +1,5 @@
 #!/bin/csh
 
-source /afs/cern.ch/sw/lcg/external/gcc/4.9/x86_64-slc6-gcc49-opt/setup.csh
-cd /afs/cern.ch/sw/lcg/app/releases/ROOT/6.05.02/x86_64-slc6-gcc49-opt/root/
-source ./bin/thisroot.csh
-cd -
-
+source /cvmfs/sft.cern.ch/lcg/releases/LCG_94/ROOT/6.14.04/x86_64-slc6-gcc62-opt/ROOT-env.sh
+    
 setenv LD_LIBRARY_PATH DynamicTTree/lib/:$LD_LIBRARY_PATH
