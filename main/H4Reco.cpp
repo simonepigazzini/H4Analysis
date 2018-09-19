@@ -73,55 +73,61 @@ void TrackProcess(float* cpu, float* mem, float* vsz, float* rss)
 }
                   
 //----------Get input files---------------------------------------------------------------
-void ReadInputFiles(CfgManager& opts, TChain* inTree)
+void ReadInputFiles(CfgManager& opts, int& firstSpill, TChain* inTree)
 {
     int nFiles=0;
     string ls_command;
     string file;
     string path=opts.GetOpt<string>("h4reco.path2data");
-    string run=opts.GetOpt<string>("h4reco.run");
+    string run=opts.GetOpt<string>("h4reco.run");    
 
     //---Get file list searching in specified path (eos or locally)
     if(path.find("/eos/cms") != string::npos)
     {
-	if ( getMachineDomain() != "cern.ch" )
-            ls_command = string("gfal-ls root://eoscms/"+path+run+" | grep 'root' > tmp/"+run+".list");
-	else
-            ls_command = string("ls "+path+run+" | grep 'root' > tmp/"+run+".list");
+	// if ( getMachineDomain() != "cern.ch" )
+        //     ls_command = string("gfal-ls root://eoscms/"+path+run+" | grep 'root' > /tmp/"+run+".list");
+	// else
+        ls_command = string("ls "+path+run+" | grep 'root' > /tmp/"+run+".list");
     }
     else if(path.find("srm://") != string::npos)
         ls_command = string("echo "+path+run+"/`gfal-ls "+path+run+
-                            "` | sed -e 's:^.*\\/cms\\/:root\\:\\/\\/xrootd-cms.infn.it\\/\\/:g' | grep 'root' > tmp/"+run+".list");
+                            "` | sed -e 's:^.*\\/cms\\/:root\\:\\/\\/xrootd-cms.infn.it\\/\\/:g' | grep 'root' > /tmp/"+run+".list");
     else
-        ls_command = string("ls "+path+run+" | grep 'root' > tmp/"+run+".list");
+        ls_command = string("ls "+path+run+" | grep 'root' > /tmp/"+run+".list");
     system(ls_command.c_str());
-    ifstream waveList(string("tmp/"+run+".list").c_str(), ios::in);
+
+    ifstream waveList(string("/tmp/"+run+".list").c_str(), ios::in);
     while(waveList >> file && (opts.GetOpt<int>("h4reco.maxFiles")<0 || nFiles<opts.GetOpt<int>("h4reco.maxFiles")) )
     {
-        if(path.find("/eos/cms") != string::npos)
+        //---skip files before specified spill
+        auto currentSpill = std::stoi(file.substr(0, file.size()-4));
+        if(firstSpill == -1 || currentSpill == firstSpill)
         {
-            if ( getMachineDomain() != "cern.ch" )
+            if(path.find("/eos/cms") != string::npos)
             {
-                std::cout << "+++ Adding file " << ("root://eoscms/"+path+run+"/"+file).c_str() << std::endl;
-                inTree->AddFile(("root://eoscms/"+path+run+"/"+file).c_str());
+                // if ( getMachineDomain() != "cern.ch" )
+                // {
+                //     std::cout << "+++ Adding file " << ("root://eoscms/"+path+run+"/"+file).c_str() << std::endl;
+                //     inTree->AddFile(("root://eoscms/"+path+run+"/"+file).c_str());
+                // }
+                // else
+                // {
+                std::cout << "+++ Adding file " << (path+run+"/"+file).c_str() << std::endl;
+                inTree->AddFile((path+run+"/"+file).c_str());
+                // }
+            }
+            else if(path.find("srm://") != string::npos)
+            {
+                std::cout << "+++ Adding file " << file << std::endl;
+                inTree->AddFile((file).c_str());
             }
             else
             {
                 std::cout << "+++ Adding file " << (path+run+"/"+file).c_str() << std::endl;
                 inTree->AddFile((path+run+"/"+file).c_str());
             }
+            ++nFiles;
         }
-        else if(path.find("srm://") != string::npos)
-        {
-            std::cout << "+++ Adding file " << file << std::endl;
-            inTree->AddFile((file).c_str());
-        }
-        else
-        {
-            std::cout << "+++ Adding file " << (path+run+"/"+file).c_str() << std::endl;
-            inTree->AddFile((path+run+"/"+file).c_str());
-        }
-        ++nFiles;
     }
     std::cout << "+++ Added " << nFiles << " files with " << inTree->GetEntries() << " events" << std::endl;
     return;
@@ -132,7 +138,7 @@ int main(int argc, char* argv[])
 {
     if(argc < 2)
     {
-        cout << argv[0] << " cfg file " << "[run]" << endl; 
+        cout << argv[0] << " cfg file " << "[run] " << "[spill] " <<endl; 
         return -1;
     }
 
@@ -144,20 +150,31 @@ int main(int argc, char* argv[])
     opts.ParseConfigFile(argv[1]);
 
     //-----input setup-----    
+    int spill=-1;
     if(argc > 2)
     {
         vector<string> run(1, argv[2]);
         opts.SetOpt("h4reco.run", run);
     }
+    if(argc > 3)
+    {
+        spill = atoi(argv[3]);
+        vector<string> files(1, "1");
+        opts.SetOpt("h4reco.maxFiles", files);
+    }
     string outSuffix = opts.GetOpt<string>("h4reco.outNameSuffix");
     string run = opts.GetOpt<string>("h4reco.run");
     TChain* inTree = new TChain("H4tree");
-    ReadInputFiles(opts, inTree);
+    ReadInputFiles(opts, spill, inTree);
     H4Tree h4Tree(inTree);
 
     //-----output setup-----
-    uint64 index=stoul(run)*1e9;
-    TFile* outROOT = new TFile(outSuffix+TString(run)+".root", "RECREATE");
+    uint64 index=0;    
+    TFile* outROOT;
+    if(spill == -1)
+      outROOT = new TFile(outSuffix+TString(run)+".root", "RECREATE");
+    else
+      outROOT = new TFile(outSuffix+"/"+TString(run)+"/"+to_string(spill).c_str()+".root", "RECREATE");
     outROOT->cd();
     RecoTree mainTree(&index);
 
@@ -211,17 +228,30 @@ int main(int argc, char* argv[])
     }
             
     //---events loop
+    int nEvents = 0;
     int maxEvents = opts.OptExist("h4reco.maxEvents") ? opts.GetOpt<int>("h4reco.maxEvents") : -1;
-    cout << ">>> Processing H4DAQ run #" << run << " <<<" << endl;
-    while(h4Tree.NextEntry() && (index-stoul(run)*1e9<maxEvents || maxEvents==-1))
+    bool isSim = opts.OptExist("h4reco.generateEvents") ? opts.GetOpt<bool>("h4reco.generateEvents") : false;
+    if(isSim)
+        cout << ">>> Processing H4DAQ simulation <<<" << endl;
+    else
+        cout << ">>> Processing H4DAQ run #" << run << " <<<" << endl;
+    while((h4Tree.NextEntry() && (nEvents < maxEvents || maxEvents == -1)) || (isSim && (nEvents < maxEvents)))
     {
-        if(index % 1000 == 0)
+        if(nEvents % 1000 == 0)
         {
-            cout << ">>> Processed events: " << index-stoul(run)*1e9 << "/"
-                 << (maxEvents<0 ? h4Tree.GetEntries() : min(h4Tree.GetEntries(), (uint64)maxEvents))
-                 << endl;
+            if(isSim)
+                cout << ">>> Generated events: " << nEvents << "/"
+                     << maxEvents 
+                     << endl;
+            else                
+                cout << ">>> Processed events: " << nEvents << "/"
+                     << (maxEvents<0 ? h4Tree.GetEntries() : min(h4Tree.GetEntries(), (uint64)maxEvents))
+                     << endl;
             TrackProcess(cpu, mem, vsz, rss);
         }
+        
+        //---set index value run*1e10+spill*1e4+event
+        index = h4Tree.runNumber*1e9 + h4Tree.spillNumber*1e5 + h4Tree.evtNumber;
         
         //---call ProcessEvent for each plugin and check the return status
         bool status=true;
@@ -237,19 +267,19 @@ int main(int argc, char* argv[])
         mainTree.spill = h4Tree.spillNumber;
         mainTree.event = h4Tree.evtNumber;
         mainTree.Fill();
-        ++index;
+        ++nEvents;
     }
 
     //---end
     for(auto& plugin : pluginSequence)
     {
         //---call endjob for each plugin        
-        // bool r_status = plugin->End(opts);
-        // if(!r_status)
-        // {
-        //     cout << ">>> ERROR: plugin returned bad flag from End() call: " << plugin->GetInstanceName() << endl;
-        //     exit(-1);
-        // }
+        bool r_status = plugin->End(opts);
+        if(!r_status)
+        {
+            cout << ">>> ERROR: plugin returned bad flag from End() call: " << plugin->GetInstanceName() << endl;
+            exit(-1);
+        }
 
         //---get permanent data from each plugin and store them in the out file
         for(auto& shared : plugin->GetSharedData())

@@ -38,9 +38,9 @@ public:
     vector<SharedData> GetSharedData(string tag="", string type="", bool permanent=true);
     
     //---utils---
-    virtual bool Begin(CfgManager& opts, uint64* index) { return false; };
-    virtual bool ProcessEvent(const H4Tree& event, map<string, PluginBase*>& plugins, CfgManager& opts) { return false; };
-    virtual bool End(CfgManager& opts) { return false; };
+    virtual bool Begin(CfgManager& opts, uint64* index) { return true; };
+    virtual bool ProcessEvent(const H4Tree& event, map<string, PluginBase*>& plugins, CfgManager& opts) { return true; };
+    virtual bool End(CfgManager& opts) { return true; };
 
 protected:
     //---utils---
@@ -53,8 +53,8 @@ protected:
     vector<SharedData> data_;
 };
 
-#define DEFINE_PLUGIN(NAME) \
-    extern "C" PluginBase* create() {return new NAME;} \
+#define DEFINE_PLUGIN(NAME)                                         \
+    extern "C" PluginBase* create() {return new NAME;}              \
     extern "C" void destroy(PluginBase* plugin) {delete plugin;}
 
 #endif

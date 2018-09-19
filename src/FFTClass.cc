@@ -40,7 +40,7 @@ const vector<double>* FFTClass::GetAmplitudes()
     //   if not fill it
     if(vars_["ampl"].size() == 0)
         for(unsigned int i=0; i<vars_["re"].size(); ++i)
-	  vars_["ampl"].push_back(sqrt(pow(vars_["re"][i], 2) + pow(vars_["im"][i], 2)));
+            vars_["ampl"].push_back(sqrt(pow(vars_["re"][i], 2) + pow(vars_["im"][i], 2)));
 
     return &vars_["ampl"];
 }
@@ -50,8 +50,10 @@ const vector<double>* FFTClass::GetPhases()
     //---first check if phases vector is already full
     //   if not fill it
     if(vars_["phase"].size() == 0)
+    {
         for(unsigned int i=0; i<vars_["re"].size(); ++i)
-            vars_["phase"].push_back(atan(vars_["im"][i]/vars_["re"][i]));
+            vars_["phase"].push_back(atan2(vars_["im"][i], vars_["re"][i]));
+    }
 
     return &vars_["phase"];
 }

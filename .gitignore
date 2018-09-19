@@ -21,3 +21,6 @@ AutoDict_*
 *.tmp
 *.o
 *.so
+
+# Python cache
+*__pycache__/*

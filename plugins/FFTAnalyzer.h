@@ -18,7 +18,7 @@ class FFTAnalyzer: public PluginBase
 {
 public:
     //---ctors---
-    FFTAnalyzer(){};
+    FFTAnalyzer();
 
     //---dtor---
     ~FFTAnalyzer(){};
@@ -32,7 +32,6 @@ private:
     //---internal data
     uint64*                   index_;
     unsigned int              n_tot_;
-    int                       nSamples_;
     int*                      current_ch_;
     float*                    freqs_;
     float*                    re_;

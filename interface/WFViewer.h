@@ -22,21 +22,21 @@ using namespace std;
 class InterpolatorFunc: public ROOT::Math::Interpolator
 {
 public:
-InterpolatorFunc(unsigned int ndata, ROOT::Math::Interpolation::Type type, float ampl, float time):
-    ROOT::Math::Interpolator(ndata, type), ampl_(ampl), time_(time) {};
+    InterpolatorFunc(unsigned int ndata, ROOT::Math::Interpolation::Type type, float ampl, float time):
+        ROOT::Math::Interpolator(ndata, type), ampl_(ampl), time_(time) {};
     
     double operator() (double* x, double*) const
-    {
-        double value=ampl_*ROOT::Math::Interpolator::Eval(x[0]-time_);
-        return std::isnan(value) ? 0 : value;
-    };
+        {
+            double value=ampl_*ROOT::Math::Interpolator::Eval(x[0]-time_);
+            return std::isnan(value) ? 0 : value;
+        };
 
     float ampl_;
     float time_;
     
     //---ROOT dictionary
     ClassDef(InterpolatorFunc, 0)  
-      };
+};
 
 class WFViewer: public TObject
 {
@@ -72,6 +72,6 @@ private:
     
     //---ROOT dictionary
     ClassDef(WFViewer, 1)
-      };
+};
 
 #endif

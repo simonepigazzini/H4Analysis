@@ -8,6 +8,7 @@
 #include "interface/WFTree.h"
 #include "interface/WFClass.h"
 #include "interface/WFClassNINO.h"
+#include "interface/WFClassClock.h"
 #include "interface/WFViewer.h"
 
 class WFAnalyzer: public PluginBase
@@ -22,6 +23,7 @@ public:
     //---utils---
     bool Begin(CfgManager& opts, uint64* index);
     bool ProcessEvent(const H4Tree& event, map<string, PluginBase*>& plugins, CfgManager& opts);
+    bool End(CfgManager& opts) { return true; };
     
 private:    
     //---internal data

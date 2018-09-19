@@ -29,8 +29,12 @@ float WFClass::GetAmpMax(int min, int max)
 
     //---find the max
     maxSample_=sWinMin_;
-    for(int iSample=sWinMin_; iSample<sWinMax_; iSample++)
+    for(int iSample=sWinMin_; iSample<sWinMax_; ++iSample)
     {
+        if(iSample < 0)
+            continue;
+        if(iSample >= samples_.size())
+            break;
         if(samples_.at(iSample) > samples_.at(maxSample_)) 
             maxSample_ = iSample;
     }    
@@ -38,7 +42,7 @@ float WFClass::GetAmpMax(int min, int max)
 }
 
 //----------Get the interpolated max/min amplitude wrt polarity---------------------------
-WFFitResults WFClass::GetInterpolatedAmpMax(int min, int max, int nFitSamples)
+WFFitResults WFClass::GetInterpolatedAmpMax(int min, int max, int nFitSamples, string function)
 {
     //---check if already computed
     if(min==-1 && max==-1 && fitAmpMax_!=-1)
@@ -55,7 +59,7 @@ WFFitResults WFClass::GetInterpolatedAmpMax(int min, int max, int nFitSamples)
 
     //---fit the max
     TH1F h_max("h_max", "", nFitSamples, maxSample_-nFitSamples/2, maxSample_+nFitSamples/2);
-    TF1 f_max("f_max", "pol2", maxSample_-nFitSamples/2, maxSample_+nFitSamples/2);
+    TF1 f_max("f_max", function.c_str(), maxSample_-nFitSamples/2, maxSample_+nFitSamples/2);
 
     int bin=1;
     for(int iSample=maxSample_-(nFitSamples-1)/2; iSample<=maxSample_+(nFitSamples-1)/2; ++iSample)
@@ -64,10 +68,22 @@ WFFitResults WFClass::GetInterpolatedAmpMax(int min, int max, int nFitSamples)
         h_max.SetBinError(bin, BaselineRMS());
         ++bin;
     }
-    auto fit_result = h_max.Fit(&f_max, "QRSO");
-    fitTimeMax_ = -f_max.GetParameter(1)/(2*f_max.GetParameter(2));
-    fitAmpMax_ = f_max.Eval(fitTimeMax_);
-    fitChi2Max_ = fit_result->Chi2()/(nFitSamples-3);
+
+    if(h_max.GetMaximum() != 0)
+    {
+        auto fit_result = h_max.Fit(&f_max, "QRSO");
+        // fitTimeMax_ = -f_max.GetParameter(1)/(2*f_max.GetParameter(2));
+        // fitAmpMax_ = f_max.Eval(fitTimeMax_);
+        fitTimeMax_ = f_max.GetMaximumX();
+        fitAmpMax_ = f_max.GetMaximum();
+        fitChi2Max_ = nFitSamples > 3 ? fit_result->Chi2()/(nFitSamples-3) : -1;
+    }
+    else
+    {
+        fitTimeMax_ = -1;
+        fitAmpMax_ = 1000;
+        fitChi2Max_ = -1;
+    }
         
     return WFFitResults{fitAmpMax_, fitTimeMax_*tUnit_, fitChi2Max_};
 }
@@ -79,7 +95,7 @@ pair<float, float> WFClass::GetTime(string method, vector<float>& params)
     if(method.find("CFD") != string::npos)
     {
         if(params.size()<1)
-            cout << ">>>ERROR: to few arguments passed for CFD time computation" << endl;
+            cout << ">>>ERROR, WFClass: to few arguments passed for CFD time computation" << endl;
         else if(params.size()<2)
             return GetTimeCF(params[0]);
         else if(params.size()<3)
@@ -92,7 +108,7 @@ pair<float, float> WFClass::GetTime(string method, vector<float>& params)
     else if(method.find("LED") != string::npos)
     {
         if(params.size()<1)
-            cout << ">>>ERROR: to few arguments passed for LED time computation" << endl;
+            cout << ">>>ERROR, WFClass: to few arguments passed for LED time computation" << endl;
         else if(params.size()<2)
             return GetTimeLE(params[0]);
         else if(params.size()<4)
@@ -102,7 +118,7 @@ pair<float, float> WFClass::GetTime(string method, vector<float>& params)
 
     }
     
-    cout << ">>>ERROR: time reconstruction method <" << method << "> not supported" << endl;
+    cout << ">>>ERROR, WFClass: time reconstruction method <" << method << "> not supported" << endl;
     return make_pair(-1000, -1);
 }
 
@@ -176,8 +192,14 @@ float WFClass::GetIntegral(int min, int max)
 {
     //---compute integral
     float integral=0;
-    for(int iSample=min; iSample<max; iSample++)
+    for(int iSample=min; iSample<max; ++iSample)
+    {
+        if(iSample < 0)
+            continue;
+        if(iSample >= samples_.size())
+            break;
         integral += samples_.at(iSample);
+    }
 
     return integral;
 }
@@ -191,11 +213,13 @@ float WFClass::GetSignalIntegral(int riseWin, int fallWin)
 
     //---compute integral
     float integral=0;
-    for(int iSample=maxSample_-riseWin; iSample<maxSample_+fallWin; iSample++)
+    for(int iSample=maxSample_-riseWin; iSample<maxSample_+fallWin; ++iSample)
     {
         //---if signal window goes out of bound return a bad value
-      if(iSample > int(samples_.size()) || iSample < 0)
-            return -1000;        
+        if(iSample < 0)
+            continue;
+        if(iSample >= samples_.size())
+	    break;
         integral += samples_.at(iSample);
     }
 
@@ -207,8 +231,12 @@ float WFClass::GetSignalIntegral(int riseWin, int fallWin)
 float WFClass::GetModIntegral(int min, int max)
 {   
     float integral=0;
-    for(int iSample=min; iSample<max; iSample++)
+    for(int iSample=min; iSample<max; ++iSample)
     {
+        if(iSample < 0)
+            continue;
+        if(iSample >= samples_.size())
+            break;
         if(samples_.at(iSample) < 0)
             integral -= samples_.at(iSample);
         else
@@ -222,15 +250,15 @@ float WFClass::GetModIntegral(int min, int max)
 //----------Set the signal window---------------------------------------------------------
 void WFClass::SetSignalWindow(int min, int max)
 {
-    sWinMin_ = min + trigRef_;
-    sWinMax_ = max + trigRef_;
+    sWinMin_ = std::max(int(min + trigRef_), 0);
+    sWinMax_ = std::min(int(max + trigRef_), int(samples_.size()));
 }
 
 //----------Set the baseline window-------------------------------------------------------
 void WFClass::SetBaselineWindow(int min, int max)
 {
-    bWinMin_ = min;
-    bWinMax_ = max;
+    bWinMin_ = std::max(min, 0);
+    bWinMax_ = std::min(max, int(samples_.size()));
 }
 
 //----------Set the fit template----------------------------------------------------------
@@ -245,7 +273,7 @@ void WFClass::SetTemplate(TH1* templateWF)
 
     //---reset template fit variables
     if(interpolator_)
-      return;
+        return;
 
     interpolator_ = new ROOT::Math::Interpolator(0, ROOT::Math::Interpolation::kCSPLINE);
     tempFitTime_ = templateWF->GetBinCenter(templateWF->GetMaximumBin());
@@ -304,13 +332,17 @@ WFBaseline WFClass::SubtractBaseline(int min, int max)
     }
     //---compute baseline
     float baseline_=0;
-    for(int iSample=bWinMin_; iSample<bWinMax_; iSample++)
+    for(int iSample=bWinMin_; iSample<bWinMax_; ++iSample)
     {
+        if(iSample < 0)
+            continue;
+        if(iSample >= samples_.size())
+            break;
         baseline_ += samples_.at(iSample);
     }
     baseline_ = baseline_/((float)(bWinMax_-bWinMin_));
     //---subtract baseline
-    for(unsigned int iSample=0; iSample<samples_.size(); iSample++)
+    for(unsigned int iSample=0; iSample<samples_.size(); ++iSample)
         samples_.at(iSample) = (samples_.at(iSample) - baseline_);    
     //---interpolate baseline
     BaselineRMS();
@@ -338,8 +370,8 @@ WFFitResults WFClass::TemplateFit(float offset, int lW, int hW)
         minimizer->SetTolerance(1e-3);
         minimizer->SetPrintLevel(0);
         minimizer->SetFunction(chi2);
-        minimizer->SetLimitedVariable(0, "amplitude", GetAmpMax(), 1e-2, -4000., 4000.);
-        minimizer->SetLimitedVariable(1, "deltaT", maxSample_*tUnit_, 1e-2, -1024.*tUnit_, 1024.*tUnit_);
+        minimizer->SetLimitedVariable(0, "amplitude", GetAmpMax(), 1e-2, 0., GetAmpMax()*2.);
+        minimizer->SetLimitedVariable(1, "deltaT", maxSample_*tUnit_, 1e-2, fWinMin_*tUnit_, fWinMax_*tUnit_);
         //---fit
         minimizer->Minimize();
         tempFitAmp_ = minimizer->X()[0];
@@ -347,7 +379,7 @@ WFFitResults WFClass::TemplateFit(float offset, int lW, int hW)
 
         delete minimizer;        
     }
-    
+
     return WFFitResults{tempFitAmp_, tempFitTime_, TemplateChi2()/(fWinMax_-fWinMin_-2)};
 }
 
@@ -436,7 +468,7 @@ float WFClass::BaselineRMS()
 
     int nSample=0;
     float sum=0, sum2=0;
-    for(int iSample=bWinMin_; iSample<bWinMax_; iSample++)
+    for(int iSample=bWinMin_; iSample<bWinMax_; ++iSample)
     {
         ++nSample;
         sum += samples_[iSample];
@@ -495,9 +527,9 @@ double WFClass::TemplateChi2(const double* par)
 {
     double chi2 = 0;
     double delta = 0;
-    for(int iSample=fWinMin_; iSample<fWinMax_; ++iSample)
+    for(int iSample=fWinMin_; iSample<=fWinMax_; ++iSample)
     {
-      if(iSample < 0 || iSample >= int(samples_.size()))
+        if(iSample < 0 || iSample >= int(samples_.size()))
         {
             //cout << ">>>WARNING: template fit out of samples rage (chi2 set to -1)" << endl;
             chi2 += 9999;
