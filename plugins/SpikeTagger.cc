@@ -275,8 +275,8 @@ bool SpikeTagger::ProcessEvent(const H4Tree& event, map<string, PluginBase*>& pl
                 continue;
             }
             const auto analizedWF = WFs_[channel]->GetSamples();
-            const unsigned int firstSample = max_sample - opts.GetOpt<int>(instanceName_+".storeNSampleBeforeMax")/2;
-            const unsigned int lastSample = max_sample + opts.GetOpt<int>(instanceName_+".storeNSampleAfterMax")/2;
+            const unsigned int firstSample = max_sample - opts.GetOpt<int>(instanceName_+".storeNSampleBeforeMax");
+            const unsigned int lastSample = max_sample + opts.GetOpt<int>(instanceName_+".storeNSampleAfterMax");
             for(unsigned int jSample=firstSample; jSample<lastSample; ++jSample)
             {
                 outWFTree_.WF_ch.push_back(outCh);
