@@ -2,6 +2,8 @@
 #define __SPIKE_TAGGER__
 
 #include <iostream>
+#include <algorithm>
+#include <iterator>
 
 #include "interface/PluginBase.h"
 #include "interface/WFTree.h"
@@ -26,6 +28,8 @@ private:
     //---internal data
     string                      srcInstance_;
     vector<string>              channelsNames_;
+    map<string, vector<string>> channelsNamesSwissCross_;
+    map<string, vector<string>> channelsNames3By3_;
     SpikesTree                  spikesTree_;
     WFTree                      outWFTree_;
     map<string, WFClass*>       WFs_;
