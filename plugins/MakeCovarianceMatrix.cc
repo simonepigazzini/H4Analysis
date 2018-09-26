@@ -28,7 +28,7 @@ bool MakeCovarianceMatrix::ProcessEvent(const H4Tree& event, map<string, PluginB
     {        
         WFClass* wf = (WFClass*)plugins[digiInstance_]->GetSharedData(digiInstance_+"_"+channel, "", false).at(0).obj;
         auto samples = wf->GetSamples();
-        auto maxSample = wf->GetTimeCF(1.).first/wf->GetTUnit();
+        auto maxSample = wf->GetTimeCF(1.).time/wf->GetTUnit();
         auto firstSample = maxSample-opts.GetOpt<int>(channel+".templateFit.fitWin", 1);
         auto lastSample = maxSample+opts.GetOpt<int>(channel+".templateFit.fitWin", 2);
         if(wf->GetAmpMax() < 50.)
