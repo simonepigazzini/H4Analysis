@@ -94,18 +94,26 @@ bool WFAnalyzer::ProcessEvent(const H4Tree& event, map<string, PluginBase*>& plu
             *WFs_[channel] -= *WFs_[opts.GetOpt<string>(channel+".subtractChannel")];        
         WFs_[channel]->SetBaselineWindow(opts.GetOpt<int>(channel+".baselineWin", 0), 
                                          opts.GetOpt<int>(channel+".baselineWin", 1));
+        WFs_[channel]->SetBaselineIntegralWindow(opts.GetOpt<int>(channel+".baselineInt", 0),
+                                                 opts.GetOpt<int>(channel+".baselineInt", 1));
         WFs_[channel]->SetSignalWindow(opts.GetOpt<int>(channel+".signalWin", 0), 
                                        opts.GetOpt<int>(channel+".signalWin", 1));
+        WFs_[channel]->SetSignalIntegralWindow(opts.GetOpt<int>(channel+".signalInt", 0),
+                                               opts.GetOpt<int>(channel+".signalInt", 1));
         WFBaseline baselineInfo = WFs_[channel]->SubtractBaseline();
-        string max_function = opts.OptExist(channel+".signalWin", 3) ? opts.GetOpt<string>(channel+".signalWin", 3) : "pol2";
-        WFFitResults interpolAmpMax = WFs_[channel]->GetInterpolatedAmpMax(-1,-1, opts.GetOpt<int>(channel+".signalWin", 2), max_function);
+        string max_function = opts.OptExist(channel+".signalWin", 4) ? opts.GetOpt<string>(channel+".signalWin", 4) : "pol2";
+        int nParams = opts.OptExist(channel+".signalWin", 5) ? opts.GetOpt<int>(channel+".signalWin", 5) : 0;
+        std::vector<float> max_params;
+        for(int ipar = 0; ipar < nParams; ++ipar)
+          max_params.push_back( opts.GetOpt<float>(channel+".signalWin",6+ipar) );
+        WFFitResults interpolAmpMax = WFs_[channel]->GetInterpolatedAmpMax(-1,-1, opts.GetOpt<int>(channel+".signalWin", 2),opts.GetOpt<int>(channel+".signalWin", 3), max_function, max_params);
         digiTree_.pedestal[outCh] = baselineInfo.baseline;
         digiTree_.b_charge[outCh] = WFs_[channel]->GetIntegral(opts.GetOpt<int>(channel+".baselineInt", 0), 
                                                                opts.GetOpt<int>(channel+".baselineInt", 1));        
         digiTree_.b_slope[outCh] = baselineInfo.slope;
         digiTree_.b_rms[outCh] = baselineInfo.rms;
         digiTree_.maximum[outCh] = WFs_[channel]->GetAmpMax();
-        digiTree_.time_maximum[outCh] = WFs_[channel]->GetTimeCF(1).first;
+        digiTree_.time_maximum[outCh] = WFs_[channel]->GetTimeCF(1).time;
         digiTree_.amp_max[outCh] = interpolAmpMax.ampl;
         digiTree_.time_max[outCh] = interpolAmpMax.time;
         digiTree_.chi2_max[outCh] = interpolAmpMax.chi2;
@@ -119,14 +127,16 @@ bool WFAnalyzer::ProcessEvent(const H4Tree& event, map<string, PluginBase*>& plu
             //---compute time with selected method or store default value (-99)
             if(timeOpts_.find(channel+"."+timeRecoTypes_[iT]) != timeOpts_.end())
             {
-                pair<float, float> timeInfo = WFs_[channel]->GetTime(timeRecoTypes_[iT], timeOpts_[channel+"."+timeRecoTypes_[iT]]);
-                digiTree_.time[outCh+iT*channelsNames_.size()] = timeInfo.first;
-                digiTree_.time_chi2[outCh+iT*channelsNames_.size()] = timeInfo.second;
+                WFFitResults timeInfo = WFs_[channel]->GetTime(timeRecoTypes_[iT], timeOpts_[channel+"."+timeRecoTypes_[iT]]);
+                digiTree_.time[outCh+iT*channelsNames_.size()] = timeInfo.time;
+                digiTree_.time_chi2[outCh+iT*channelsNames_.size()] = timeInfo.chi2;
+                digiTree_.time_slope[outCh+iT*channelsNames_.size()] = timeInfo.slope;
             }
             else
             {
                 digiTree_.time[outCh+iT*channelsNames_.size()] = -99;
                 digiTree_.time_chi2[outCh+iT*channelsNames_.size()] = -99;
+                digiTree_.time_slope[outCh+iT*channelsNames_.size()] = -99;
             }
         }
 

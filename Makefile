@@ -90,7 +90,7 @@ test:
 
 $(BIN)%: $(PRG)%$(PRGSuf) $(HDRS) $(LIB)$(SONAME) Makefile
 	@echo " CXX $<"
-	@$ $(CPP) $(CPPFLAGS) $(GLIBS) -L$(LIB) -lH4Analysis -o $@ $<
+	@$ $(CPP) $(CPPFLAGS) $(GLIBS) -L$(LIB) -lH4Analysis -lWFAnalyzer -o $@ $<
 
 $(OBJ)%$(OBJSuf): $(SRC)%$(SRCSuf) Makefile
 	@echo " CXX $<"

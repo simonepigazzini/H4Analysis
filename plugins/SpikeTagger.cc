@@ -139,7 +139,7 @@ bool SpikeTagger::ProcessEvent(const H4Tree& event, map<string, PluginBase*>& pl
         //---Look for undershoot after maximum
         const auto undershoot_window = opts.GetOpt<int>(instanceName_+".undershootFinderWindow");
         const auto analizedWF = WFs_[channel]->GetSamples();
-        const int max_sample = WFs_[channel]->GetTimeCF(1).first/WFs_[channel]->GetTUnit();
+        const int max_sample = WFs_[channel]->GetTimeCF(1).time/WFs_[channel]->GetTUnit();
         if(max_sample+undershoot_window < analizedWF->size())
         {
             auto undershoot_sample = std::min_element(analizedWF->begin() + max_sample,
@@ -265,7 +265,7 @@ bool SpikeTagger::ProcessEvent(const H4Tree& event, map<string, PluginBase*>& pl
         //---fix WF window around maximum sample of largest hit in the event.
         //   also assuming all channels have the same sampling frequency (i.e. don't mix VFEs with V1742 channels)
         const float tUnit = WFs_[channelsNames_[spikesTree_.max_hit]]->GetTUnit();
-        const int max_sample = WFs_[channelsNames_[spikesTree_.max_hit]]->GetTimeCF(1).first/tUnit;
+        const int max_sample = WFs_[channelsNames_[spikesTree_.max_hit]]->GetTimeCF(1).time/tUnit;
         for(const auto& channel : channelsNames_)
         {
             //---skip dead channels
