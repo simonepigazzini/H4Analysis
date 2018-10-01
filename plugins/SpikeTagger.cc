@@ -90,8 +90,9 @@ bool SpikeTagger::Begin(CfgManager& opts, uint64* index)
     if(opts.GetOpt<int>(instanceName_+".fillWFtree"))
     {
         int nSamples = 0;
-        if(opts.OptExist(instanceName_+".storeNSampleAroundMax"))
-            nSamples = channelsNames_.size() * opts.GetOpt<int>(instanceName_+".storeNSampleAroundMax");
+        if(opts.OptExist(instanceName_+".storeNSampleAfterMax") && opts.OptExist(instanceName_+".storeNSampleBeforeMax"))
+            nSamples = channelsNames_.size() *
+                (opts.GetOpt<int>(instanceName_+".storeNSampleAfterMax") + opts.GetOpt<int>(instanceName_+".storeNSampleBeforeMax") + 1);
         else
         {
             for(const auto& channel : channelsNames_)
@@ -275,9 +276,14 @@ bool SpikeTagger::ProcessEvent(const H4Tree& event, map<string, PluginBase*>& pl
                 continue;
             }
             const auto analizedWF = WFs_[channel]->GetSamples();
-            const unsigned int firstSample = max_sample - opts.GetOpt<int>(instanceName_+".storeNSampleBeforeMax");
-            const unsigned int lastSample = max_sample + opts.GetOpt<int>(instanceName_+".storeNSampleAfterMax");
-            for(unsigned int jSample=firstSample; jSample<lastSample; ++jSample)
+            unsigned int firstSample = 0;
+            unsigned int lastSample = analizedWF->size();
+            if(opts.OptExist(instanceName_+".storeNSampleAfterMax") && opts.OptExist(instanceName_+".storeNSampleBeforeMax"))
+            {
+                firstSample = max_sample - opts.GetOpt<int>(instanceName_+".storeNSampleBeforeMax");
+                lastSample = max_sample + opts.GetOpt<int>(instanceName_+".storeNSampleAfterMax");
+            }
+            for(unsigned int jSample=firstSample; jSample<=lastSample; ++jSample)
             {
                 outWFTree_.WF_ch.push_back(outCh);
                 outWFTree_.WF_time.push_back(jSample*tUnit);
