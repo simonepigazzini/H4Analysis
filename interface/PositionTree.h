@@ -17,7 +17,7 @@ class PositionTree
 public: 
     //---ctors---
     PositionTree(){};
-    PositionTree(uint64* idx, TTree* tree=NULL, int nPlanes=1);
+    PositionTree(uint64* idx, TTree* tree=NULL);
     //---dtor---
     ~PositionTree(){};
     
@@ -27,14 +27,13 @@ public:
 
     TTree*  tree_; 
 
-    uint64* index;
-    int n_planes;
-    int n_hitsX;
-    int n_hitsY;
-    int*  nFibresOnX;
-    int*  nFibresOnY;
-    float* X;
-    float* Y;
+    uint64*        index;
+    int            n_clusters_X;
+    int            n_clusters_Y;    
+    vector<int>    cluster_X_size;
+    vector<int>    cluster_Y_size;
+    vector<float>  X;
+    vector<float>  Y;
 };
 
 #endif

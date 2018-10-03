@@ -152,8 +152,6 @@ bool HodoBTFReco::ProcessEvent(const H4Tree& h4Tree, map<string, PluginBase*>& p
 {
     hodoXpos.clear();
     hodoYpos.clear();
-    hodoTree_.n_hitsX = 0;
-    hodoTree_.n_hitsY = 0;
     for(unsigned int iCh=0; iCh<h4Tree.nAdcChannels; iCh++)
     {
         if(h4Tree.adcBoard[iCh] == 201392129)
@@ -172,11 +170,21 @@ bool HodoBTFReco::ProcessEvent(const H4Tree& h4Tree, map<string, PluginBase*>& p
         }	
     }
     //--fill output tree with default values if needed
-    hodoTree_.n_hitsX = hodoXpos.size();
-    hodoTree_.n_hitsY = hodoYpos.size();    
-    hodoTree_.X[0] = hodoXpos.size() > 0 ? hodoXpos[0] : -1;
-    hodoTree_.Y[0] = hodoYpos.size() > 0 ? hodoYpos[0] : -1;
+    hodoTree_.n_clusters_X = hodoXpos.size();
+    hodoTree_.n_clusters_Y= hodoYpos.size();    
+    hodoTree_.cluster_X_size.push_back(hodoXpos.size());
+    hodoTree_.cluster_Y_size.push_back(hodoYpos.size());    
+    hodoTree_.X.push_back(hodoXpos.size() > 0 ? hodoXpos[0] : -1);
+    hodoTree_.Y.push_back(hodoYpos.size() > 0 ? hodoYpos[0] : -1);
     hodoTree_.Fill();
 
+    //---clear tree
+    hodoTree_.X.clear();
+    hodoTree_.cluster_X_size.clear();
+    hodoTree_.n_clusters_X=0;
+    hodoTree_.Y.clear();
+    hodoTree_.cluster_Y_size.clear();
+    hodoTree_.n_clusters_Y=0;
+    
     return true;
 }
