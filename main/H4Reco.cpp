@@ -101,7 +101,7 @@ void ReadInputFiles(CfgManager& opts, int& firstSpill, TChain* inTree)
     {
         //---skip files before specified spill
         auto currentSpill = std::stoi(file.substr(0, file.size()-4));
-        if(firstSpill == -1 || currentSpill == firstSpill)
+        if(firstSpill == -1 || (currentSpill >= firstSpill && currentSpill < firstSpill + opts.GetOpt<int>("h4reco.maxFiles")))
         {
             if(path.find("/eos/cms") != string::npos)
             {
@@ -138,7 +138,7 @@ int main(int argc, char* argv[])
 {
     if(argc < 2)
     {
-        cout << argv[0] << " cfg file " << "[run] " << "[spill] " <<endl; 
+        cout << argv[0] << " cfg file " << "[run] " << "[first spill] " << "[number of spills] " << endl;
         return -1;
     }
 
@@ -151,6 +151,7 @@ int main(int argc, char* argv[])
 
     //-----input setup-----    
     int spill=-1;
+    int nspills=-1;
     if(argc > 2)
     {
         vector<string> run(1, argv[2]);
@@ -160,6 +161,12 @@ int main(int argc, char* argv[])
     {
         spill = atoi(argv[3]);
         vector<string> files(1, "1");
+        opts.SetOpt("h4reco.maxFiles", files);
+    }
+    if(argc > 4)
+    {
+        nspills = atoi(argv[4]);
+        vector<string> files(1, argv[4]);
         opts.SetOpt("h4reco.maxFiles", files);
     }
     string outSuffix = opts.GetOpt<string>("h4reco.outNameSuffix");
@@ -172,9 +179,12 @@ int main(int argc, char* argv[])
     uint64 index=0;    
     TFile* outROOT;
     if(spill == -1)
-      outROOT = new TFile(outSuffix+TString(run)+".root", "RECREATE");
+      outROOT = new TFile(outSuffix+"run"+TString(run)+".root", "RECREATE");
+    else if (nspills == -1)
+      outROOT = new TFile(outSuffix+"run"+TString(run)+"_spill"+to_string(spill).c_str()+".root", "RECREATE");
     else
-      outROOT = new TFile(outSuffix+"/"+TString(run)+"/"+to_string(spill).c_str()+".root", "RECREATE");
+      // TODO: generate correct file name if less than the requested number of spills are available
+      outROOT = new TFile(outSuffix+"run"+TString(run)+"_spills"+to_string(spill)+"-"+to_string(spill+nspills-1).c_str()+".root", "RECREATE");
     outROOT->cd();
     RecoTree mainTree(&index);
 

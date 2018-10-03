@@ -117,7 +117,7 @@ bool WFAnalyzer::ProcessEvent(const H4Tree& event, map<string, PluginBase*>& plu
         for(unsigned int iT=0; iT<timeRecoTypes_.size(); ++iT)
         {
             //---compute time with selected method or store default value (-99)
-            if(timeOpts_.find(channel+"."+timeRecoTypes_[iT]) != timeOpts_.end())
+            if(timeOpts_.find(channel+"."+timeRecoTypes_[iT]) != timeOpts_.end() && WFs_[channel]->GetAmpMax() > 100.)
             {
                 pair<float, float> timeInfo = WFs_[channel]->GetTime(timeRecoTypes_[iT], timeOpts_[channel+"."+timeRecoTypes_[iT]]);
                 digiTree_.time[outCh+iT*channelsNames_.size()] = timeInfo.first;
