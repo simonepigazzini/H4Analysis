@@ -106,7 +106,7 @@ $(LIB)libH4Analysis.o: $(LIB)libH4Analysis.cc
 
 $(LIB)$(SONAME): $(OBJS) $(LIB)libH4Analysis.o
 	@echo "Linking $(SONAME):"
-	@$ $(LD) $(LDFLAGS) $(OBJS) $(LIB)libH4Analysis.o -o $(LIB)$(SONAME) $(SOFLAGS)$(SONAME)
+	@$ $(LD) $(LDFLAGS) $(OBJS) $(LIB)libH4Analysis.o -o $(LIB)$(SONAME) $(SOFLAGS)$(SONAME) $(GLIBS)
 
 $(LIB)lib%$(LIBSuf): $(PLG)%$(SRCSuf) $(PLG)%$(HDRSuf) $(OBJS)
 	@echo "Creating plugin library " $@

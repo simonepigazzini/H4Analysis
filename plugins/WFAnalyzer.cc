@@ -6,7 +6,7 @@ bool WFAnalyzer::Begin(CfgManager& opts, uint64* index)
     //---inputs---
     if(!opts.OptExist(instanceName_+".srcInstanceName"))
     {
-        cout << ">>> FFTAnalyzer ERROR: no source plugin specified" << endl;
+        cout << ">>> WFAnalyzer ERROR: no source plugin specified" << endl;
         return false;
     }
     srcInstance_ = opts.GetOpt<string>(instanceName_+".srcInstanceName");
@@ -99,6 +99,7 @@ bool WFAnalyzer::ProcessEvent(const H4Tree& event, map<string, PluginBase*>& plu
         WFBaseline baselineInfo = WFs_[channel]->SubtractBaseline();
         string max_function = opts.OptExist(channel+".signalWin", 3) ? opts.GetOpt<string>(channel+".signalWin", 3) : "pol2";
         WFFitResults interpolAmpMax = WFs_[channel]->GetInterpolatedAmpMax(-1,-1, opts.GetOpt<int>(channel+".signalWin", 2), max_function);
+        digiTree_.pedestal[outCh] = baselineInfo.baseline;
         digiTree_.b_charge[outCh] = WFs_[channel]->GetIntegral(opts.GetOpt<int>(channel+".baselineInt", 0), 
                                                                opts.GetOpt<int>(channel+".baselineInt", 1));        
         digiTree_.b_slope[outCh] = baselineInfo.slope;
