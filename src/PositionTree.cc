@@ -1,12 +1,8 @@
 #include "interface/PositionTree.h"
 
-PositionTree::PositionTree(uint64* idx, TTree* tree, int nPlanes)
+PositionTree::PositionTree(uint64* idx, TTree* tree)
 {
     tree_ = tree ? tree : new TTree();
-
-    n_planes = nPlanes;
-    n_hitsX=0;
-    n_hitsY=0;
     
     index=idx;
 }
@@ -15,14 +11,18 @@ void PositionTree::Init()
 {
     //---global branches
     tree_->Branch("index", index, "index/l");
-    X = new float[n_planes];
-    Y = new float[n_planes];
-    nFibresOnX = new int[n_planes];
-    nFibresOnY = new int[n_planes];
+
     //---position branches
-    tree_->Branch("n_planes", &n_planes, "n_planes/I");
-    tree_->Branch("X", X, "X[n_planes]/F");
-    tree_->Branch("Y", Y, "Y[n_planes]/F");
-    tree_->Branch("nFibresOnX", nFibresOnX, "nFibresOnX[n_planes]/I");
-    tree_->Branch("nFibresOnY", nFibresOnY, "nFibresOnY[n_planes]/I");
+    n_clusters_X = 0;
+    n_clusters_Y = 0;
+    cluster_X_size = vector<int>(); 
+    cluster_Y_size = vector<int>(); 
+    X = vector<float>(); 
+    Y = vector<float>(); 
+    tree_->Branch("n_clusters_X", &n_clusters_X, "n_clusters_X/I");
+    tree_->Branch("n_clusters_Y", &n_clusters_Y, "n_clusters_Y/I");    
+    tree_->Branch("cluster_X_size", &cluster_X_size);
+    tree_->Branch("cluster_Y_size", &cluster_Y_size);
+    tree_->Branch("X", &X);
+    tree_->Branch("Y", &Y);
 }

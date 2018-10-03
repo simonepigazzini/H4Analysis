@@ -30,7 +30,9 @@ private:
     int              nFibers_=64;
     std::vector<int> hodoFiberOrderA_;
     std::vector<int> hodoFiberOrderB_;
-    PositionTree     hodoTree_;
+    int              minClusterSize_;
+    int              maxClusterSize_;    
+    PositionTree     hodoTrees_[2];
 };
 
 DEFINE_PLUGIN(HodoReco);
