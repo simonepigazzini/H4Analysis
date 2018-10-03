@@ -261,7 +261,7 @@ int main(int argc, char* argv[])
         }
         
         //---fill the main tree with info variables and increase event counter
-        mainTree.time_stamp = h4Tree.evtTimeStart;
+        mainTree.time_stamp = h4Tree.evtTime[0];
         mainTree.evt_flag = status;
         mainTree.run = h4Tree.runNumber;
         mainTree.spill = h4Tree.spillNumber;

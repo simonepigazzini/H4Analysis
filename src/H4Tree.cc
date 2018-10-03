@@ -29,6 +29,8 @@ void H4Tree::Init()
 
 H4Tree::~H4Tree()
 {
+    delete[] evtTimeBoard;
+    delete[] evtTime;
     delete[] tdcChannel;
     delete[] tdcData;
     delete[] pattern;
