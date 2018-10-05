@@ -11,7 +11,7 @@
 
 using namespace std;
 
-#define MAX_ADC_CHANNELS 5000
+#define MAX_ADC_CHANNELS 50000
 #define MAX_TDC_CHANNELS 200
 
 typedef unsigned long int uint32;

@@ -10,6 +10,8 @@ using namespace std;
 #define FITPIX_PIXELS_X 256
 #define FITPIX_PIXELS_Y 256
 
+#define FITPIX_PIXELSIZE 0.055 //convert pixel position in mm
+
 class FitpixReco: public PluginBase
 {
 public:
@@ -30,6 +32,11 @@ public:
       }
 
     ~FPHit() {};
+
+    inline void swapCoordinates()
+    {
+        std::swap(x_,y_);
+    }
 
     inline int deltax( const FPHit& otherhit ) const
     {
@@ -225,6 +232,8 @@ public:
     bool ProcessEvent(const H4Tree& event, map<string, PluginBase*>& plugins, CfgManager& opts);
     
 private:
+
+    bool swapCoordinates_;
     long int        boardId_;
     std::vector<FPHit> hits_;
     std::vector<FPCluster> clusters_;
