@@ -22,46 +22,46 @@ public:
     //---dtor---
     ~FitpixReco() {};
   
-  class FPHit {
-  public:
-    FPHit( int x, int y, float c=1 )
-      {
-	x_=x;
-	y_=y;
-	c_=c;
-      }
+    class FPHit {
+    public:
+        FPHit( int x, int y, float c=1 )
+            {
+                x_=x;
+                y_=y;
+                c_=c;
+            }
 
-    ~FPHit() {};
+        ~FPHit() {};
 
-    inline void swapCoordinates()
-    {
-        std::swap(x_,y_);
-    }
+        inline void swapCoordinates()
+            {
+                std::swap(x_,y_);
+            }
 
-    inline int deltax( const FPHit& otherhit ) const
-    {
-      return x_-otherhit.x_;
-    }
-    inline int deltay( const FPHit& otherhit ) const
-    {
-      return y_-otherhit.y_;
-    }
-    inline bool isAdjacent( const FPHit& otherhit ) const
-    {
-      return ( (fabs(deltax(otherhit))<=1) && (fabs(deltay(otherhit))<=1) );
-    }
-    inline float deltaR( const FPHit& otherhit ) const
-    {
-      return sqrt( (float)deltax(otherhit)*deltax(otherhit) + (float)deltay(otherhit)*deltay(otherhit) );
-    }
+        inline int deltax( const FPHit& otherhit ) const
+            {
+                return x_-otherhit.x_;
+            }
+        inline int deltay( const FPHit& otherhit ) const
+            {
+                return y_-otherhit.y_;
+            }
+        inline bool isAdjacent( const FPHit& otherhit ) const
+            {
+                return ( (fabs(deltax(otherhit))<=1) && (fabs(deltay(otherhit))<=1) );
+            }
+        inline float deltaR( const FPHit& otherhit ) const
+            {
+                return sqrt( (float)deltax(otherhit)*deltax(otherhit) + (float)deltay(otherhit)*deltay(otherhit) );
+            }
 
-    int x_;
-    int y_;
-    float c_;
-  };
+        int x_;
+        int y_;
+        float c_;
+    };
 
-  class FPCluster {
-  public:
+    class FPCluster {
+    public:
     
         FPCluster( const std::vector<FPHit>& hits )
             {
@@ -130,7 +130,6 @@ public:
   
                         isAdj = true;
                         break;
-
                     } // if
 
                 } // for 
