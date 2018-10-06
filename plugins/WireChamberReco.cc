@@ -21,7 +21,7 @@ bool WireChamberReco::Begin(CfgManager& opts, uint64* index)
 }
 
 //----------ProcessEvent------------------------------------------------------------------
-bool WireChamberReco::ProcessEvent(const H4Tree& h4Tree, map<string, PluginBase*>& plugins, CfgManager& opts)
+bool WireChamberReco::ProcessEvent(H4Tree& h4Tree, map<string, PluginBase*>& plugins, CfgManager& opts)
 {
     //---search the first (in time) hit for each channel
     vector<float> timeL, timeR, timeU, timeD;

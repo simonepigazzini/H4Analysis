@@ -148,7 +148,7 @@ bool HodoBTFReco::Begin(CfgManager& opts, uint64* index)
     return true;
 }
 
-bool HodoBTFReco::ProcessEvent(const H4Tree& h4Tree, map<string, PluginBase*>& plugins, CfgManager& opts)
+bool HodoBTFReco::ProcessEvent(H4Tree& h4Tree, map<string, PluginBase*>& plugins, CfgManager& opts)
 {
     hodoXpos.clear();
     hodoYpos.clear();

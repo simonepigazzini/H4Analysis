@@ -11,7 +11,7 @@
 
 using namespace std;
 
-#define MAX_ADC_CHANNELS 5000
+#define MAX_ADC_CHANNELS 500000
 #define MAX_TDC_CHANNELS 200
 
 typedef unsigned long int uint32;
@@ -56,12 +56,15 @@ typedef std::unordered_map<const bgc_key_t, int, key_hash, key_equal> bgc_map_t;
     DATA(unsigned int,  runNumber)              \
     DATA(unsigned int,  spillNumber)            \
     DATA(unsigned int,  evtNumber)              \
+    DATA(unsigned int,  nEvtTimes)              \
     DATA(unsigned int,  nAdcChannels)           \
     DATA(unsigned int,  nTdcChannels)           \
     DATA(unsigned int,  nPatterns)              \
-    DATA(unsigned int,  nDigiSamples)               
+    DATA(unsigned int,  nDigiSamples)
 
 #define DATA_VECT_TABLE                                 \
+    DATA(unsigned int, evtTimeBoard, nEvtTimes)         \
+    DATA(uint64,       evtTime, nEvtTimes)                  \
     DATA(unsigned int, adcBoard, MAX_ADC_CHANNELS)          \
     DATA(unsigned int, adcChannel, MAX_ADC_CHANNELS)        \
     DATA(unsigned int, adcData, MAX_ADC_CHANNELS)           \
@@ -73,7 +76,7 @@ typedef std::unordered_map<const bgc_key_t, int, key_hash, key_equal> bgc_map_t;
     DATA(unsigned int, digiBoard, nDigiSamples)         \
     DATA(unsigned int, digiGroup, nDigiSamples)         \
     DATA(unsigned int, digiChannel, nDigiSamples)       \
-    DATA(uint16_t,     digiSampleValue, nDigiSamples)   
+    DATA(uint16_t,     digiSampleValue, nDigiSamples)
 
 #include "DynamicTTree/interface/DynamicTTreeInterface.h"
 

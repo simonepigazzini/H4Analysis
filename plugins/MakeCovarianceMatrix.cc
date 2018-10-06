@@ -5,20 +5,20 @@ bool MakeCovarianceMatrix::Begin(CfgManager& opts, uint64* index)
 {
     digiInstance_ = opts.GetOpt<string>(instanceName_+".digiInstanceName");
     channelsNames_ = opts.GetOpt<vector<string> >(instanceName_+".channelsNames");
-    firstSample_ = opts.GetOpt<int>(instanceName_+".firstSample");
-    lastSample_ = opts.GetOpt<int>(instanceName_+".lastSample");
 
     for(auto& ch : channelsNames_)
     {
-        sums_[ch].resize(lastSample_-firstSample_);
-        sum2s_[ch].resize(lastSample_-firstSample_);
-        mapCovariances_[ch] = TH2F(ch.c_str(), "", lastSample_-firstSample_, 0, lastSample_-firstSample_-1,
-                                   lastSample_-firstSample_, 0, lastSample_-firstSample_-1);
+        auto firstSample = opts.GetOpt<int>(ch+".templateFit.fitWin", 1);
+        auto lastSample = opts.GetOpt<int>(ch+".templateFit.fitWin", 2);
+        sums_[ch].resize(lastSample-firstSample);
+        sum2s_[ch].resize(lastSample-firstSample);
+        mapCovariances_[ch] = TH2F(ch.c_str(), "", lastSample+firstSample+1, -firstSample-0.5, lastSample+0.5,
+                                   lastSample+firstSample+1, -firstSample-0.5, lastSample+0.5);
         mapCovariances_[ch].SetAxisRange(-1, 1, "Z");
         mapCovariances_[ch].SetContour(10000);
         RegisterSharedData(&mapCovariances_[ch], ch, true);
     }
-    
+
     return true;
 }
 
@@ -28,14 +28,20 @@ bool MakeCovarianceMatrix::ProcessEvent(const H4Tree& event, map<string, PluginB
     {        
         WFClass* wf = (WFClass*)plugins[digiInstance_]->GetSharedData(digiInstance_+"_"+channel, "", false).at(0).obj;
         auto samples = wf->GetSamples();
-        for(int iSample=firstSample_; iSample<lastSample_; ++iSample)
+        auto maxSample = wf->GetTimeCF(1.).first/wf->GetTUnit();
+        auto firstSample = maxSample-opts.GetOpt<int>(channel+".templateFit.fitWin", 1);
+        auto lastSample = maxSample+opts.GetOpt<int>(channel+".templateFit.fitWin", 2);
+        if(wf->GetAmpMax() < 50.)
+            continue;
+        for(int iSample=firstSample; iSample<=lastSample; ++iSample)
         {
-            values_[channel][iSample-firstSample_].push_back(samples->at(iSample));
-            sums_[channel][iSample-firstSample_] += samples->at(iSample);
-            sum2s_[channel][iSample-firstSample_] += samples->at(iSample)*samples->at(iSample);
+            values_[channel][iSample-firstSample].push_back(samples->at(iSample));
+            sums_[channel][iSample-firstSample] += samples->at(iSample);
+            sum2s_[channel][iSample-firstSample] += samples->at(iSample)*samples->at(iSample);
         }
+        //---FIXME
+        ++events_;   
     }
-    ++events_;
 
     return true;
 }

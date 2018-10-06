@@ -98,7 +98,7 @@ bool HodoReco::Begin(CfgManager& opts, uint64* index)
     return true;
 }
 
-bool HodoReco::ProcessEvent(const H4Tree& h4Tree, map<string, PluginBase*>& plugins, CfgManager& opts)
+bool HodoReco::ProcessEvent(H4Tree& h4Tree, map<string, PluginBase*>& plugins, CfgManager& opts)
 {
     //---clear output tree
     for(int i=0; i<nPlanes_; ++i)

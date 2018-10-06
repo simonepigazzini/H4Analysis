@@ -25,7 +25,7 @@ bool DigitizerReco::Begin(CfgManager& opts, uint64* index)
     return true;
 }
 
-bool DigitizerReco::ProcessEvent(const H4Tree& event, map<string, PluginBase*>& plugins, CfgManager& opts)
+bool DigitizerReco::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, CfgManager& opts)
 {        
     //---read the digitizer
     //---set time reference from digitized trigger

@@ -51,7 +51,7 @@ bool InfoTreeMaker::Begin(CfgManager& opts, uint64* index)
 }
 
 //----------ProcessEvent------------------------------------------------------------------
-bool InfoTreeMaker::ProcessEvent(const H4Tree& h4Tree, map<string, PluginBase*>& plugins, CfgManager& opts)
+bool InfoTreeMaker::ProcessEvent(H4Tree& h4Tree, map<string, PluginBase*>& plugins, CfgManager& opts)
 {
     //---numeric variables
     for(auto& var : mappedVariablesNum_)

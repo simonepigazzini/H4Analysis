@@ -61,7 +61,7 @@ bool WFAnalyzer::Begin(CfgManager& opts, uint64* index)
     return true;
 }
 
-bool WFAnalyzer::ProcessEvent(const H4Tree& event, map<string, PluginBase*>& plugins, CfgManager& opts)
+bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, CfgManager& opts)
 {
     //---setup output event 
     int outCh=0;
