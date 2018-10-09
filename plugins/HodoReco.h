@@ -22,7 +22,7 @@ public:
 
     //---utils---
     bool Begin(CfgManager& opts, uint64* index);
-    bool ProcessEvent(const H4Tree& event, map<string, PluginBase*>& plugins, CfgManager& opts);
+    bool ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, CfgManager& opts);
     bool End(CfgManager& opts) { return true; };
     
 private:
@@ -30,7 +30,9 @@ private:
     int              nFibers_=64;
     std::vector<int> hodoFiberOrderA_;
     std::vector<int> hodoFiberOrderB_;
-    PositionTree     hodoTree_;
+    int              minClusterSize_;
+    int              maxClusterSize_;    
+    PositionTree     hodoTrees_[2];
 };
 
 DEFINE_PLUGIN(HodoReco);

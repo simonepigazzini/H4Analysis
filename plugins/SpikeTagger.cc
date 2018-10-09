@@ -109,7 +109,7 @@ bool SpikeTagger::Begin(CfgManager& opts, uint64* index)
     return true;
 }
 
-bool SpikeTagger::ProcessEvent(const H4Tree& event, map<string, PluginBase*>& plugins, CfgManager& opts)
+bool SpikeTagger::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, CfgManager& opts)
 {
     //---setup output event 
     int outCh=0;

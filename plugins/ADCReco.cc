@@ -27,7 +27,7 @@ bool ADCReco::Begin(CfgManager& opts, uint64* index)
 }
 
 //----------Event loop--------------------------------------------------------------------
-bool ADCReco::ProcessEvent(const H4Tree& event, map<string, PluginBase*>& plugins, CfgManager& opts)
+bool ADCReco::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, CfgManager& opts)
 {
     for(unsigned int iADC=0; iADC<event.nAdcChannels; ++iADC)
     {

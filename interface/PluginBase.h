@@ -39,7 +39,7 @@ public:
     
     //---utils---
     virtual bool Begin(CfgManager& opts, uint64* index) { return true; };
-    virtual bool ProcessEvent(const H4Tree& event, map<string, PluginBase*>& plugins, CfgManager& opts) { return true; };
+    virtual bool ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, CfgManager& opts) { return true; };
     virtual bool End(CfgManager& opts) { return true; };
 
 protected:
