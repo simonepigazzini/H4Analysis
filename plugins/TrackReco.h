@@ -8,6 +8,8 @@
 #include "Math/GenVector/Rotation3D.h"
 using namespace std;
 
+using TrackParameters_t = ROOT::Math::SVector<double,4>; 
+using TrackParametersCovarianceMatrix_t = ROOT::Math::SMatrix<double,4,4,ROOT::Math::MatRepSym<double,4> >;
 using Measurement_t = ROOT::Math::SVector<double,2>;
 using LocalCoord_t = ROOT::Math::SVector<double,2>;
 using GlobalCoord_t = ROOT::Math::SVector<double,3>;
@@ -138,7 +140,7 @@ public:
   
     class Track {
     public:
-    Track(const TelescopeLayout& hodo) : hodo_(hodo)
+    Track(const TelescopeLayout& hodo) : covarianceMatrixStatus_(0), hodo_(hodo)
       {
 	hits_.clear();
       };
@@ -147,7 +149,7 @@ public:
       
       inline Measurement_t statusAt(const double& z) const //return also error in future
       {
-	return position_ + angle_ * z;
+	return trackPar_.Sub<Measurement_t>(0) + trackPar_.Sub<Measurement_t>(2) * z;
       }
       
       void addMeasurement(TrackMeasurement& hit)
@@ -159,10 +161,9 @@ public:
 
       bool fitTrack();
 
-      Measurement_t position_; //x,y
-      MeasurementErrorMatrix_t positionError_;
-      Measurement_t angle_; //alpha,beta angles in xz & yz
-      MeasurementErrorMatrix_t angleError_;
+      TrackParameters_t trackPar_; //x,y,alpha(xz angle),beta(yz angle)
+      TrackParametersCovarianceMatrix_t trackParCov_; 
+      int covarianceMatrixStatus_;
       const TelescopeLayout& hodo_;
       std::vector<TrackMeasurement> hits_;
       bool fitAngle_;
