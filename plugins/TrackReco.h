@@ -96,17 +96,17 @@ public:
       
       ~TrackMeasurement() {};
       
-      inline void setVarianceX(double& sigma2x) 
+      inline void setVarianceX(const double& sigma2x) 
       {
 	localPositionError_(0,0)=sigma2x;
       }
 
-      inline void setVarianceY(double& sigma2y) 
+      inline void setVarianceY(const double& sigma2y) 
       {
 	localPositionError_(1,1)=sigma2y;
       }
 
-      inline void calculateInvertVarianceY()
+      inline void calculateInverseVariance()
       {
 	int ifail;
 	localPositionErrorInverse_ = localPositionErrorInverse_.InverseFast(ifail);

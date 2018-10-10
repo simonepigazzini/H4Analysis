@@ -38,10 +38,10 @@ bool TrackReco::Track::fitTrack()
   minimizer->SetTolerance(1e-3);
   minimizer->SetPrintLevel(0);
   minimizer->SetFunction(chi2);
-  minimizer->SetLimitedVariable(0, "X",0, 1E-3, -20, 20);
-  minimizer->SetLimitedVariable(1, "Y",0, 1E-3, -20, 20);
-  minimizer->SetLimitedVariable(2, "alpha",0, 1E-3,  -0.1, 0.1);
-  minimizer->SetLimitedVariable(3, "beta", 0, 1E-3,  -0.1, 0.1);
+  minimizer->SetLimitedVariable(0, "X",0, 1E-2, -30, 30);
+  minimizer->SetLimitedVariable(1, "Y",0, 1E-2, -30, 30);
+  minimizer->SetLimitedVariable(2, "alpha",0, 1E-4,  -0.1, 0.1);
+  minimizer->SetLimitedVariable(3, "beta", 0, 1E-4,  -0.1, 0.1);
 
   //---fit
   minimizer->Minimize();
@@ -70,8 +70,28 @@ bool TrackReco::ProcessEvent(H4Tree& h4Tree, map<string, PluginBase*>& plugins, 
 {
 
     tracks_.clear();
-    //---fill output tree
-    //fitpixTree_->Fill();
 
+    GlobalCoord_t layer0Pos(0,0,0);
+    GlobalCoord_t layer1Pos(0,0,100);
+    TrackLayer layer_0(layer0Pos);
+    TrackLayer layer_1(layer0Pos);
+    TelescopeLayout hodo;
+    hodo.addLayer(layer_0);
+    hodo.addLayer(layer_1);
+    TrackMeasurement aHit_0(0,0,hodo,0);
+    aHit_0.setVarianceX(1);
+    aHit_0.setVarianceY(1);
+    aHit_0.calculateInverseVariance();
+    TrackMeasurement aHit_1(0,0,hodo,0);
+    aHit_1.setVarianceX(1);
+    aHit_1.setVarianceY(1);
+    aHit_1.calculateInverseVariance();
+    Track aTrack(hodo);
+    aTrack.addMeasurement(aHit_0);
+    aTrack.addMeasurement(aHit_1);
+
+    aTrack.fitTrack();
+
+    //---fill output tree
     return true;
 }
