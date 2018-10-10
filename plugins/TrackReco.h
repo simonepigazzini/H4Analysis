@@ -29,7 +29,7 @@ public:
     {
     public:
     TrackLayer(const GlobalCoord_t& pos):
-      position_(pos),rotation_()
+      position_(pos),rotation_( ROOT::Math::SMatrixIdentity() )
       {
       };
 
@@ -40,7 +40,7 @@ public:
       
       inline void globalCoordinates( const Measurement_t& loc, Measurement_t& pos ) const
       {
-	pos=rotation_.Sub<LocalRotationMatrix_t>(0,0)*loc+position_.Sub<LocalCoord_t>(0);
+	pos= rotation_.Sub<LocalRotationMatrix_t>(0,0)*loc + position_.Sub<LocalCoord_t>(0);
       };
 
       inline void globalCoordinates( const MeasurementErrorMatrix_t& err, MeasurementErrorMatrix_t& globalError ) const
@@ -91,7 +91,7 @@ public:
     TrackMeasurement( double x, double y, const TelescopeLayout& hodo, int layer ) :
       localPosition_(x,y), localPositionError_(), hodo_(hodo), layer_(layer)
       {
-	
+	//check that layer is within the size of telescope...
       }
       
       ~TrackMeasurement() {};
@@ -109,7 +109,7 @@ public:
       inline void calculateInverseVariance()
       {
 	int ifail;
-	localPositionErrorInverse_ = localPositionErrorInverse_.InverseFast(ifail);
+	localPositionErrorInverse_ = localPositionError_.InverseFast(ifail);
 	if (ifail)
 	  cout << "[TrackMeasurement]::[ERROR]::Matrix Inversion failed" << endl;
       }
@@ -147,9 +147,7 @@ public:
       
       inline Measurement_t statusAt(const double& z) const //return also error in future
       {
-	double x=position_(0)+angle_(0)*z;
-	double y=position_(1)+angle_(1)*z;
-	return Measurement_t(x,y);
+	return position_ + angle_ * z;
       }
       
       void addMeasurement(TrackMeasurement& hit)
@@ -167,6 +165,7 @@ public:
       MeasurementErrorMatrix_t angleError_;
       const TelescopeLayout& hodo_;
       std::vector<TrackMeasurement> hits_;
+      bool fitAngle_;
     };
    
     //---utils---
@@ -176,6 +175,7 @@ public:
 private:
 
     std::vector<Track> tracks_;
+    TelescopeLayout hodo_;
     //    TrackTree*     trackTree_;
 };
 
