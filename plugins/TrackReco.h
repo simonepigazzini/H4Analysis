@@ -3,17 +3,17 @@
 
 #include "interface/PluginBase.h"
 //#include "interface/TrackTree.h"
-#include "TVector2.h"
-#include "TVector3.h"
 #include "Math/SMatrix.h"
+#include "Math/SVector.h"
 #include "Math/GenVector/Rotation3D.h"
 using namespace std;
 
+using Measurement_t = ROOT::Math::SVector<double,2>;
+using LocalCoord_t = ROOT::Math::SVector<double,2>;
+using GlobalCoord_t = ROOT::Math::SVector<double,3>;
 using MeasurementErrorMatrix_t = ROOT::Math::SMatrix<double,2,2,ROOT::Math::MatRepSym<double,2> >;
-using RotationMatrix_t = ROOT::Math::Rotation3D;
-using Measurement_t = TVector2;
-using GlobalMeasurement_t = TVector3;
-using GlobalCoord_t = TVector3;
+using RotationMatrix_t = ROOT::Math::SMatrix<double,3,3>;
+using LocalRotationMatrix_t = ROOT::Math::SMatrix<double,2,2>;
 
 class TrackReco: public PluginBase
 {
@@ -38,8 +38,16 @@ public:
       {
       };
       
-      inline void globalCoordinates( const Measurement_t& loc, GlobalCoord_t& pos ) const
+      inline void globalCoordinates( const Measurement_t& loc, Measurement_t& pos ) const
       {
+	pos=rotation_.Sub<LocalRotationMatrix_t>(0,0)*loc+position_.Sub<LocalCoord_t>(0);
+      };
+
+      inline void globalCoordinates( const MeasurementErrorMatrix_t& err, MeasurementErrorMatrix_t& globalError ) const
+      {
+	//LocalRotationMatrix_t r=rotation_.Sub<LocalRotationMatrix_t>(0,0);
+	//globalError=rotation_.Sub<LocalRotationMatrix_t>(0,0)*err*ROOT::Math::Transpose(rotation_.Sub<LocalRotationMatrix_t>(0,0));
+	globalError= err;
       };
       
       /*
@@ -48,7 +56,7 @@ public:
 	 } 
       */
       
-      GlobalCoord_t position_; //axis origin translation from localFrame to global Frame 
+      GlobalCoord_t position_; //axis origin in global Frame 
       RotationMatrix_t rotation_; //axis rotation matrix from localFrame to global Frame 
     };
 
@@ -65,9 +73,14 @@ public:
 	layers_.push_back(layer);
       }
 
-      inline void globalCoordinates( const int& k, const Measurement_t& loc, GlobalCoord_t& pos ) const
+      inline void globalCoordinates( const int& k, const Measurement_t& loc, Measurement_t& pos ) const
       {
 	layers_[k].globalCoordinates(loc, pos);
+      }
+
+      inline void globalCoordinates( const int& k, const MeasurementErrorMatrix_t& locErr, MeasurementErrorMatrix_t& posErr ) const
+      {
+	layers_[k].globalCoordinates(locErr, posErr);
       }
             
       std::vector<TrackLayer> layers_;
@@ -83,17 +96,42 @@ public:
       
       ~TrackMeasurement() {};
       
-      inline void setVarianceX(double& x) {};
-      inline void setVarianceY(double& y) {};
+      inline void setVarianceX(double& sigma2x) 
+      {
+	localPositionError_(0,0)=sigma2x;
+      }
 
-      inline void toGlobal( GlobalCoord_t& pos ) const
+      inline void setVarianceY(double& sigma2y) 
+      {
+	localPositionError_(1,1)=sigma2y;
+      }
+
+      inline void calculateInvertVarianceY()
+      {
+	int ifail;
+	localPositionErrorInverse_ = localPositionErrorInverse_.InverseFast(ifail);
+	if (ifail)
+	  cout << "[TrackMeasurement]::[ERROR]::Matrix Inversion failed" << endl;
+      }
+
+      inline void globalPosition( Measurement_t& pos ) const 
       {
 	hodo_.globalCoordinates(layer_, localPosition_, pos);
       }
-      
-      
+
+      inline void globalPositionError( MeasurementErrorMatrix_t& posErr ) const 
+      {
+	hodo_.globalCoordinates(layer_, localPositionError_, posErr);
+      }
+
+      inline void globalPositionErrorInverse( MeasurementErrorMatrix_t& posErr ) const 
+      {
+	hodo_.globalCoordinates(layer_, localPositionErrorInverse_, posErr);
+      }
+
       Measurement_t localPosition_;
-      MeasurementErrorMatrix_t localPositionError_;
+      MeasurementErrorMatrix_t localPositionError_; //covariance matrix
+      MeasurementErrorMatrix_t localPositionErrorInverse_; //covariance matrix^-1
       const TelescopeLayout& hodo_;
       int layer_;
     };
@@ -109,8 +147,8 @@ public:
       
       inline Measurement_t statusAt(const double& z) const //return also error in future
       {
-	double x=position_.X()+angle_.X()*z;
-	double y=position_.Y()+angle_.Y()*z;
+	double x=position_(0)+angle_(0)*z;
+	double y=position_(1)+angle_(1)*z;
 	return Measurement_t(x,y);
       }
       
@@ -119,14 +157,10 @@ public:
 	hits_.push_back(hit);
       }
       
-      double chi2() 
-      {
-      };
+      double chi2(const double* par=NULL); 
 
-      void fitTrack() 
-      {
-      };
-      
+      bool fitTrack();
+
       Measurement_t position_; //x,y
       MeasurementErrorMatrix_t positionError_;
       Measurement_t angle_; //alpha,beta angles in xz & yz
