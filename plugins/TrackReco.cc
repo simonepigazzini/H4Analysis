@@ -93,41 +93,30 @@ bool TrackReco::Begin(CfgManager& opts, uint64* index)
   trackTree_ = new TrackTree(index, (TTree*)data_.back().obj);
   trackTree_->Init();
   
-  //  Now build the hodoscope - just an example
-  GlobalCoord_t layer0Pos(0.,0.,0.);
-  GlobalCoord_t layer1Pos(0.,0.,100);
+  //---inputs---
+  std::vector<string> layers = opts.GetOpt<vector<string> >(instanceName_+".layers");
   
-  GlobalCoord_t layer2Pos(0.,0.,500.);
-  RotationMatrix_t layer2Rot;
-  layer2Rot=ROOT::Math::SMatrixIdentity();
-  // double angle=-0.05;
-  // layer2Rot(0,0)=cos(angle);
-  // layer2Rot(0,1)=sin(angle);
-  // layer2Rot(1,0)=-sin(angle);
-  // layer2Rot(1,1)=cos(angle);
-
-  GlobalCoord_t layer3Pos(0.,0.,1000);
-  GlobalCoord_t layer4Pos(0.,0.,1100);
-  
-  TrackLayer layer_0(layer0Pos);
-  TrackLayer layer_1(layer1Pos);
-  TrackLayer layer_2(layer2Pos,layer2Rot);
-  TrackLayer layer_3(layer3Pos);
-  TrackLayer layer_4(layer4Pos);
-  
-  hodo_.addLayer(layer_0);
-  hodo_.addLayer(layer_1);
-  hodo_.addLayer(layer_2);
-  hodo_.addLayer(layer_3);
-  hodo_.addLayer(layer_4);
-  
-  std::cout << "BUILT HODO" << std::endl;
-  int i=0;
-  for (auto& layer : hodo_.layers_)
+  for (auto& layer: layers)
     {
-      cout << "LAYER "<< i << ":" << layer.position_ << std::endl;
-      ++i;
+      std::vector<double> position=opts.GetOpt<vector<double> >(layer+".position");
+      if (position.size() != 3)
+	std::cout << "ERROR: Expecting a vector of size 3 for the layer position" << std::endl;
+      GlobalCoord_t layerPos;
+      layerPos.SetElements(position.begin(),position.end());
+      TrackLayer aLayer(layerPos);
+      hodo_.addLayer(aLayer);
+
+      //  RotationMatrix_t layer2Rot;
+      //layer2Rot=ROOT::Math::SMatrixIdentity();
+      // double angle=-0.15;
+      // layer2Rot(0,0)=cos(angle);
+      // layer2Rot(0,1)=sin(angle);
+      // layer2Rot(1,0)=-sin(angle);
+      // layer2Rot(1,1)=cos(angle);
     }
+
+  hodo_.Print();
+
   return true;
 }
 

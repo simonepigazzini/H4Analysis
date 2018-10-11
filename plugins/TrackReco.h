@@ -84,7 +84,18 @@ public:
       {
 	layers_[k].globalCoordinates(locErr, posErr);
       }
-            
+
+      void Print()
+      {
+	std::cout << "=== TELESCOPE GEOMETRY ===" << std::endl;
+	int i=0;
+	for (auto& layer : layers_)
+	  {
+	    std::cout << "LAYER "<< i << " ===> [" << layer.position_ << "]" << std::endl;
+	    ++i;
+	  }
+      }
+
       std::vector<TrackLayer> layers_;
     };
     
