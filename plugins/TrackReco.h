@@ -2,10 +2,10 @@
 #define __TRACK_RECO__
 
 #include "interface/PluginBase.h"
-//#include "interface/TrackTree.h"
+#include "interface/TrackTree.h"
 #include "Math/SMatrix.h"
 #include "Math/SVector.h"
-#include "Math/GenVector/Rotation3D.h"
+
 using namespace std;
 
 using TrackParameters_t = ROOT::Math::SVector<double,4>; 
@@ -177,7 +177,7 @@ private:
 
     std::vector<Track> tracks_;
     TelescopeLayout hodo_;
-    //    TrackTree*     trackTree_;
+    TrackTree*     trackTree_;
 };
 
 DEFINE_PLUGIN(TrackReco);
