@@ -98,7 +98,8 @@ $(OBJ)%$(OBJSuf): $(SRC)%$(SRCSuf) Makefile
 
 $(LIB)libH4Analysis.cc: $(DICTHDRS)
 	@echo "Generating dictionary..."
-	@$ rootcling -f $(LIB)libH4Analysis.cc -c -p ${CXXFLAGS} $(DICTHDRS)
+#	@$ rootcling -f $(LIB)libH4Analysis.cc -c -p ${CXXFLAGS} $(DICTHDRS)
+	@$ genreflex $(DICTHDRS) -o $(LIB)libH4Analysis.cc -l$(LIB)libH4Analysis.so -s src/classes_def.xml -Iinterface/
 
 $(LIB)libH4Analysis.o: $(LIB)libH4Analysis.cc
 	@echo " CXX $<"	

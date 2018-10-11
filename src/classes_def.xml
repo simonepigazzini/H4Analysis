@@ -1,0 +1,7 @@
+<lcgdict>
+  <class name="TrackPar"/>
+  <class name="std::vector<TrackPar>"/>
+  <class name="MCPAnalyzer"/>
+  <class name="WFViewer"/>
+  <class name="InterpolatorFunc"/>
+</lcgdict>
