@@ -30,6 +30,7 @@ private:
     vector<string>              channelsNames_;
     map<string, vector<string>> channelsNamesSwissCross_;
     map<string, vector<string>> channelsNames3By3_;
+    vector<float>               weightsLd_;
     SpikesTree                  spikesTree_;
     WFTree                      outWFTree_;
     map<string, WFClass*>       WFs_;

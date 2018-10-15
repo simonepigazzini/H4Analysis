@@ -12,6 +12,13 @@ bool SpikeTagger::Begin(CfgManager& opts, uint64* index)
     srcInstance_ = opts.GetOpt<string>(instanceName_+".srcInstanceName");
     channelsNames_ = opts.GetOpt<vector<string> >(instanceName_+".channelsNames");
 
+    if (opts.OptExist(instanceName_+".weightsLd")) {
+        weightsLd_ = opts.GetOpt<vector<float>>(instanceName_+".weightsLd");
+    } else {
+        // Use weights from TDR
+        weightsLd_.assign({1.48322, -2.20018, 1.89766, -0.683441});
+    }
+
     //---calculate channels for swiss cross and A_9 variable
     for (const auto& channel : channelsNames_) {
         channelsNames3By3_[channel].emplace_back(channel);
@@ -245,6 +252,16 @@ bool SpikeTagger::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins,
                 }
             }
         }
+
+        //---Calculate the linear discriminant LD value from the TDR (Eq. 9.2)
+        const auto rminus1 = spikesTree_.sample_max_minus1_over_sample_max[outCh];
+        auto ld = spikesTree_.sample_max_plus1_over_sample_max[outCh];
+        float rminus1pow = 1.;
+        for (const auto weightLd : weightsLd_) {
+            ld -= weightLd * rminus1pow;
+            rminus1pow *= rminus1;
+        }
+        spikesTree_.ld[outCh] = ld;
 
         //---Calculate delta t between maximum and 3 sigma of baseline rms
         const auto rms = WFs_[channel]->SubtractBaseline().rms;
