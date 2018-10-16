@@ -257,7 +257,8 @@ int main(int argc, char* argv[])
         bool status=true;
         for(auto& plugin : pluginSequence)
         {
-            status &= plugin->ProcessEvent(h4Tree, pluginMap, opts);
+	  status &= plugin->Clear(); 
+	  status &= plugin->ProcessEvent(h4Tree, pluginMap, opts);
         }
         
         //---fill the main tree with info variables and increase event counter
