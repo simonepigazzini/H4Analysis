@@ -193,12 +193,12 @@ bool HodoReco::ProcessEvent(H4Tree& h4Tree, map<string, PluginBase*>& plugins, C
 		    }
 		  else
 		    {
-		      Tracking::TrackMeasurement trackMeasure(0., 0.5*value);
+		      Tracking::TrackMeasurement trackMeasure(0., -0.5*value);
 		      trackMeasure.setVarianceY(0.15*0.15);
 		      trackMeasure.setVarianceX(9999.);
 		      trackMeasure.calculateInverseVariance();
 		      hodoHits_[i].hits_.push_back(trackMeasure);
-		      hodoTrees_[i/nPlanes_].Y.push_back(0.5*value + offset);
+		      hodoTrees_[i/nPlanes_].Y.push_back(-0.5*value + offset);
 		      hodoTrees_[i/nPlanes_].cluster_Y_size.push_back(cluster.size());
 		      hodoTrees_[i/nPlanes_].n_clusters_Y++;
 		    }

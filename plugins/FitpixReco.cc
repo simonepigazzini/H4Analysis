@@ -51,7 +51,7 @@ bool FitpixReco::ProcessEvent(H4Tree& h4Tree, map<string, PluginBase*>& plugins,
         if(h4Tree.adcBoard[i] != boardId_)
             continue;
 
-        int x = h4Tree.adcChannel[i] % FITPIX_PIXELS_X;
+        int x = (FITPIX_PIXELS_X-1)-(h4Tree.adcChannel[i] % FITPIX_PIXELS_X);
         int y = floor(h4Tree.adcChannel[i]/FITPIX_PIXELS_Y);
         FPHit hit=FPHit(x,y,h4Tree.adcData[i]);
         if (swapCoordinates_)
