@@ -2,6 +2,8 @@
 #include <regex>
 
 #include "TRandom3.h"
+#include "Math/Rotation3D.h"
+#include "Math/RotationZ.h"
 
 //----------Begin-------------------------------------------------------------------------
 bool TrackReco::Begin(CfgManager& opts, uint64* index)
@@ -34,22 +36,22 @@ bool TrackReco::Begin(CfgManager& opts, uint64* index)
     {
       int measurementType=opts.GetOpt<int>(layer+".measurementType");
       std::vector<double> position=opts.GetOpt<vector<double> >(layer+".position");
-      //Need to take also rotation from cfg
       if (position.size() != 3)
 	std::cout << "ERROR: Expecting a vector of size 3 for the layer position" << std::endl;
       GlobalCoord_t layerPos;
       layerPos.SetElements(position.begin(),position.end());
-      Tracking::TrackLayer aLayer(layerPos);
-      aLayer.measurementType_=measurementType;
-      hodo_.addLayer(aLayer);
-
+      
       //  RotationMatrix_t layer2Rot;
-      //layer2Rot=ROOT::Math::SMatrixIdentity();
-      // double angle=-0.15;
-      // layer2Rot(0,0)=cos(angle);
-      // layer2Rot(0,1)=sin(angle);
-      // layer2Rot(1,0)=-sin(angle);
-      // layer2Rot(1,1)=cos(angle);
+      ROOT::Math::Rotation3D::Scalar zRotationAngle = opts.GetOpt<ROOT::Math::Rotation3D::Scalar>(layer+".zRotationAngle");
+      ROOT::Math::RotationZ r_z(zRotationAngle);      
+      ROOT::Math::Rotation3D rotation(r_z);
+      std::vector<double> rot_components(9);
+      rotation.GetComponents(rot_components.begin());
+      RotationMatrix_t layerRot(rot_components.begin(),rot_components.end());
+
+      Tracking::TrackLayer aLayer(layerPos,layerRot);
+      aLayer.measurementType_=measurementType;
+      hodo_.addLayer(aLayer);      
     }
 
   hitProducers_ = opts.GetOpt<vector<string> >(instanceName_+".hitProducers");

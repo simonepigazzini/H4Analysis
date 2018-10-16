@@ -36,7 +36,7 @@ DICTHDRS  =  $(patsubst $(LINKDEF),,$(HDRS)) $(LINKDEF)
 ARCH  =  $(shell root-config --arch)
 
 ROOTCFLAGS    = $(shell root-config --cflags)
-ROOTGLIBS     = $(shell root-config --glibs) -lMinuit -lTreePlayer -lMathMore
+ROOTGLIBS     = $(shell root-config --glibs) -lMinuit -lTreePlayer -lMathMore -lGenVector
 
 
 
@@ -47,7 +47,7 @@ CPP  =  g++
 CPPFLAGS  = -Wall -Wno-sign-compare -Wno-overloaded-virtual -I$(DIR) $(ROOTCFLAGS)
 
 LD       =  g++
-LDFLAGS  =  -rdynamic -shared -O2
+LDFLAGS  =  -rdynamic -shared -O2 
 SONAME	 =  libH4Analysis.so
 SOFLAGS  =  -Wl,-soname,
 
