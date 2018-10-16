@@ -3,6 +3,7 @@
 
 #include "interface/PluginBase.h"
 #include "interface/PositionTree.h"
+#include "interface/Track.h"
 
 #define HODO_X1 0
 #define HODO_Y1 1
@@ -33,6 +34,7 @@ private:
     int              minClusterSize_;
     int              maxClusterSize_;    
     PositionTree     hodoTrees_[2];
+    Tracking::LayerMeasurements hodoHits_[4]; //container of hits for each hodoscope layer (X and Y are separate layers)
 };
 
 DEFINE_PLUGIN(HodoReco);
