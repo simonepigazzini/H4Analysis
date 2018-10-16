@@ -98,9 +98,7 @@ bool HodoReco::Begin(CfgManager& opts, uint64* index)
     }
 
     for (int i=0;i<4;++i)
-      {
 	RegisterSharedData(&hodoHits_[i],Form("hodo_layer_%d",i),false);
-      }
 
     return true;
 }
@@ -187,6 +185,7 @@ bool HodoReco::ProcessEvent(H4Tree& h4Tree, map<string, PluginBase*>& plugins, C
 		      Tracking::TrackMeasurement trackMeasure(0.5*value, 0);
 		      trackMeasure.setVarianceX(0.15*0.15);
 		      trackMeasure.setVarianceY(9999.);
+		      trackMeasure.calculateInverseVariance();
 		      hodoHits_[i].hits_.push_back(trackMeasure);
 		      hodoTrees_[i/nPlanes_].X.push_back(0.5*value + offset);
 		      hodoTrees_[i/nPlanes_].cluster_X_size.push_back(cluster.size());
@@ -197,6 +196,7 @@ bool HodoReco::ProcessEvent(H4Tree& h4Tree, map<string, PluginBase*>& plugins, C
 		      Tracking::TrackMeasurement trackMeasure(0., 0.5*value);
 		      trackMeasure.setVarianceY(0.15*0.15);
 		      trackMeasure.setVarianceX(9999.);
+		      trackMeasure.calculateInverseVariance();
 		      hodoHits_[i].hits_.push_back(trackMeasure);
 		      hodoTrees_[i/nPlanes_].Y.push_back(0.5*value + offset);
 		      hodoTrees_[i/nPlanes_].cluster_Y_size.push_back(cluster.size());

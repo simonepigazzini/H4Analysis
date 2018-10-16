@@ -40,7 +40,17 @@ namespace Tracking {
 	//globalError=rotation_.Sub<LocalRotationMatrix_t>(0,0)*err*ROOT::Math::Transpose(rotation_.Sub<LocalRotationMatrix_t>(0,0));
 	globalError= err;
       };
-      
+
+      inline bool measureX()
+      {
+	return measurementType_ & 0x1;
+      }
+
+      inline bool measureY()
+      {
+	return (measurementType_>>1) & 0x1 ;
+      }
+
       /*
 	inline void localCoordinates( GlobalCoord_t& loc, GlobalCoord_t& pos ) const;  
 	 { 
@@ -157,7 +167,7 @@ namespace Tracking {
     class Track : public TObject
     {
     public:
-    Track(const TelescopeLayout* hodo=NULL) : covarianceMatrixStatus_(0), hodo_(hodo)
+    Track(const TelescopeLayout* hodo=NULL) : trackPattern_(0), covarianceMatrixStatus_(0), hodo_(hodo)
       {
 	hits_.clear();
       };
@@ -172,6 +182,7 @@ namespace Tracking {
       void addMeasurement(TrackMeasurement& hit)
       {
 	hits_.push_back(hit);
+	trackPattern_ |= 1 << hit.layer_;
       }
       
       double chi2(const double* par=NULL); 
@@ -182,6 +193,7 @@ namespace Tracking {
 
       TrackParameters_t trackPar_; //x,y,alpha(xz angle),beta(yz angle)
       TrackParametersCovarianceMatrix_t trackParCov_; 
+      unsigned int trackPattern_;
       int covarianceMatrixStatus_;
       const TelescopeLayout* hodo_;
       std::vector<TrackMeasurement> hits_;

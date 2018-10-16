@@ -64,11 +64,14 @@ bool AsyncDataProcessor::Begin(CfgManager& opts, uint64* index)
             cout << ">>> ERROR: plugin returned bad flag from Begin() call: " << plugin->GetInstanceName() << endl;
             return r_status;
         }
-        //---Get plugin shared data
-        for(auto& shared : plugin->GetSharedData("", "TTree", true))
-        {
-            RegisterSharedData(shared.obj, plugin->GetInstanceName()+"_"+shared.tag, shared.permanent); 
-        }
+        //---Get plugin permanent shared data
+	for(auto& shared : plugin->GetSharedData("", "TTree", true))
+	  RegisterSharedData(shared.obj, shared.tag, shared.permanent); 
+
+        //---Get plugin transient shared data
+	for(auto& shared : plugin->GetSharedData("", "", false))
+	  RegisterSharedData(shared.obj, shared.tag, shared.permanent); 
+
     }
     
     return true;
@@ -77,6 +80,7 @@ bool AsyncDataProcessor::Begin(CfgManager& opts, uint64* index)
 //---------ProcessEvent-------------------------------------------------------------------
 bool AsyncDataProcessor::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, CfgManager& opts)
 {
+
     //---check if spill number has changed, if so open new async data file
     if(currentSpill_ != event.spillNumber)
     {        
@@ -112,6 +116,12 @@ bool AsyncDataProcessor::ProcessEvent(H4Tree& event, map<string, PluginBase*>& p
 
     //---Event loop. Match RC event with asynchronous DR events
     bool status=true;
+
+    for(auto& plugin : pluginSequence_)
+    {
+      status &= plugin->Clear(); //clearing for every event!
+    }
+
     if(opts.OptExist(instanceName_+".asyncEventSelection") && dataSelector_->EvalInstance())
     {
         int retries=0;

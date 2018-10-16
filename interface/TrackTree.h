@@ -53,6 +53,7 @@ public:
   void Clear() 
   {
     trackHits.clear();
+    trackPattern.clear();
     trackChi2.clear();
     fitStatus.clear();
     fitResult.clear();
@@ -66,6 +67,7 @@ public:
   int n_tracks;
   std::vector<int> trackHits;
   std::vector<float> trackChi2;
+  std::vector<unsigned int> trackPattern;
   std::vector<int> fitStatus;
   std::vector<TrackPar> fitResult;
 };

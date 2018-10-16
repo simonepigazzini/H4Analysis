@@ -16,4 +16,5 @@ void TrackTree::Init()
     tree_->Branch("fitStatus", &fitStatus);
     tree_->Branch("trackHits", &trackHits);
     tree_->Branch("trackChi2", &trackChi2);
+    tree_->Branch("trackPattern", &trackPattern);
 }

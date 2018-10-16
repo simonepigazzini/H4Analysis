@@ -16,6 +16,10 @@ bool FitpixReco::Begin(CfgManager& opts, uint64* index)
     swapCoordinates_ = opts.OptExist(instanceName_+".swapCoordinates") ?
         opts.GetOpt<bool>(instanceName_+".swapCoordinates") : false;
 
+    maxClusterSize_ = opts.OptExist(instanceName_+".maxClusterSize") ?
+        opts.GetOpt<int>(instanceName_+".maxClusterSize") : 5;
+
+
     RegisterSharedData(new TTree(treeName.c_str(), treeName.c_str()), treeName.c_str(), storeTree);
 
     fitpixTree_ = new FitpixTree(index, (TTree*)data_.back().obj);
@@ -23,16 +27,22 @@ bool FitpixReco::Begin(CfgManager& opts, uint64* index)
 
     boardId_ = opts.GetOpt<int>(instanceName_+".boardId"); 
 
+    RegisterSharedData(&fitpixHits_,"fitpix",false);
+
     return true;
 }
 
-//----------ProcessEvent------------------------------------------------------------------
-bool FitpixReco::ProcessEvent(H4Tree& h4Tree, map<string, PluginBase*>& plugins, CfgManager& opts)
+bool FitpixReco::Clear()
 {
-
     hits_.clear();
     clusters_.clear();
     fitpixTree_->Clear();
+    fitpixHits_.hits_.clear();
+    return true;
+}
+//----------ProcessEvent------------------------------------------------------------------
+bool FitpixReco::ProcessEvent(H4Tree& h4Tree, map<string, PluginBase*>& plugins, CfgManager& opts)
+{
 
     std::vector<FPHit*> clustered_hits;
 
@@ -87,10 +97,22 @@ bool FitpixReco::ProcessEvent(H4Tree& h4Tree, map<string, PluginBase*>& plugins,
     fitpixTree_->n_clusters=clusters_.size();
     for (int i=0;i<clusters_.size();++i)
     {
-        fitpixTree_->clusterX.push_back( (clusters_[i].x() - ((double)FITPIX_PIXELS_X/2.)) * FITPIX_PIXELSIZE );
-        fitpixTree_->clusterY.push_back( (clusters_[i].y() - ((double)FITPIX_PIXELS_Y/2.)) * FITPIX_PIXELSIZE );
-        fitpixTree_->clusterCharge.push_back(clusters_[i].charge());
-        fitpixTree_->clusterSize.push_back(clusters_[i].nhits());
+      double clusX=(clusters_[i].x() - ((double)FITPIX_PIXELS_X/2.)) * FITPIX_PIXELSIZE;
+      double clusY=(clusters_[i].y() - ((double)FITPIX_PIXELS_Y/2.)) * FITPIX_PIXELSIZE;
+
+      if ( clusters_[i].nhits() <= maxClusterSize_ )
+	{
+	  Tracking::TrackMeasurement trackMeasure( clusX, clusY);
+	  trackMeasure.setVarianceX(0.016*0.016); //55 mum/sqrt(12)
+	  trackMeasure.setVarianceY(0.016*0.016);
+	  trackMeasure.calculateInverseVariance();
+	  fitpixHits_.hits_.push_back(trackMeasure);
+	}
+
+      fitpixTree_->clusterX.push_back(clusX);
+      fitpixTree_->clusterY.push_back(clusY);
+      fitpixTree_->clusterCharge.push_back(clusters_[i].charge());
+      fitpixTree_->clusterSize.push_back(clusters_[i].nhits());
     }
 
     //---fill output tree

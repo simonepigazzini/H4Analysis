@@ -3,7 +3,7 @@
 
 #include "interface/PluginBase.h"
 #include "interface/FitpixTree.h"
-
+#include "interface/Track.h"
 
 using namespace std;
 
@@ -229,14 +229,17 @@ public:
     //---utils---
     bool Begin(CfgManager& opts, uint64* index);
     bool ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, CfgManager& opts);
-    
+    bool Clear();
+
 private:
 
     bool swapCoordinates_;
     long int        boardId_;
+    int  maxClusterSize_;
     std::vector<FPHit> hits_;
     std::vector<FPCluster> clusters_;
     FitpixTree*     fitpixTree_;
+    Tracking::LayerMeasurements fitpixHits_; //container of hits for track reco
 };
 
 DEFINE_PLUGIN(FitpixReco);

@@ -34,6 +34,7 @@ private:
     Tracking::TelescopeLayout hodo_;
     TrackTree*     trackTree_;
     float          maxChi2_;
+    float          cleaningChi2Cut_;
 };
 
 DEFINE_PLUGIN(TrackReco);

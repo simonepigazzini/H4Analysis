@@ -21,7 +21,11 @@ bool TrackReco::Begin(CfgManager& opts, uint64* index)
 
   //---maxchi2 option
   maxChi2_ = opts.OptExist(instanceName_+".maxChi2") ?
-    opts.GetOpt<float>(instanceName_+".maxChi2") : 30; 
+    opts.GetOpt<float>(instanceName_+".maxChi2") : 100; 
+
+  //---maxchi2 cleaning
+  cleaningChi2Cut_ = opts.OptExist(instanceName_+".cleaningChi2Cut") ?
+    opts.GetOpt<float>(instanceName_+".cleaningChi2Cut") : 100; 
   
   //---inputs---
   std::vector<string> layers = opts.GetOpt<vector<string> >(instanceName_+".layers");
@@ -61,20 +65,19 @@ void TrackReco::buildTracks()
 {
   while(1) 
     {
-      std::cout << "+++++++++" << std::endl;
       Tracking::Track aTrack(&hodo_);  //create an empty track     
       aTrack.fitAngle_=false; //do not fit angle at this building step
       for (int i=0; i<hitProducers_.size(); ++i)
 	{
 	  std::string hitLayer=hitProducers_[i];
-	  std::cout << "=======> " << i << " " <<  hits_[hitLayer]->hits_.size()  << std::endl;
 	  for (auto it=hits_[hitLayer]->hits_.begin(); it != hits_[hitLayer]->hits_.end(); /* NOTHING */)
 	    {
 	      Tracking::TrackMeasurement* hit=&(*it);
 	      Tracking::TrackMeasurement aHit(hit->localPosition_,hit->localPositionError_,&hodo_,i); //create a new hit attached to the right geometry
-	      if ( aTrack.hits_.size()==0                                                        || //empty 
-		   (sqrt(aTrack.trackParCov_(0,0))>20. && hodo_.layers_[i].measurementType_%2==1) || //lousy track in X 
-		   (sqrt(aTrack.trackParCov_(1,1))>20. && hodo_.layers_[i].measurementType_%2==0) )  //lousy track in Y 
+	      if ( aTrack.hits_.size()==0                                               || //empty track 
+		   (sqrt(aTrack.trackParCov_(0,0))>20. && hodo_.layers_[i].measureX() ) || //lousy track in X 
+		   (sqrt(aTrack.trackParCov_(1,1))>20. && hodo_.layers_[i].measureY() )    //lousy track in Y 
+		   )
 		{
 		  aTrack.addMeasurement(aHit);
 		  aTrack.fitTrack();
@@ -83,7 +86,6 @@ void TrackReco::buildTracks()
 		}
 	      else
 		{
-		  std::cout << "R " << aTrack.residual(aHit,false) << std::endl;
 		  if (aTrack.residual(aHit)<maxChi2_)
 		    {
 		      aTrack.addMeasurement(aHit);
@@ -95,8 +97,6 @@ void TrackReco::buildTracks()
 		    it++;
 		}
 	    }
-	  if (aTrack.hits_.size()>0)
-	      std::cout << sqrt(aTrack.trackParCov_(0,0)) << " " << sqrt(aTrack.trackParCov_(1,1)) << std::endl;
 	}
 
       if (aTrack.hits_.size()==0)
@@ -104,7 +104,6 @@ void TrackReco::buildTracks()
       else
 	{
 	  tracks_.push_back(aTrack);
-	  std::cout<< "OK " << aTrack.hits_.size() << std::endl;
 	}
     }
 
@@ -118,9 +117,8 @@ void TrackReco::cleanTracks()
       if (track->covarianceMatrixStatus_ != 3 || 
 	  sqrt(track->trackParCov_(0,0))>20.  || 
 	  sqrt(track->trackParCov_(1,1))>20.  ||
-	  track->chi2() > 30.)
+	  track->chi2() > cleaningChi2Cut_)
   	{
-  	  std::cout << "ERASING TRACK with hits " << track->hits_.size() << std::endl;
 	  tracks_.erase( track );
   	}
       else
@@ -147,29 +145,26 @@ bool TrackReco::ProcessEvent(H4Tree& h4Tree, map<string, PluginBase*>& plugins, 
       if(shared_data.size() != 0)
 	hits_[hitLayer] = (Tracking::LayerMeasurements*)shared_data.at(0).obj;
       else
-	cout << "[TrackReco::" << instanceName_ << "]: " << hitLayer << " not found" << endl; 
+	cout << "[TrackReco::" << instanceName_ << "]: " << tokens[0]+"_"+tokens[1] << " not found" << endl; 
     }
 
   tracks_.clear();
 
   //---track building step  
   buildTracks();
-  std::cout << "TRACKS AFTER BUILDING STEP " << tracks_.size() << std::endl;
 
   //---track cleaning
   cleanTracks();
-  std::cout << "TRACKS AFTER CLEANING STEP " << tracks_.size() << std::endl;
 
   //---final fitting
   for (auto& track : tracks_)
     {
-      if (track.hits_.size()>4)
+      if (track.hits_.size()>4) //fit angle only when there is fitpix
 	track.fitAngle_=true;
       else
 	track.fitAngle_=false;
       track.fitTrack();
     }
-  std::cout << "TRACKS AFTER FITTING STEP " << tracks_.size() << std::endl;
 
   //---fill output tree
   trackTree_->Clear();
@@ -181,6 +176,7 @@ bool TrackReco::ProcessEvent(H4Tree& h4Tree, map<string, PluginBase*>& plugins, 
       par.covariance.assign(aTrack.trackParCov_.Array(),aTrack.trackParCov_.Array()+10);
       trackTree_->fitResult.push_back(par);
       trackTree_->fitStatus.push_back(aTrack.covarianceMatrixStatus_);
+      trackTree_->trackPattern.push_back(aTrack.trackPattern_);
       trackTree_->trackHits.push_back(aTrack.hits_.size());
       trackTree_->trackChi2.push_back(aTrack.chi2());
     }
