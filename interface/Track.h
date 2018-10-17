@@ -184,7 +184,21 @@ namespace Tracking {
 	hits_.push_back(hit);
 	trackPattern_ |= 1 << hit.layer_;
       }
-      
+
+      inline int nFreeParameters()
+      {
+	//count pixel hits as 2
+	int nFreePar=0;
+	for (auto& hit: hits_)
+	  {
+	    if (hodo_->layers_[hit.layer_].measurementType_ == 3)
+	      nFreePar+=2;
+	    else if(hodo_->layers_[hit.layer_].measurementType_ > 0)
+	      nFreePar+=1;
+	  }
+	return nFreePar;
+      }
+
       double chi2(const double* par=NULL); 
 
       double residual(const TrackMeasurement& hit,bool print=false);
