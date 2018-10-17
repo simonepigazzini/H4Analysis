@@ -72,43 +72,53 @@ void TrackReco::buildTracks()
       for (int i=0; i<hitProducers_.size(); ++i)
 	{
 	  std::string hitLayer=hitProducers_[i];
-	  for (auto it=hits_[hitLayer]->hits_.begin(); it != hits_[hitLayer]->hits_.end(); /* NOTHING */)
+
+	  if (hits_[hitLayer]->hits_.size() == 0 )
+	    continue;
+
+	  //--- just add the first hit of a layer if no measurement 
+	  if ( aTrack.hits_.size()==0                                               || //empty track 
+	       (sqrt(aTrack.trackParCov_(0,0))>20. && hodo_.layers_[i].measureX() ) || //lousy track in X 
+	       (sqrt(aTrack.trackParCov_(1,1))>20. && hodo_.layers_[i].measureY() )    //lousy track in Y 
+	       )
 	    {
-	      Tracking::TrackMeasurement* hit=&(*it);
+	      Tracking::TrackMeasurement* hit=&(*hits_[hitLayer]->hits_.begin());
 	      Tracking::TrackMeasurement aHit(hit->localPosition_,hit->localPositionError_,&hodo_,i); //create a new hit attached to the right geometry
-	      if ( aTrack.hits_.size()==0                                               || //empty track 
-		   (sqrt(aTrack.trackParCov_(0,0))>20. && hodo_.layers_[i].measureX() ) || //lousy track in X 
-		   (sqrt(aTrack.trackParCov_(1,1))>20. && hodo_.layers_[i].measureY() )    //lousy track in Y 
-		   )
+	      aTrack.addMeasurement(aHit);
+	      aTrack.fitTrack();
+	      hits_[hitLayer]->hits_.erase( hits_[hitLayer]->hits_.begin() );
+	      continue;
+	    }
+
+	  //--- otherwise look for the most compatible hit
+	  std::vector<Tracking::TrackMeasurement>::iterator bestHit;
+	  double minChi2=99999999.;
+
+	  for (auto it=hits_[hitLayer]->hits_.begin(); it != hits_[hitLayer]->hits_.end(); ++it)
+	    {	      
+	      Tracking::TrackMeasurement aHit(it->localPosition_,it->localPositionError_,&hodo_,i); //create a new hit attached to the right geometry
+	      double res=aTrack.residual(aHit);
+	      if (res<minChi2)
 		{
-		  aTrack.addMeasurement(aHit);
-		  aTrack.fitTrack();
-		  hits_[hitLayer]->hits_.erase( it );
-		  break;
-		}
-	      else
-		{
-		  if (aTrack.residual(aHit)<maxChi2_)
-		    {
-		      aTrack.addMeasurement(aHit);
-		      aTrack.fitTrack();
-		      hits_[hitLayer]->hits_.erase( it );
-		      break;
-		    }
-		  else
-		    it++;
+		  bestHit=it;
+		  minChi2=res;
 		}
 	    }
-	}
+
+	  if (minChi2<maxChi2_)
+	    {
+	      Tracking::TrackMeasurement aHit(bestHit->localPosition_,bestHit->localPositionError_,&hodo_,i); 
+	      aTrack.addMeasurement(aHit);
+	      aTrack.fitTrack();
+	      hits_[hitLayer]->hits_.erase( bestHit );
+	    }
+	} //--end of loop over layers
 
       if (aTrack.hits_.size()==0)
 	break; //no more Hits
       else
-	{
-	  tracks_.push_back(aTrack);
-	}
+	tracks_.push_back(aTrack);
     }
-
 }
 
 void TrackReco::cleanTracks()
@@ -161,7 +171,7 @@ bool TrackReco::ProcessEvent(H4Tree& h4Tree, map<string, PluginBase*>& plugins, 
   //---final fitting
   for (auto& track : tracks_)
     {
-      if (track.hits_.size()>4) //fit angle only when there is fitpix
+      if (track.nFreeParameters()>4) //fit angle only when there is fitpix
 	track.fitAngle_=true;
       else
 	track.fitAngle_=false;
