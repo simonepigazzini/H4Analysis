@@ -58,6 +58,8 @@ bool TrackReco::Begin(CfgManager& opts, uint64* index)
   
   // layerMeas.reserve(hitProducers_.size());
 
+  RegisterSharedData(&tracks_,"tracks",false);
+
   hodo_.Print();
 
   return true;
@@ -117,13 +119,13 @@ void TrackReco::buildTracks()
       if (aTrack.hits_.size()==0)
 	break; //no more Hits
       else
-	tracks_.push_back(aTrack);
+	tracks_.tracks_.push_back(aTrack);
     }
 }
 
 void TrackReco::cleanTracks()
 {
-  for (auto track=tracks_.begin(); track !=tracks_.end(); /* NOTHING */)
+  for (auto track=tracks_.tracks_.begin(); track !=tracks_.tracks_.end(); /* NOTHING */)
     {
       //want to have at least an hit on X and Y. Check the error
       if (track->covarianceMatrixStatus_ != 3 || 
@@ -131,7 +133,7 @@ void TrackReco::cleanTracks()
 	  sqrt(track->trackParCov_(1,1))>20.  ||
 	  track->chi2() > cleaningChi2Cut_)
   	{
-	  tracks_.erase( track );
+	  tracks_.tracks_.erase( track );
   	}
       else
 	++track;
@@ -160,7 +162,7 @@ bool TrackReco::ProcessEvent(H4Tree& h4Tree, map<string, PluginBase*>& plugins, 
 	cout << "[TrackReco::" << instanceName_ << "]: " << tokens[0]+"_"+tokens[1] << " not found" << endl; 
     }
 
-  tracks_.clear();
+  tracks_.tracks_.clear();
 
   //---track building step  
   buildTracks();
@@ -169,7 +171,7 @@ bool TrackReco::ProcessEvent(H4Tree& h4Tree, map<string, PluginBase*>& plugins, 
   cleanTracks();
 
   //---final fitting
-  for (auto& track : tracks_)
+  for (auto& track : tracks_.tracks_)
     {
       if (track.nFreeParameters()>4) //fit angle only when there is fitpix
 	track.fitAngle_=true;
@@ -180,8 +182,8 @@ bool TrackReco::ProcessEvent(H4Tree& h4Tree, map<string, PluginBase*>& plugins, 
 
   //---fill output tree
   trackTree_->Clear();
-  trackTree_->n_tracks=tracks_.size();
-  for (auto& aTrack: tracks_)
+  trackTree_->n_tracks=tracks_.tracks_.size();
+  for (auto& aTrack: tracks_.tracks_)
     {
       TrackPar par;
       par.value.assign(aTrack.trackPar_.Array(),aTrack.trackPar_.Array()+4);

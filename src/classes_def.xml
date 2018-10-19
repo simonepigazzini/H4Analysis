@@ -1,4 +1,7 @@
 <lcgdict>
+  <class name="Tracking::TelescopeLayout"/>
+  <class name="Tracking::TrackLayer"/>
+  <class name="std::vector<Tracking::TrackLayer>"/>
   <class name="TrackPar"/>
   <class name="std::vector<TrackPar>"/>
   <class name="MCPAnalyzer"/>

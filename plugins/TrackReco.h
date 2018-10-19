@@ -28,7 +28,7 @@ private:
     void buildTracks();
     void cleanTracks();
 
-    std::vector<Tracking::Track> tracks_;
+    Tracking::TrackContainer tracks_;
     std::vector<string> hitProducers_;
     std::map<string,Tracking::LayerMeasurements*> hits_;
     Tracking::TelescopeLayout hodo_;

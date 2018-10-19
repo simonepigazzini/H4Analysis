@@ -16,202 +16,237 @@ using RotationMatrix_t = ROOT::Math::SMatrix<double,3,3>;
 using LocalRotationMatrix_t = ROOT::Math::SMatrix<double,2,2>;
 
 namespace Tracking {
-  class TrackLayer 
+  class TrackLayer
   {
   public:
+    TrackLayer()
+      {
+      };
+  
   TrackLayer(const GlobalCoord_t& pos):
     position_(pos),rotation_( ROOT::Math::SMatrixIdentity() )
       {
       };
     
   TrackLayer(const GlobalCoord_t& pos, const RotationMatrix_t& rot):
-      position_(pos),rotation_(rot)
-      {
-      };
-      
-      inline void globalCoordinates( const Measurement_t& loc, Measurement_t& pos ) const
-      {
-	pos= rotation_.Sub<LocalRotationMatrix_t>(0,0)*loc + position_.Sub<LocalCoord_t>(0);
-      };
-
-      inline void globalCoordinates( const MeasurementErrorMatrix_t& err, MeasurementErrorMatrix_t& globalError ) const
-      {
-	//LocalRotationMatrix_t r=rotation_.Sub<LocalRotationMatrix_t>(0,0);
-	//globalError=rotation_.Sub<LocalRotationMatrix_t>(0,0)*err*ROOT::Math::Transpose(rotation_.Sub<LocalRotationMatrix_t>(0,0));
-	globalError= err;
-      };
-
-      inline bool measureX()
-      {
-	return measurementType_ & 0x1;
-      }
-
-      inline bool measureY()
-      {
-	return (measurementType_>>1) & 0x1 ;
-      }
-
-      /*
-	inline void localCoordinates( GlobalCoord_t& loc, GlobalCoord_t& pos ) const;  
-	 { 
-	 } 
-      */
-      
-      GlobalCoord_t position_; //axis origin in global Frame 
-      RotationMatrix_t rotation_; //axis rotation matrix from localFrame to global Frame 
-      int measurementType_; //0=no measurement passive layer,1=x only,2=y only,3=x,y only
+    position_(pos),rotation_(rot)
+    {
     };
 
-    class TelescopeLayout
+    virtual ~TrackLayer()
+      {
+      };
+
+    inline void globalCoordinates( const Measurement_t& loc, Measurement_t& pos ) const
     {
-    public:
-      TelescopeLayout()
+      pos= rotation_.Sub<LocalRotationMatrix_t>(0,0)*loc + position_.Sub<LocalCoord_t>(0);
+    };
+
+    inline void globalCoordinates( const MeasurementErrorMatrix_t& err, MeasurementErrorMatrix_t& globalError ) const
+    {
+      //LocalRotationMatrix_t r=rotation_.Sub<LocalRotationMatrix_t>(0,0);
+      //globalError=rotation_.Sub<LocalRotationMatrix_t>(0,0)*err*ROOT::Math::Transpose(rotation_.Sub<LocalRotationMatrix_t>(0,0));
+      globalError= err;
+    };
+
+    inline bool measureX()
+    {
+      return measurementType_ & 0x1;
+    }
+
+    inline bool measureY()
+    {
+      return (measurementType_>>1) & 0x1 ;
+    }
+
+    /*
+      inline void localCoordinates( GlobalCoord_t& loc, GlobalCoord_t& pos ) const;  
+      { 
+      } 
+    */
+      
+    GlobalCoord_t position_; //axis origin in global Frame 
+    RotationMatrix_t rotation_; //axis rotation matrix from localFrame to global Frame 
+    int measurementType_; //0=no measurement passive layer,1=x only,2=y only,3=x,y only
+
+    ClassDef(TrackLayer, 1)
+  };
+
+  class TelescopeLayout : public TObject
+  {
+  public:
+    TelescopeLayout()
       {
 	layers_.clear();
       };
       
-      void addLayer(const TrackLayer& layer)
-      {
-	layers_.push_back(layer);
-      }
-
-      inline void globalCoordinates( const int& k, const Measurement_t& loc, Measurement_t& pos ) const
-      {
-	layers_[k].globalCoordinates(loc, pos);
-      }
-
-      inline void globalCoordinates( const int& k, const MeasurementErrorMatrix_t& locErr, MeasurementErrorMatrix_t& posErr ) const
-      {
-	layers_[k].globalCoordinates(locErr, posErr);
-      }
-
-      void Print()
-      {
-	std::cout << "=== TELESCOPE GEOMETRY ===" << std::endl;
-	int i=0;
-	for (auto& layer : layers_)
-	  {
-	    std::cout << "LAYER "<< i << " ===> [" << layer.position_ << "]" << std::endl;
-	    ++i;
-	  }
-      }
-
-      std::vector<TrackLayer> layers_;
-    };
-
-    class TrackMeasurement : public TObject 
+    void addLayer(const TrackLayer& layer)
     {
-    public:
+      layers_.push_back(layer);
+    }
 
-      TrackMeasurement( Measurement_t position, MeasurementErrorMatrix_t positionErr,  const TelescopeLayout* hodo=NULL, int layer=0 ) : 
-      localPosition_(position), localPositionError_ (positionErr), hodo_(hodo), layer_(layer)
-      {
-	calculateInverseVariance();
-      }
-      
-    TrackMeasurement( double x, double y, const TelescopeLayout* hodo=NULL, int layer=0 ) :
-      localPosition_(x,y), localPositionError_(), hodo_(hodo), layer_(layer)
-      {
-	//check that layer is within the size of telescope...
-      }
-      
-      ~TrackMeasurement() {};
-      
-      inline void setVarianceX(const double& sigma2x) 
-      {
-	localPositionError_(0,0)=sigma2x;
-      }
-
-      inline void setVarianceY(const double& sigma2y) 
-      {
-	localPositionError_(1,1)=sigma2y;
-      }
-
-      inline void calculateInverseVariance()
-      {
-	int ifail;
-	localPositionErrorInverse_ = localPositionError_.InverseFast(ifail);
-	if (ifail)
-	  cout << "[TrackMeasurement]::[ERROR]::Matrix Inversion failed" << endl;
-      }
-
-      inline void globalPosition( Measurement_t& pos ) const 
-      {
-	hodo_->globalCoordinates(layer_, localPosition_, pos);
-      }
-
-      inline void globalPositionError( MeasurementErrorMatrix_t& posErr ) const 
-      {
-	hodo_->globalCoordinates(layer_, localPositionError_, posErr);
-      }
-
-      inline void globalPositionErrorInverse( MeasurementErrorMatrix_t& posErr ) const 
-      {
-	hodo_->globalCoordinates(layer_, localPositionErrorInverse_, posErr);
-      }
-
-      Measurement_t localPosition_;
-      MeasurementErrorMatrix_t localPositionError_; //covariance matrix
-      MeasurementErrorMatrix_t localPositionErrorInverse_; //covariance matrix^-1
-      const TelescopeLayout* hodo_;
-      int layer_;
-    };
-    
-    class LayerMeasurements: public TObject
+    inline void globalCoordinates( const int& k, const Measurement_t& loc, Measurement_t& pos ) const
     {
-    public:
-      LayerMeasurements() { hits_.clear(); };
-      std::vector<TrackMeasurement> hits_;
-    };
-    
-    class Track : public TObject
+      layers_[k].globalCoordinates(loc, pos);
+    }
+
+    inline void globalCoordinates( const int& k, const MeasurementErrorMatrix_t& locErr, MeasurementErrorMatrix_t& posErr ) const
     {
-    public:
-    Track(const TelescopeLayout* hodo=NULL) : trackPattern_(0), covarianceMatrixStatus_(0), hodo_(hodo)
-      {
-	hits_.clear();
-      };
+      layers_[k].globalCoordinates(locErr, posErr);
+    }
+
+    void Print()
+    {
+      std::cout << "=== TELESCOPE GEOMETRY ===" << std::endl;
+      int i=0;
+      for (auto& layer : layers_)
+	{
+	  std::cout << "LAYER "<< i << " ===> [" << layer.position_ << "]" << std::endl;
+	  ++i;
+	}
+    }
+
+    std::vector<TrackLayer> layers_;
+
+    ClassDef(TelescopeLayout, 1)
+  };
+
+  class TrackMeasurement : public TObject 
+  {
+  public:
+
+  TrackMeasurement( Measurement_t position, MeasurementErrorMatrix_t positionErr,  const TelescopeLayout* hodo=NULL, int layer=0 ) : 
+    localPosition_(position), localPositionError_ (positionErr), hodo_(hodo), layer_(layer)
+    {
+      calculateInverseVariance();
+    }
       
-      ~Track() {};
+  TrackMeasurement( double x, double y, const TelescopeLayout* hodo=NULL, int layer=0 ) :
+    localPosition_(x,y), localPositionError_(), hodo_(hodo), layer_(layer)
+    {
+      //check that layer is within the size of telescope...
+    }
       
-      inline Measurement_t statusAt(const double& z) const //return also error in future
-      {
-	return trackPar_.Sub<Measurement_t>(0) + trackPar_.Sub<Measurement_t>(2) * z;
-      }
+    ~TrackMeasurement() {};
       
-      void addMeasurement(TrackMeasurement& hit)
-      {
-	hits_.push_back(hit);
-	trackPattern_ |= 1 << hit.layer_;
-      }
+    inline void setVarianceX(const double& sigma2x) 
+    {
+      localPositionError_(0,0)=sigma2x;
+    }
 
-      inline int nFreeParameters()
-      {
-	//count pixel hits as 2
-	int nFreePar=0;
-	for (auto& hit: hits_)
-	  {
-	    if (hodo_->layers_[hit.layer_].measurementType_ == 3)
-	      nFreePar+=2;
-	    else if(hodo_->layers_[hit.layer_].measurementType_ > 0)
-	      nFreePar+=1;
-	  }
-	return nFreePar;
-      }
+    inline void setVarianceY(const double& sigma2y) 
+    {
+      localPositionError_(1,1)=sigma2y;
+    }
 
-      double chi2(const double* par=NULL); 
+    inline void calculateInverseVariance()
+    {
+      int ifail;
+      localPositionErrorInverse_ = localPositionError_.InverseFast(ifail);
+      if (ifail)
+	cout << "[TrackMeasurement]::[ERROR]::Matrix Inversion failed" << endl;
+    }
 
-      double residual(const TrackMeasurement& hit,bool print=false);
+    inline void globalPosition( Measurement_t& pos ) const 
+    {
+      hodo_->globalCoordinates(layer_, localPosition_, pos);
+    }
 
-      bool fitTrack();
+    inline void globalPositionError( MeasurementErrorMatrix_t& posErr ) const 
+    {
+      hodo_->globalCoordinates(layer_, localPositionError_, posErr);
+    }
 
-      TrackParameters_t trackPar_; //x,y,alpha(xz angle),beta(yz angle)
-      TrackParametersCovarianceMatrix_t trackParCov_; 
-      unsigned int trackPattern_;
-      int covarianceMatrixStatus_;
-      const TelescopeLayout* hodo_;
-      std::vector<TrackMeasurement> hits_;
-      bool fitAngle_;
+    inline void globalPositionErrorInverse( MeasurementErrorMatrix_t& posErr ) const 
+    {
+      hodo_->globalCoordinates(layer_, localPositionErrorInverse_, posErr);
+    }
+
+    Measurement_t localPosition_;
+    MeasurementErrorMatrix_t localPositionError_; //covariance matrix
+    MeasurementErrorMatrix_t localPositionErrorInverse_; //covariance matrix^-1
+    const TelescopeLayout* hodo_;
+    int layer_;
+  };
+     
+  class LayerMeasurements: public TObject
+  {
+  public:
+    LayerMeasurements() { hits_.clear(); };
+    std::vector<TrackMeasurement> hits_;
+  };
+ 
+  class Track : public TObject
+  {
+  public:
+  Track(TelescopeLayout* hodo=NULL) : trackPattern_(0), covarianceMatrixStatus_(0), hodo_(hodo)
+    {
+      hits_.clear();
     };
+      
+    ~Track() {};
+      
+    inline Measurement_t statusAt(const double& z) const //return also error in future
+    {
+      return trackPar_.Sub<Measurement_t>(0) + trackPar_.Sub<Measurement_t>(2) * z;
+    }
+      
+    void addMeasurement(TrackMeasurement& hit)
+    {
+      hits_.push_back(hit);
+      trackPattern_ |= 1 << hit.layer_;
+    }
+
+    void removeMeasurement(std::vector<TrackMeasurement>::iterator it)
+    {
+      int layer=it->layer_;
+      hits_.erase(it);
+      trackPattern_ &= 0 << layer;
+    }
+
+    void setTelescopeLayout(TelescopeLayout* hodo)
+    {
+      hodo_=hodo;
+      for (auto& hit: hits_)
+	hit.hodo_=hodo;
+    }
+
+    inline int nFreeParameters()
+    {
+      //count pixel hits as 2
+      int nFreePar=0;
+      for (auto& hit: hits_)
+	{
+	  if (hodo_->layers_[hit.layer_].measurementType_ == 3)
+	    nFreePar+=2;
+	  else if(hodo_->layers_[hit.layer_].measurementType_ > 0)
+	    nFreePar+=1;
+	}
+      return nFreePar;
+    }
+
+      
+    double chi2(const double* par=NULL); 
+
+    double residual(const TrackMeasurement& hit,bool print=false);
+
+    bool fitTrack();
+
+    TrackParameters_t trackPar_; //x,y,alpha(xz angle),beta(yz angle)
+    TrackParametersCovarianceMatrix_t trackParCov_; 
+    unsigned int trackPattern_;
+    int covarianceMatrixStatus_;
+    TelescopeLayout* hodo_;
+    std::vector<TrackMeasurement> hits_;
+    bool fitAngle_;
+  };
+
+  class TrackContainer: public TObject
+  {
+  public:
+    TrackContainer() { tracks_.clear(); };
+    std::vector<Track> tracks_;
+  };
+  
 
 }
