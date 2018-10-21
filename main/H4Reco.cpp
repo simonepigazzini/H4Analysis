@@ -163,6 +163,9 @@ int main(int argc, char* argv[])
         opts.SetOpt("h4reco.maxFiles", files);
     }
     string outSuffix = opts.GetOpt<string>("h4reco.outNameSuffix");
+    bool storeTree = opts.OptExist("h4reco.storeTree") ?
+      opts.GetOpt<bool>("h4reco.storeTree") : true;
+
     string run = opts.GetOpt<string>("h4reco.run");
     int totLoops= opts.OptExist("h4reco.totLoops") ? opts.GetOpt<int>("h4reco.totLoops") : 1;
 
@@ -317,7 +320,7 @@ int main(int argc, char* argv[])
 	    //---get permanent data from each plugin and store them in the out file
 	    for(auto& shared : plugin->GetSharedData())
 	      {
-	    	if(shared.obj->IsA()->GetName() == string("TTree"))
+	    	if(shared.obj->IsA()->GetName() == string("TTree") && storeTree)
 	    	  {
 	    	    TTree* currentTree = (TTree*)shared.obj;
 	    	    outDIR->cd();
@@ -334,7 +337,8 @@ int main(int argc, char* argv[])
 	  }
 
 	outDIR->cd();
-	mainTree.Write();
+	if (storeTree)
+	  mainTree.Write();
 	++iLoop;
       }
 
