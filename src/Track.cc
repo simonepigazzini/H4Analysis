@@ -101,15 +101,9 @@ Tracking::TelescopeLayout::TelescopeLayout(CfgManager& opts,string tagName)
       GlobalCoord_t layerPos;
       layerPos.SetElements(position.begin(),position.end());
       
-      //  RotationMatrix_t layer2Rot;
       ROOT::Math::Rotation3D::Scalar zRotationAngle = opts.GetOpt<ROOT::Math::Rotation3D::Scalar>(layer+".zRotationAngle");
-      ROOT::Math::RotationZ r_z(zRotationAngle);      
-      ROOT::Math::Rotation3D rotation(r_z);
-      std::vector<double> rot_components(9);
-      rotation.GetComponents(rot_components.begin());
-      RotationMatrix_t layerRot(rot_components.begin(),rot_components.end());
 
-      Tracking::TrackLayer aLayer(layerPos,layerRot);
+      Tracking::TrackLayer aLayer(layerPos,zRotationAngle);
       aLayer.measurementType_=measurementType;
       addLayer(aLayer);      
     }

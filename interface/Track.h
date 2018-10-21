@@ -1,6 +1,11 @@
 #include "Math/SMatrix.h"
 #include "Math/SVector.h"
 
+#include "Math/Rotation3D.h"
+#include "Math/RotationZ.h"
+#include "Math/AxisAngle.h"
+#include "Math/DisplacementVector3D.h"
+
 #include "CfgManager/interface/CfgManager.h"
 #include "CfgManager/interface/CfgManagerT.h"
 
@@ -35,11 +40,34 @@ namespace Tracking {
   TrackLayer(const GlobalCoord_t& pos, const RotationMatrix_t& rot):
     position_(pos),rotation_(rot)
     {
+
+    };
+
+  TrackLayer(const GlobalCoord_t& pos, const double& zRot):
+    position_(pos), rotation_(), zRotation_(zRot)
+    {
+      ROOT::Math::Rotation3D::Scalar zRotationAngle = zRotation_;
+      ROOT::Math::RotationZ r_z(zRotationAngle);      
+      ROOT::Math::Rotation3D rotation(r_z);
+      std::vector<double> rot_components(9);
+      rotation.GetComponents(rot_components.begin());
+      rotation_.SetElements(rot_components.begin(),rot_components.end());
     };
 
     virtual ~TrackLayer()
       {
       };
+
+    void setZRotation(const double& zRot)
+    {
+      zRotation_=zRot;
+      ROOT::Math::Rotation3D::Scalar zRotationAngle = zRotation_;
+      ROOT::Math::RotationZ r_z(zRotationAngle);      
+      ROOT::Math::Rotation3D rotation(r_z);
+      std::vector<double> rot_components(9);
+      rotation.GetComponents(rot_components.begin());
+      rotation_.SetElements(rot_components.begin(),rot_components.end());
+    }
 
     inline void globalCoordinates( const Measurement_t& loc, Measurement_t& pos ) const
     {
@@ -71,9 +99,10 @@ namespace Tracking {
       
     GlobalCoord_t position_; //axis origin in global Frame 
     RotationMatrix_t rotation_; //axis rotation matrix from localFrame to global Frame 
+    double zRotation_;
     int measurementType_; //0=no measurement passive layer,1=x only,2=y only,3=x,y only
 
-    ClassDef(TrackLayer, 2)
+    ClassDef(TrackLayer, 3)
   };
 
   class TelescopeLayout : public TObject
@@ -108,14 +137,14 @@ namespace Tracking {
       int i=0;
       for (auto& layer : layers_)
 	{
-	  std::cout << "LAYER "<< i << " ===> [" << layer.position_ << "]" << std::endl;
+	  std::cout << "LAYER "<< i << " ===> [" << layer.position_ << "]:[" << layer.zRotation_ << "]" <<  std::endl;
 	  ++i;
 	}
     }
 
     std::vector<TrackLayer> layers_;
 
-    ClassDef(TelescopeLayout, 2)
+    ClassDef(TelescopeLayout, 3)
   };
 
   class TrackMeasurement : public TObject 

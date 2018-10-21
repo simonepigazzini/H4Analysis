@@ -34,6 +34,7 @@ bool TrackReco::Begin(CfgManager& opts, uint64* index)
 
   if (geoTag.find(".root")!=std::string::npos)
     {
+      //Load geometry from root file
       std::regex separator_re("::");
       std::sregex_token_iterator tkIter(geoTag.begin(),geoTag.end(),separator_re,-1);
       std::sregex_token_iterator tkIterEnd;
@@ -41,14 +42,24 @@ bool TrackReco::Begin(CfgManager& opts, uint64* index)
       tokens.assign(tkIter,tkIterEnd);
 
       if (tokens.size() != 2)
-	cout << "[TrackReco::" << instanceName_ << "]: Wrong geometry input " << geoTag << endl;
+	{
+	  cout << "[TrackReco::" << instanceName_ << "]: Wrong geometry input " << geoTag << endl;
+	  return false;
+	}
 
       TFile *f=TFile::Open(tokens[0].c_str(),"READ");
       Tracking::TelescopeLayout* hodo= (Tracking::TelescopeLayout*)f->Get(tokens[1].c_str());
+      if (!hodo)
+	{
+	  cout << "[TrackReco::" << instanceName_ << "]: Cannot find object " << geoTag << endl;
+	  return false;
+	}
+
       hodo_=*hodo;
     }
   else
     {
+      //load from cfg
       hodo_ = Tracking::TelescopeLayout(opts,geoTag);
     }
 
@@ -149,7 +160,10 @@ bool TrackReco::ProcessEvent(H4Tree& h4Tree, map<string, PluginBase*>& plugins, 
       std::vector<string> tokens;
       tokens.assign(tkIter,tkIterEnd);
       if (tokens.size() != 2)
-	cout << "[TrackReco::" << instanceName_ << "]: Wrong input name " << hitLayer << endl;
+	{
+	  cout << "[TrackReco::" << instanceName_ << "]: Wrong input name " << hitLayer << endl;
+	  return false;
+	}
 
       auto shared_data = plugins[tokens[0]]->GetSharedData(tokens[0]+"_"+tokens[1], "", false);
 

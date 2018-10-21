@@ -74,13 +74,8 @@ double AlignHodo::globalChi2(const double* par)
 	  //--- set position and rotations
 	  for (int icoord=0;icoord<3;++icoord) 
 	    alignedLayers[i+2].position_(icoord)=par[i*4+icoord];
-	  
-	  ROOT::Math::Rotation3D::Scalar zRotationAngle = par[i*4+3];
-	  ROOT::Math::RotationZ r_z(zRotationAngle);      
-	  ROOT::Math::Rotation3D rotation(r_z);
-	  std::vector<double> rot_components(9);
-	  rotation.GetComponents(rot_components.begin());
-	  alignedLayers[i+2].rotation_.SetElements(rot_components.begin(),rot_components.end());
+	  alignedLayers[i+2].setZRotation(par[i*4+3]);
+
 	  alignedHodo.layers_[i+2]=alignedLayers[i+2]; //put misaligned layer in layout 
 	}
     }
@@ -128,7 +123,7 @@ void AlignHodo::minimize()
       minimizer->SetLimitedVariable(i*4, Form("X_%d",i+2), layerPos(0), 1E-6, -30, 30);
       minimizer->SetLimitedVariable(i*4+1, Form("Y_%d",i+2), layerPos(1), 1E-6, -30, 30);
       minimizer->SetLimitedVariable(i*4+2, Form("Z_%d",i+2), layerPos(2), 1E-6, 0, 3000);
-      minimizer->SetLimitedVariable(i*4+3, Form("zRot_%d",i+2), 0, 1E-6, -30, 30);
+      minimizer->SetLimitedVariable(i*4+3, Form("zRot_%d",i+2), hodo_->layers_[i+2].zRotation_, 1E-6, -0.5, 0.5);
     }
 
 
@@ -148,13 +143,7 @@ void AlignHodo::minimize()
       //--- set position and rotations
       for (int icoord=0;icoord<3;++icoord) 
 	hodo_->layers_[i+2].position_(icoord)=minimizer->X()[i*4+icoord];
-      
-      ROOT::Math::Rotation3D::Scalar zRotationAngle = minimizer->X()[i*4+3];
-      ROOT::Math::RotationZ r_z(zRotationAngle);      
-      ROOT::Math::Rotation3D rotation(r_z);
-      std::vector<double> rot_components(9);
-      rotation.GetComponents(rot_components.begin());
-      hodo_->layers_[i+2].rotation_.SetElements(rot_components.begin(),rot_components.end());
+      hodo_->layers_[i+2].setZRotation(minimizer->X()[i*4+3]);
     }
 
   // //---get covariance matrix
