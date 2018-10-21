@@ -1,5 +1,9 @@
 #include "Math/SMatrix.h"
 #include "Math/SVector.h"
+
+#include "CfgManager/interface/CfgManager.h"
+#include "CfgManager/interface/CfgManagerT.h"
+
 #include "TObject.h"
 
 #include <iostream>
@@ -69,16 +73,19 @@ namespace Tracking {
     RotationMatrix_t rotation_; //axis rotation matrix from localFrame to global Frame 
     int measurementType_; //0=no measurement passive layer,1=x only,2=y only,3=x,y only
 
-    ClassDef(TrackLayer, 1)
+    ClassDef(TrackLayer, 2)
   };
 
   class TelescopeLayout : public TObject
   {
   public:
+
     TelescopeLayout()
       {
 	layers_.clear();
       };
+
+    TelescopeLayout(CfgManager& opts, string tagName);
       
     void addLayer(const TrackLayer& layer)
     {
@@ -108,7 +115,7 @@ namespace Tracking {
 
     std::vector<TrackLayer> layers_;
 
-    ClassDef(TelescopeLayout, 1)
+    ClassDef(TelescopeLayout, 2)
   };
 
   class TrackMeasurement : public TObject 

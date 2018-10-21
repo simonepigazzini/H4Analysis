@@ -245,7 +245,7 @@ bool FFTAnalyzer::ProcessEvent(const H4Tree& event, map<string, PluginBase*>& pl
     return true;
 }
 
-bool FFTAnalyzer::End(CfgManager& opts)
+bool FFTAnalyzer::EndLoop(int iLoop,CfgManager& opts)
 {
     for(auto& channel : channelsNames_)
         for(auto& tmpl : templatesNames_)

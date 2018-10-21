@@ -15,21 +15,26 @@ public:
     AlignHodo() {};
   
     //---dtor---
-    ~AlignHodo() {};
+    ~AlignHodo() 
+      {
+      };
 
    
     //---utils---
     bool Begin(CfgManager& opts, uint64* index);
     bool ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, CfgManager& opts);
     bool End(CfgManager& opts);
-    
+
+    bool BeginLoop(int iLoop, CfgManager& opts);
+    bool EndLoop(int iLoop, CfgManager& opts);
+
 private:
 
     double globalChi2(const double* par);
     void   minimize();
 
     string srcInstance_;
-    Tracking::TelescopeLayout hodo_;
+    Tracking::TelescopeLayout* hodo_; //pointer to current layout 
     Tracking::TrackContainer tracks_;
 };
 

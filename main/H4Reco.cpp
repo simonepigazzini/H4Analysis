@@ -164,6 +164,8 @@ int main(int argc, char* argv[])
     }
     string outSuffix = opts.GetOpt<string>("h4reco.outNameSuffix");
     string run = opts.GetOpt<string>("h4reco.run");
+    int totLoops= opts.OptExist("h4reco.totLoops") ? opts.GetOpt<int>("h4reco.totLoops") : 1;
+
     TChain* inTree = new TChain("H4tree");
     ReadInputFiles(opts, spill, inTree);
     H4Tree h4Tree(inTree);
@@ -176,6 +178,8 @@ int main(int argc, char* argv[])
     else
       outROOT = new TFile(outSuffix+"/"+TString(run)+"/"+to_string(spill).c_str()+".root", "RECREATE");
     outROOT->cd();
+    TDirectory* outDIR=outROOT;
+
     RecoTree mainTree(&index);
 
     //---Get plugin sequence---
@@ -218,58 +222,121 @@ int main(int argc, char* argv[])
             cout << ">>> ERROR: plugin returned bad flag from Begin() call: " << plugin->GetInstanceName() << endl;
             exit(-1);
         }
-        //---Get plugin shared data
-        for(auto& shared : plugin->GetSharedData("", "TTree", true))
-        {
-            TTree* tree = (TTree*)shared.obj;
-            tree->SetMaxVirtualSize(10000);
-            tree->SetDirectory(outROOT);
-        }
     }
             
-    //---events loop
-    int nEvents = 0;
+
+    int iLoop=0;
     int maxEvents = opts.OptExist("h4reco.maxEvents") ? opts.GetOpt<int>("h4reco.maxEvents") : -1;
     bool isSim = opts.OptExist("h4reco.generateEvents") ? opts.GetOpt<bool>("h4reco.generateEvents") : false;
+
     if(isSim)
-        cout << ">>> Processing H4DAQ simulation <<<" << endl;
+      cout << ">>> Processing H4DAQ simulation <<<" << endl;
     else
-        cout << ">>> Processing H4DAQ run #" << run << " <<<" << endl;
-    while((h4Tree.NextEntry() && (nEvents < maxEvents || maxEvents == -1)) || (isSim && (nEvents < maxEvents)))
-    {
-        if(nEvents % 1000 == 0)
-        {
-            if(isSim)
-                cout << ">>> Generated events: " << nEvents << "/"
-                     << maxEvents 
-                     << endl;
-            else                
-                cout << ">>> Processed events: " << nEvents << "/"
-                     << (maxEvents<0 ? h4Tree.GetEntries() : min(h4Tree.GetEntries(), (uint64)maxEvents))
-                     << endl;
-            TrackProcess(cpu, mem, vsz, rss);
-        }
+      cout << ">>> Processing H4DAQ run #" << run << " <<<" << endl;
+
+    while (iLoop<totLoops)
+      {
+	int nEvents = 0;
+
+	if (totLoops>1)
+	  {
+	    cout << ">>> Starting iteration #" << iLoop << " <<<" << endl;
+	    outDIR=outROOT->mkdir(Form("Iter_%d",iLoop));
+	  }
+
+	//---begin loop
+	mainTree.tree_->Reset();
+	for(auto& plugin : pluginSequence)
+	  {
+	    //---call Begin() methods and check the return status
+	    bool r_status = plugin->BeginLoop(iLoop, opts);
+	    if(!r_status)
+	      {
+		cout << ">>> ERROR: plugin returned bad flag from BeginLoop() call: " << plugin->GetInstanceName() << endl;
+		exit(-1);
+	      }
+	    
+	    //---Get plugin shared data
+	    for(auto& shared : plugin->GetSharedData("", "TTree", true))
+	      {
+	    	TTree* tree = (TTree*)shared.obj;
+		tree->Reset();
+	    	tree->SetDirectory(outDIR);
+	      }
+	  }
+
+
+	//---events loop
+	while((h4Tree.NextEntry() && (nEvents < maxEvents || maxEvents == -1)) || (isSim && (nEvents < maxEvents)))
+	  {
+	    if(nEvents % 1000 == 0)
+	      {
+		if(isSim)
+		  cout << ">>> Generated events: " << nEvents << "/"
+		       << maxEvents 
+		       << endl;
+		else                
+		  cout << ">>> Processed events: " << nEvents << "/"
+		       << (maxEvents<0 ? h4Tree.GetEntries() : min(h4Tree.GetEntries(), (uint64)maxEvents))
+		       << endl;
+		TrackProcess(cpu, mem, vsz, rss);
+	      }
         
-        //---set index value run*1e10+spill*1e4+event
-        index = h4Tree.runNumber*1e9 + h4Tree.spillNumber*1e5 + h4Tree.evtNumber;
+	    //---set index value run*1e10+spill*1e4+event
+	    index = h4Tree.runNumber*1e9 + h4Tree.spillNumber*1e5 + h4Tree.evtNumber;
+	    
+	    //---call ProcessEvent for each plugin and check the return status
+	    bool status=true;
+	    for(auto& plugin : pluginSequence)
+	      {
+	    	status &= plugin->Clear(); 
+	    	status &= plugin->ProcessEvent(h4Tree, pluginMap, opts);
+	      }
         
-        //---call ProcessEvent for each plugin and check the return status
-        bool status=true;
-        for(auto& plugin : pluginSequence)
-        {
-	  status &= plugin->Clear(); 
-	  status &= plugin->ProcessEvent(h4Tree, pluginMap, opts);
-        }
-        
-        //---fill the main tree with info variables and increase event counter
-        mainTree.time_stamp = h4Tree.evtTimeStart;
-        mainTree.evt_flag = status;
-        mainTree.run = h4Tree.runNumber;
-        mainTree.spill = h4Tree.spillNumber;
-        mainTree.event = h4Tree.evtNumber;
-        mainTree.Fill();
-        ++nEvents;
-    }
+	    //---Fill the main tree with info variables and increase event counter
+	    mainTree.time_stamp = h4Tree.evtTimeStart;
+	    mainTree.evt_flag = status;
+	    mainTree.run = h4Tree.runNumber;
+	    mainTree.spill = h4Tree.spillNumber;
+	    mainTree.event = h4Tree.evtNumber;
+	    mainTree.Fill();
+	    ++nEvents;
+	  }
+
+	//---end
+	for(auto& plugin : pluginSequence)
+	  {
+	    //---call endjob for each plugin        
+	    bool r_status = plugin->EndLoop(iLoop,opts);
+	    if(!r_status)
+	      {
+		cout << ">>> ERROR: plugin returned bad flag from EndLoop() call: " << plugin->GetInstanceName() << endl;
+		exit(-1);
+	      }
+
+	    //---get permanent data from each plugin and store them in the out file
+	    for(auto& shared : plugin->GetSharedData())
+	      {
+	    	if(shared.obj->IsA()->GetName() == string("TTree"))
+	    	  {
+	    	    TTree* currentTree = (TTree*)shared.obj;
+	    	    outDIR->cd();
+	    	    currentTree->BuildIndex("index");
+	    	    currentTree->Write(currentTree->GetName(), TObject::kOverwrite);
+	    	    mainTree.AddFriend(currentTree->GetName());
+	    	  }
+	    	else
+	    	  {
+	    	    outDIR->cd();
+	    	    shared.obj->Write(shared.tag.c_str(), TObject::kOverwrite);
+	    	  }
+	      }
+	  }
+
+	outDIR->cd();
+	mainTree.Write();
+	++iLoop;
+      }
 
     //---end
     for(auto& plugin : pluginSequence)
@@ -281,28 +348,10 @@ int main(int argc, char* argv[])
             cout << ">>> ERROR: plugin returned bad flag from End() call: " << plugin->GetInstanceName() << endl;
             exit(-1);
         }
-
-        //---get permanent data from each plugin and store them in the out file
-        for(auto& shared : plugin->GetSharedData())
-        {
-            if(shared.obj->IsA()->GetName() == string("TTree"))
-            {
-                TTree* currentTree = (TTree*)shared.obj;
-                outROOT->cd();
-                currentTree->BuildIndex("index");
-                currentTree->Write(currentTree->GetName(), TObject::kOverwrite);
-                mainTree.AddFriend(currentTree->GetName());
-            }
-            else
-            {
-                outROOT->cd();
-                shared.obj->Write(shared.tag.c_str(), TObject::kOverwrite);
-            }
-        }
     }
     
     //---close
-    mainTree.Write();
+    outROOT->cd();
     opts.Write("cfg");
     outROOT->Close();
     for(auto& loader : pluginLoaders)

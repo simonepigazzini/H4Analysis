@@ -30,35 +30,32 @@ bool TrackReco::Begin(CfgManager& opts, uint64* index)
     opts.GetOpt<float>(instanceName_+".cleaningChi2Cut") : 100; 
   
   //---inputs---
-  std::vector<string> layers = opts.GetOpt<vector<string> >(instanceName_+".layers");
-  
-  for (auto& layer: layers)
-    {
-      int measurementType=opts.GetOpt<int>(layer+".measurementType");
-      std::vector<double> position=opts.GetOpt<vector<double> >(layer+".position");
-      if (position.size() != 3)
-	std::cout << "ERROR: Expecting a vector of size 3 for the layer position" << std::endl;
-      GlobalCoord_t layerPos;
-      layerPos.SetElements(position.begin(),position.end());
-      
-      //  RotationMatrix_t layer2Rot;
-      ROOT::Math::Rotation3D::Scalar zRotationAngle = opts.GetOpt<ROOT::Math::Rotation3D::Scalar>(layer+".zRotationAngle");
-      ROOT::Math::RotationZ r_z(zRotationAngle);      
-      ROOT::Math::Rotation3D rotation(r_z);
-      std::vector<double> rot_components(9);
-      rotation.GetComponents(rot_components.begin());
-      RotationMatrix_t layerRot(rot_components.begin(),rot_components.end());
+  std::string geoTag = opts.GetOpt<string>(instanceName_+".geometrySource");
 
-      Tracking::TrackLayer aLayer(layerPos,layerRot);
-      aLayer.measurementType_=measurementType;
-      hodo_.addLayer(aLayer);      
+  if (geoTag.find(".root")!=std::string::npos)
+    {
+      std::regex separator_re("::");
+      std::sregex_token_iterator tkIter(geoTag.begin(),geoTag.end(),separator_re,-1);
+      std::sregex_token_iterator tkIterEnd;
+      std::vector<string> tokens;
+      tokens.assign(tkIter,tkIterEnd);
+
+      if (tokens.size() != 2)
+	cout << "[TrackReco::" << instanceName_ << "]: Wrong geometry input " << geoTag << endl;
+
+      TFile *f=TFile::Open(tokens[0].c_str(),"READ");
+      Tracking::TelescopeLayout* hodo= (Tracking::TelescopeLayout*)f->Get(tokens[1].c_str());
+      hodo_=*hodo;
+    }
+  else
+    {
+      hodo_ = Tracking::TelescopeLayout(opts,geoTag);
     }
 
   hitProducers_ = opts.GetOpt<vector<string> >(instanceName_+".hitProducers");
   
-  // layerMeas.reserve(hitProducers_.size());
-
   RegisterSharedData(&tracks_,"tracks",false);
+  RegisterSharedData(&hodo_,"hodo",true);
 
   hodo_.Print();
 
