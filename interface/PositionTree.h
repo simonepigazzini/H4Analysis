@@ -12,6 +12,32 @@ typedef unsigned long long int uint64;
 
 using namespace std;
 
+
+//---General position measurement used for permanent storage in output file  
+class PositionMeasurement
+{
+public:
+    //---ctors
+    PositionMeasurement();
+    PositionMeasurement(int nhits, float x, float y, float mag=0):
+        nHits_(nhits),
+        X_(x),
+        Y_(y),
+        magnitude_(mag)
+        {};
+    
+    inline int   nHits() {return nHits_;};
+    inline float X() {return X_;};
+    inline float Y() {return Y_;};
+    inline float magnidute() {return magnitude_;};
+
+private:
+    int   nHits_;
+    float X_;
+    float Y_;
+    float magnitude_;
+};
+    
 class PositionTree
 {
 public: 
@@ -23,17 +49,14 @@ public:
     
     //---utils---
     void Init();
-    void Fill() {tree_->Fill();};
-
+    void Clear();
+    void Fill() {tree_->Fill();};    
+    
     TTree*  tree_; 
-
-    uint64*        index;
-    int            n_clusters_X;
-    int            n_clusters_Y;    
-    vector<int>    cluster_X_size;
-    vector<int>    cluster_Y_size;
-    vector<float>  X;
-    vector<float>  Y;
+    uint64* index;
+    
+    int                         n_clusters;
+    vector<PositionMeasurement> clusters;
 };
 
 #endif

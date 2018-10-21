@@ -120,7 +120,7 @@ bool FFTAnalyzer::Begin(CfgManager& opts, uint64* index)
     return true;
 }
 
-bool FFTAnalyzer::ProcessEvent(const H4Tree& event, map<string, PluginBase*>& plugins, CfgManager& opts)
+bool FFTAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, CfgManager& opts)
 {
     for(auto& channel : channelsNames_)
     {

@@ -141,15 +141,20 @@ bool HodoBTFReco::Begin(CfgManager& opts, uint64* index)
     //---create a position tree
     bool storeTree = opts.OptExist(instanceName_+".storeTree") ?
         opts.GetOpt<bool>(instanceName_+".storeTree") : true;
-    RegisterSharedData(new TTree("hodo", "hodo_tree"), "hodo_tree", storeTree);
-    hodoTree_ = PositionTree(index, (TTree*)data_.back().obj);
-    hodoTree_.Init();
+    RegisterSharedData(new TTree("hX", "hodoX_tree"), "hodoX_tree", storeTree);
+    hodoTreeX_ = PositionTree(index, (TTree*)data_.back().obj);
+    hodoTreeX_.Init();
+    RegisterSharedData(new TTree("hY", "hodoY_tree"), "hodoY_tree", storeTree);
+    hodoTreeY_ = PositionTree(index, (TTree*)data_.back().obj);
+    hodoTreeY_.Init();
 
     return true;
 }
 
 bool HodoBTFReco::ProcessEvent(H4Tree& h4Tree, map<string, PluginBase*>& plugins, CfgManager& opts)
 {
+    hodoTreeX_.Clear();
+    hodoTreeY_.Clear();    
     hodoXpos.clear();
     hodoYpos.clear();
     for(unsigned int iCh=0; iCh<h4Tree.nAdcChannels; iCh++)
@@ -169,22 +174,17 @@ bool HodoBTFReco::ProcessEvent(H4Tree& h4Tree, map<string, PluginBase*>& plugins
             }
         }	
     }
-    //--fill output tree with default values if needed
-    hodoTree_.n_clusters_X = hodoXpos.size();
-    hodoTree_.n_clusters_Y= hodoYpos.size();    
-    hodoTree_.cluster_X_size.push_back(hodoXpos.size());
-    hodoTree_.cluster_Y_size.push_back(hodoYpos.size());    
-    hodoTree_.X.push_back(hodoXpos.size() > 0 ? hodoXpos[0] : -1);
-    hodoTree_.Y.push_back(hodoYpos.size() > 0 ? hodoYpos[0] : -1);
-    hodoTree_.Fill();
+    //--fill output trees with default values if needed
+    hodoTreeX_.n_clusters = hodoXpos.size();
+    hodoTreeX_.clusters.emplace_back(hodoXpos.size(), hodoXpos.size() > 0 ? hodoXpos[0] : -999, -999);
+    hodoTreeY_.n_clusters = hodoYpos.size();
+    hodoTreeY_.clusters.emplace_back(hodoYpos.size(), -999, hodoYpos.size() > 0 ? hodoYpos[0] : -999);
+    hodoTreeX_.Fill();
+    hodoTreeY_.Fill();
 
-    //---clear tree
-    hodoTree_.X.clear();
-    hodoTree_.cluster_X_size.clear();
-    hodoTree_.n_clusters_X=0;
-    hodoTree_.Y.clear();
-    hodoTree_.cluster_Y_size.clear();
-    hodoTree_.n_clusters_Y=0;
+    //---clear trees
+    hodoTreeX_.Clear();
+    hodoTreeY_.Clear();
     
     return true;
 }

@@ -27,14 +27,14 @@ public:
     bool End(CfgManager& opts) { return true; };
     
 private:
-    int              nPlanes_=2;
-    int              nFibers_=64;
-    std::vector<int> hodoFiberOrderA_;
-    std::vector<int> hodoFiberOrderB_;
-    int              minClusterSize_;
-    int              maxClusterSize_;    
-    PositionTree     hodoTrees_[2];
-    Tracking::LayerMeasurements hodoHits_[4]; //container of hits for each hodoscope layer (X and Y are separate layers)
+    int                 nPlanes_=4;
+    int                 nFibers_=64;
+    std::vector<int>    hodoFiberOrderA_;
+    std::vector<int>    hodoFiberOrderB_;
+    int                 minClusterSize_;
+    int                 maxClusterSize_;    
+    PositionTree        hodoTrees_[4];
+    Tracking::LayerHits hodoHits_[4]; //container of hits for each hodoscope layer (X and Y are separate layers)
 };
 
 DEFINE_PLUGIN(HodoReco);

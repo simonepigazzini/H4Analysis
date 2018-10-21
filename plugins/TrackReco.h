@@ -28,13 +28,13 @@ private:
     void buildTracks();
     void cleanTracks();
 
-    std::vector<Tracking::Track> tracks_;
-    std::vector<string> hitProducers_;
-    std::map<string,Tracking::LayerMeasurements*> hits_;
-    Tracking::TelescopeLayout hodo_;
-    TrackTree*     trackTree_;
-    float          maxChi2_;
-    float          cleaningChi2Cut_;
+    std::vector<Tracking::Track>           tracks_;
+    std::vector<string>                    hitProducers_;
+    std::map<string, Tracking::LayerHits*> hits_;
+    Tracking::TelescopeLayout              tLayout_;
+    TrackTree*                             trackTree_;
+    float                                  maxChi2_;
+    float                                  cleaningChi2Cut_;
 };
 
 DEFINE_PLUGIN(TrackReco);

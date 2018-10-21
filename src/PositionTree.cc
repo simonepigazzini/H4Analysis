@@ -13,16 +13,14 @@ void PositionTree::Init()
     tree_->Branch("index", index, "index/l");
 
     //---position branches
-    n_clusters_X = 0;
-    n_clusters_Y = 0;
-    cluster_X_size = vector<int>(); 
-    cluster_Y_size = vector<int>(); 
-    X = vector<float>(); 
-    Y = vector<float>(); 
-    tree_->Branch("n_clusters_X", &n_clusters_X, "n_clusters_X/I");
-    tree_->Branch("n_clusters_Y", &n_clusters_Y, "n_clusters_Y/I");    
-    tree_->Branch("cluster_X_size", &cluster_X_size);
-    tree_->Branch("cluster_Y_size", &cluster_Y_size);
-    tree_->Branch("X", &X);
-    tree_->Branch("Y", &Y);
+    n_clusters = 0;
+    clusters = vector<PositionMeasurement>();
+    tree_->Branch("n_clusters", &n_clusters, "n_clusters/I");
+    tree_->Branch("clusters", &clusters);
+}
+
+void PositionTree::Clear()
+{
+    n_clusters = 0;
+    clusters.clear();
 }

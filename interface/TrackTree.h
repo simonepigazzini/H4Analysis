@@ -12,29 +12,30 @@ typedef unsigned long long int uint64;
 
 using namespace std;
 
+//---Version of track class for persistent storage in the output file
 class TrackPar
 {
- public:
-  TrackPar() {};
-  ~TrackPar() {};
+public:
+    TrackPar() {};
+    ~TrackPar() {};
 
-  double x() { return  value[0]; }
-  double y() { return  value[1]; }
-  double alpha() { return  value[2]; }
-  double beta() { return  value[3]; }
+    double x() { return  value[0]; }
+    double y() { return  value[1]; }
+    double alpha() { return  value[2]; }
+    double beta() { return  value[3]; }
 
-  double err_x() { return  sqrt(covariance[0]); }
-  double err_y() { return  sqrt(covariance[2]); }
-  double err_alpha() { return  sqrt(covariance[5]); }
-  double err_beta() { return  sqrt(covariance[9]); }
+    double err_x() { return  sqrt(covariance[0]); }
+    double err_y() { return  sqrt(covariance[2]); }
+    double err_alpha() { return  sqrt(covariance[5]); }
+    double err_beta() { return  sqrt(covariance[9]); }
 
-  double corr_x_alpha()  { return covariance[3]/(err_x() * err_alpha()); }
-  double corr_y_beta()  { return covariance[7]/(err_y() * err_beta()); }
-  double corr_x_y() { return covariance[1]/(err_x() * err_y()); }
-  double corr_alpha_beta() { return covariance[8]/(err_alpha() * err_beta()); }
+    double corr_x_alpha()  { return covariance[3]/(err_x() * err_alpha()); }
+    double corr_y_beta()  { return covariance[7]/(err_y() * err_beta()); }
+    double corr_x_y() { return covariance[1]/(err_x() * err_y()); }
+    double corr_alpha_beta() { return covariance[8]/(err_alpha() * err_beta()); }
 
-  std::vector<double> value;
-  std::vector<double> covariance;
+    std::vector<double> value;
+    std::vector<double> covariance;
 };
 
 class TrackTree
@@ -42,34 +43,34 @@ class TrackTree
 public:
 
 
-  //---ctors---
-  TrackTree(){};
-  TrackTree(uint64* idx, TTree* tree=NULL);
-  //---dtor---
-  ~TrackTree(){};
+    //---ctors---
+    TrackTree(){};
+    TrackTree(uint64* idx, TTree* tree=NULL);
+    //---dtor---
+    ~TrackTree(){};
   
-  //---utils---
-  void Init();
-  void Clear() 
-  {
-    trackHits.clear();
-    trackPattern.clear();
-    trackChi2.clear();
-    fitStatus.clear();
-    fitResult.clear();
-  };
+    //---utils---
+    void Init();
+    void Clear() 
+        {
+            trackHits.clear();
+            trackPattern.clear();
+            trackChi2.clear();
+            fitStatus.clear();
+            fitResult.clear();
+        };
 
-  void Fill() {tree_->Fill();};
+    void Fill() {tree_->Fill();};
   
-  TTree*  tree_; 
-  
-  uint64* index;
-  int n_tracks;
-  std::vector<int> trackHits;
-  std::vector<float> trackChi2;
-  std::vector<unsigned int> trackPattern;
-  std::vector<int> fitStatus;
-  std::vector<TrackPar> fitResult;
+    TTree*  tree_; 
+    uint64* index;
+    
+    int                       n_tracks;
+    std::vector<int>          trackHits;
+    std::vector<float>        trackChi2;
+    std::vector<unsigned int> trackPattern;
+    std::vector<int>          fitStatus;
+    std::vector<TrackPar>     fitResult;
 };
 
 #endif

@@ -8,7 +8,7 @@ AsyncDataProcessor::AsyncDataProcessor():
     currentSpill_(0),
     syncTolerance_(0),
     maxForwardTries_(0)
-    {}
+{}
     
 //---------Begin--------------------------------------------------------------------------
 bool AsyncDataProcessor::Begin(CfgManager& opts, uint64* index)
@@ -66,12 +66,11 @@ bool AsyncDataProcessor::Begin(CfgManager& opts, uint64* index)
         }
         //---Get plugin permanent shared data
 	for(auto& shared : plugin->GetSharedData("", "TTree", true))
-	  RegisterSharedData(shared.obj, shared.tag, shared.permanent); 
+            RegisterSharedData(shared.obj, shared.tag, shared.permanent); 
 
         //---Get plugin transient shared data
 	for(auto& shared : plugin->GetSharedData("", "", false))
-	  RegisterSharedData(shared.obj, shared.tag, shared.permanent); 
-
+            RegisterSharedData(shared.obj, shared.tag, shared.permanent); 
     }
     
     return true;
@@ -83,14 +82,19 @@ bool AsyncDataProcessor::ProcessEvent(H4Tree& event, map<string, PluginBase*>& p
 
     //---check if spill number has changed, if so open new async data file
     if(currentSpill_ != event.spillNumber)
-    {        
+    {
+        cout << ">>> INFO: AsyncDataProcessor: opening new file" << endl;
+        
         //---clean data from previous spill
+        if(h4Tree_)
+        {
+            h4Tree_->GetTTreePtr()->Delete();            
+            delete h4Tree_;
+        }
         if(asyncDataFile_ && asyncDataFile_->IsOpen())
             asyncDataFile_->Close();
-        if(h4Tree_)
-            delete h4Tree_;
         if(dataSelector_)
-            delete dataSelector_;
+            dataSelector_->Delete();
 
         deltaT_ = 1e7;
         
@@ -119,7 +123,7 @@ bool AsyncDataProcessor::ProcessEvent(H4Tree& event, map<string, PluginBase*>& p
 
     for(auto& plugin : pluginSequence_)
     {
-      status &= plugin->Clear(); //clearing for every event!
+        status &= plugin->Clear(); //clearing for every event!
     }
 
     if(opts.OptExist(instanceName_+".asyncEventSelection") && dataSelector_->EvalInstance())
