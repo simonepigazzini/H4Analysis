@@ -10,6 +10,7 @@
 #include "CfgManager/interface/CfgManagerT.h"
 
 #include "TObject.h"
+#include "TNamed.h"
 
 #include <iostream>
 
@@ -32,7 +33,7 @@ namespace Tracking {
       {
       };
   
-  TrackLayer(const GlobalCoord_t& pos):
+  TrackLayer(const GlobalCoord_t& pos): 
     position_(pos),rotation_( ROOT::Math::SMatrixIdentity() )
       {
       };
@@ -105,11 +106,11 @@ namespace Tracking {
     ClassDef(TrackLayer, 3)
   };
 
-  class TelescopeLayout : public TObject
+  class TelescopeLayout : public TNamed
   {
   public:
 
-    TelescopeLayout()
+  TelescopeLayout() :  TNamed()
       {
 	layers_.clear();
       };
@@ -119,6 +120,11 @@ namespace Tracking {
     void addLayer(const TrackLayer& layer)
     {
       layers_.push_back(layer);
+    }
+
+    void SetName(const char *name)
+    {
+      fName = name;
     }
 
     inline void globalCoordinates( const int& k, const Measurement_t& loc, Measurement_t& pos ) const
@@ -144,7 +150,7 @@ namespace Tracking {
 
     std::vector<TrackLayer> layers_;
 
-    ClassDef(TelescopeLayout, 3)
+    ClassDef(TelescopeLayout, 4)
   };
 
   class TrackMeasurement : public TObject 
@@ -246,7 +252,7 @@ namespace Tracking {
       for (auto& hit: hits_)
 	hit.hodo_=hodo;
     }
-
+    
     inline int nFreeParameters()
     {
       //count pixel hits as 2
