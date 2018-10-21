@@ -109,7 +109,7 @@ double AlignHodo::globalChi2(const double* par)
     }
 
   std::cout << "<RESIDUAL/TRACK>: " << chi2/tracks_.tracks_.size() << std::endl;
-  return chi2;
+  return chi2/100.; // avoid fit instability
 }
 
 void AlignHodo::minimize()
