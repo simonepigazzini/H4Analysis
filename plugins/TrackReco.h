@@ -21,6 +21,7 @@ public:
    
     //---utils---
     bool Begin(CfgManager& opts, uint64* index);
+    bool BeginLoop(int iLoop, CfgManager& opts);
     bool ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, CfgManager& opts);
     
 private:

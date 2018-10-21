@@ -146,6 +146,8 @@ void AlignHodo::minimize()
       hodo_->layers_[i+2].setZRotation(minimizer->X()[i*4+3]);
     }
 
+  // hodo_->Print();
+
   // //---get covariance matrix
   // covarianceMatrixStatus_ = minimizer->CovMatrixStatus();
   // double covariances[nFitParameters * nFitParameters];

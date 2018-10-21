@@ -68,11 +68,16 @@ bool TrackReco::Begin(CfgManager& opts, uint64* index)
   RegisterSharedData(&tracks_,"tracks",false);
   RegisterSharedData(&hodo_,"hodo",true);
 
-  hodo_.Print();
+
 
   return true;
 }
 
+bool TrackReco::BeginLoop(int iLoop,CfgManager& opts)
+{
+  hodo_.Print();
+  return true;
+}
 void TrackReco::buildTracks()
 {
   while(1) 
