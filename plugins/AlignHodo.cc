@@ -17,7 +17,8 @@ bool AlignHodo::Begin(CfgManager& opts, uint64* index)
 {  
   //---inputs---
   srcInstance_ = opts.GetOpt<string>(instanceName_+".srcInstance");
-  
+  alignZ_ = opts.OptExist(instanceName_+".alignZ") ? opts.GetOpt<bool>(instanceName_+".alignZ") : true;
+
   hodo_=NULL;
   tracks_.tracks_.clear();
   return true;
@@ -122,7 +123,10 @@ void AlignHodo::minimize()
       GlobalCoord_t layerPos=hodo_->layers_[i+2].position_;
       minimizer->SetLimitedVariable(i*4, Form("X_%d",i+2), layerPos(0), 1E-6, -30, 30);
       minimizer->SetLimitedVariable(i*4+1, Form("Y_%d",i+2), layerPos(1), 1E-6, -30, 30);
-      minimizer->SetLimitedVariable(i*4+2, Form("Z_%d",i+2), layerPos(2), 1E-6, 0, 3000);
+      if (alignZ_)
+	minimizer->SetLimitedVariable(i*4+2, Form("Z_%d",i+2), layerPos(2), 1E-6, 0, 3000);
+      else
+	minimizer->SetFixedVariable(i*4+2, Form("Z_%d",i+2), layerPos(2));
       minimizer->SetLimitedVariable(i*4+3, Form("zRot_%d",i+2), hodo_->layers_[i+2].zRotation_, 1E-6, -0.5, 0.5);
     }
 
