@@ -10,7 +10,7 @@ if __name__ == '__main__':
     parser.add_argument('-w', '--write' , dest='write', default='', help='output object name')
     args = parser.parse_args ()
 
-    ROOT.gROOT.ProcessLine(".x rootlogon.C")
+    ROOT.gSystem.Load("lib/libH4Analysis.so")
 
     _file0=ROOT.TFile.Open(args.input)
     tt=_file0.Get(args.name)
