@@ -21,6 +21,7 @@ public:
    
     //---utils---
     bool Begin(CfgManager& opts, uint64* index);
+    bool BeginLoop(int iLoop, CfgManager& opts);
     bool ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, CfgManager& opts);
     
 private:
@@ -28,7 +29,7 @@ private:
     void buildTracks();
     void cleanTracks();
 
-    std::vector<Tracking::Track>           tracks_;
+    Tracking::TrackContainer               tracks_;
     std::vector<string>                    hitProducers_;
     std::map<string, Tracking::LayerHits*> hits_;
     Tracking::TelescopeLayout              tLayout_;

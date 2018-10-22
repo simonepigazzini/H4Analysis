@@ -18,7 +18,12 @@ class PositionMeasurement
 {
 public:
     //---ctors
-    PositionMeasurement();
+    PositionMeasurement():
+        nHits_(0),
+        X_(0),
+        Y_(0),
+        magnitude_(-1)
+        {};
     PositionMeasurement(int nhits, float x, float y, float mag=0):
         nHits_(nhits),
         X_(x),

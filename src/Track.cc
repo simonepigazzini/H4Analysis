@@ -87,3 +87,24 @@ bool Tracking::Track::fitTrack()
     return true;
 }
 
+Tracking::TelescopeLayout::TelescopeLayout(CfgManager& opts,string tagName)
+{
+    //---inputs---
+    std::vector<string> layers = opts.GetOpt<vector<string> >(tagName+".layers");
+  
+    for (auto& layer: layers)
+    {
+        int measurementType=opts.GetOpt<int>(layer+".measurementType");
+        std::vector<double> position=opts.GetOpt<vector<double> >(layer+".position");
+        if (position.size() != 3)
+            std::cout << "ERROR: Expecting a vector of size 3 for the layer position" << std::endl;
+        GlobalCoord_t layerPos;
+        layerPos.SetElements(position.begin(),position.end());
+      
+        ROOT::Math::Rotation3D::Scalar zRotationAngle = opts.GetOpt<ROOT::Math::Rotation3D::Scalar>(layer+".zRotationAngle");
+
+        Tracking::TelescopeLayer aLayer(layerPos,zRotationAngle);
+        aLayer.measurementType_=measurementType;
+        addLayer(aLayer);      
+    }
+}

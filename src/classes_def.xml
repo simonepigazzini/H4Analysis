@@ -1,6 +1,11 @@
 <lcgdict>
+  <class name="Tracking::TelescopeLayout"/>
+  <class name="Tracking::TelescopeLayer"/>
+  <class name="std::vector<Tracking::TelescopeLayer>"/>
   <class name="TrackPar"/>
   <class name="std::vector<TrackPar>"/>
+  <class name="PositionMeasurement"/>
+  <class name="std::vector<PositionMeasurement>"/>
   <class name="MCPAnalyzer"/>
   <class name="WFViewer"/>
   <class name="InterpolatorFunc"/>
