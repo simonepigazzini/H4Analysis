@@ -34,6 +34,7 @@ private:
     void   minimize();
 
     string srcInstance_;
+    bool   alignZ_;
     Tracking::TelescopeLayout* tLayout_; //pointer to current layout 
     Tracking::TrackContainer tracks_;
 };
