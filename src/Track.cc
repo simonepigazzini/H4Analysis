@@ -8,7 +8,7 @@
 #include "Math/AxisAngle.h"
 #include "Math/DisplacementVector3D.h"
 
-
+//**********Track*************************************************************************
 double Tracking::Track::residual(const TrackHit& hit, bool print)
 {
     Measurement_t pos;
@@ -87,15 +87,16 @@ bool Tracking::Track::fitTrack()
     return true;
 }
 
-Tracking::TelescopeLayout::TelescopeLayout(CfgManager& opts,string tagName)
-  : TNamed()
+//**********TelescopeLayout***************************************************************
+Tracking::TelescopeLayout::TelescopeLayout(CfgManager& opts, string tagName)
+    : TNamed()
 {
     //---inputs---
     std::vector<string> layers = opts.GetOpt<vector<string> >(tagName+".layers");
   
     for (auto& layer: layers)
     {
-        int measurementType=opts.GetOpt<int>(layer+".measurementType");
+        auto measurementType=opts.GetOpt<string>(layer+".measurementType");
         std::vector<double> position=opts.GetOpt<vector<double> >(layer+".position");
         if (position.size() != 3)
             std::cout << "ERROR: Expecting a vector of size 3 for the layer position" << std::endl;
