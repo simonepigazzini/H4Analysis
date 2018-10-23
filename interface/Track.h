@@ -10,6 +10,7 @@
 #include "CfgManager/interface/CfgManagerT.h"
 
 #include "TObject.h"
+#include "TNamed.h"
 
 #include <iostream>
 
@@ -33,7 +34,7 @@ namespace Tracking {
             {
             };
   
-        TelescopeLayer(const GlobalCoord_t& pos):
+        telescopeLayer(const GlobalCoord_t& pos): 
             position_(pos),rotation_( ROOT::Math::SMatrixIdentity() )
             {
             };
@@ -154,54 +155,39 @@ namespace Tracking {
             {
                 calculateInverseVariance();
             }
+          GlobalCoord_t position_; //axis origin in global Frame 
+        RotationMatrix_t rotation_; //axis rotation matrix from localFrame to global Frame 
+        double zRotation_;
+        int measurementType_; //0=no measurement passive layer,1=x only,2=y only,3=x,y only
+
+        ClassDef(TrackLayer, 3)
+  };
+
+  class TelescopeLayout : public TNamed
+  {
+  public:
+
+  TelescopeLayout() :  TNamed()
+      {
+	layers_.clear();
+      };
+
+    TelescopeLayout(CfgManager& opts, string tagName);
       
-        TrackHit( double x, double y, const TelescopeLayout* tLayout=NULL, int layer=0 ) :
-            localPosition_(x,y), localPositionError_(), tLayout_(tLayout), layer_(layer)
-            {
-                //check that layer is within the size of telescope...
-            }
-      
-        ~TrackHit() {};
-      
-        inline void setVarianceX(const double& sigma2x) 
-            {
-                localPositionError_(0,0)=sigma2x;
-            }
+    void addLayer(const TrackLayer& layer)
+    {
+      layers_.push_back(layer);
+    }
 
-        inline void setVarianceY(const double& sigma2y) 
-            {
-                localPositionError_(1,1)=sigma2y;
-            }
+    void SetName(const char *name)
+    {
+      fName = name;
+    }
 
-        inline void calculateInverseVariance()
-            {
-                int ifail;
-                localPositionErrorInverse_ = localPositionError_.InverseFast(ifail);
-                if (ifail)
-                    cout << "[TrackHit]::[ERROR]::Matrix Inversion failed" << endl;
-            }
-
-        inline void globalPosition( Measurement_t& pos ) const 
-            {
-                tLayout_->globalCoordinates(layer_, localPosition_, pos);
-            }
-
-        inline void globalPositionError( MeasurementErrorMatrix_t& posErr ) const 
-            {
-                tLayout_->globalCoordinates(layer_, localPositionError_, posErr);
-            }
-
-        inline void globalPositionErrorInverse( MeasurementErrorMatrix_t& posErr ) const 
-            {
-                tLayout_->globalCoordinates(layer_, localPositionErrorInverse_, posErr);
-            }
-
-        Measurement_t            localPosition_;
-        MeasurementErrorMatrix_t localPositionError_; //covariance matrix
-        MeasurementErrorMatrix_t localPositionErrorInverse_; //covariance matrix^-1
-        const TelescopeLayout*   tLayout_;
-        int                      layer_;
-    };
+    inline void globalCoordinates( const int& k, const Measurement_t& loc, Measurement_t& pos ) const
+    {
+      layers_[k].globalCoordinates(loc, pos);
+    }
 
     //---All the hits reconded in one layer
     class LayerHits: public TObject
@@ -216,11 +202,29 @@ namespace Tracking {
     //   - track fitting
     class Track : public TObject
     {
-    public:
-        Track(TelescopeLayout* tLayout=NULL) : trackPattern_(0), covarianceMatrixStatus_(0), tLayout_(tLayout)
-            {
-                hits_.clear();
-            };
+      std::cout << "=== TELESCOPE GEOMETRY ===" << std::endl;
+      int i=0;
+      for (auto& layer : layers_)
+	{
+	  std::cout << "LAYER "<< i << " ===> [" << layer.position_ << "]:[" << layer.zRotation_ << "]" <<  std::endl;
+	  ++i;
+	}
+    }
+
+    std::vector<TrackLayer> layers_;
+
+    ClassDef(TelescopeLayout, 4)
+  };
+
+  class TrackMeasurement : public TObject 
+  {
+  public:
+
+  TrackMeasurement( Measurement_t position, MeasurementErrorMatrix_t positionErr,  const TelescopeLayout* hodo=NULL, int layer=0 ) : 
+    localPosition_(position), localPositionError_ (positionErr), hodo_(hodo), layer_(layer)
+    {
+      calculateInverseVariance();
+    }
       
         ~Track() {};
       
@@ -278,8 +282,35 @@ namespace Tracking {
         std::vector<TrackHit>             hits_;
         bool                              fitAngle_;
     };
+      
+    ~Track() {};
+      
+    inline Measurement_t statusAt(const double& z) const //return also error in future
+    {
+      return trackPar_.Sub<Measurement_t>(0) + trackPar_.Sub<Measurement_t>(2) * z;
+    }
+      
+    void addMeasurement(TrackMeasurement& hit)
+    {
+      hits_.push_back(hit);
+      trackPattern_ |= 1 << hit.layer_;
+    }
 
-    class TrackContainer: public TObject
+    void removeMeasurement(std::vector<TrackMeasurement>::iterator it)
+    {
+      int layer=it->layer_;
+      hits_.erase(it);
+      trackPattern_ &= 0 << layer;
+    }
+
+    void setTelescopeLayout(TelescopeLayout* hodo)
+    {
+      hodo_=hodo;
+      for (auto& hit: hits_)
+	hit.hodo_=hodo;
+    }
+    
+    inline int nFreeParameters()
     {
     public:
         TrackContainer() { tracks_.clear(); };

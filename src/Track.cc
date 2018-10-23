@@ -88,6 +88,7 @@ bool Tracking::Track::fitTrack()
 }
 
 Tracking::TelescopeLayout::TelescopeLayout(CfgManager& opts,string tagName)
+  : TNamed()
 {
     //---inputs---
     std::vector<string> layers = opts.GetOpt<vector<string> >(tagName+".layers");
