@@ -2,8 +2,8 @@
 #define __FITPIX_RECO__
 
 #include "interface/PluginBase.h"
-#include "interface/FitpixTree.h"
-
+#include "interface/PositionTree.h"
+#include "interface/Track.h"
 
 using namespace std;
 
@@ -35,7 +35,7 @@ public:
 
         inline void swapCoordinates()
             {
-                std::swap(x_,y_);
+                std::swap(x_, y_);
             }
 
         inline int deltax( const FPHit& otherhit ) const
@@ -229,14 +229,17 @@ public:
     //---utils---
     bool Begin(CfgManager& opts, uint64* index);
     bool ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, CfgManager& opts);
-    
+    bool Clear();
+
 private:
 
-    bool swapCoordinates_;
-    long int        boardId_;
-    std::vector<FPHit> hits_;
+    bool                   swapCoordinates_;
+    long int               boardId_;
+    int                    maxClusterSize_;
+    std::vector<FPHit>     hits_;
     std::vector<FPCluster> clusters_;
-    FitpixTree*     fitpixTree_;
+    PositionTree           fitpixTree_;
+    Tracking::LayerHits    fitpixHits_; //container of hits for track reco
 };
 
 DEFINE_PLUGIN(FitpixReco);

@@ -41,7 +41,7 @@ bool DFTTemplate::Begin(CfgManager& opts, uint64* index)
     return true;
 }
 
-bool DFTTemplate::ProcessEvent(const H4Tree& event, map<string, PluginBase*>& plugins, CfgManager& opts)
+bool DFTTemplate::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, CfgManager& opts)
 {
     for(auto& channel : channelsNames_)
     {

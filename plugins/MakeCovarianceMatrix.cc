@@ -46,7 +46,7 @@ bool MakeCovarianceMatrix::ProcessEvent(const H4Tree& event, map<string, PluginB
     return true;
 }
 
-bool MakeCovarianceMatrix::End(CfgManager& opts)
+bool MakeCovarianceMatrix::EndLoop(int iLoop,CfgManager& opts)
 {
     for(auto& channel : channelsNames_)
     {        
