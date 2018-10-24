@@ -1,7 +1,5 @@
 #include "interface/FitUtils.h"
 
-
-
 /*** double crystalBall ***/
 double crystalBallLowHigh(double* x, double* par)
 {

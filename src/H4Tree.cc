@@ -29,11 +29,17 @@ void H4Tree::Init()
 
 H4Tree::~H4Tree()
 {
+    delete[] evtTimeBoard;
+    delete[] evtTime;
+    delete[] adcBoard;
+    delete[] adcChannel;
+    delete[] adcData;
     delete[] tdcChannel;
     delete[] tdcData;
     delete[] pattern;
     delete[] patternBoard;
     delete[] patternChannel;
+    delete[] digiBoard;
     delete[] digiGroup;
     delete[] digiChannel;
     delete[] digiSampleValue;

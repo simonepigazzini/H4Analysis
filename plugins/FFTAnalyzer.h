@@ -25,8 +25,8 @@ public:
 
     //---utils---
     bool Begin(CfgManager& opts, uint64* index);
-    bool ProcessEvent(const H4Tree& event, map<string, PluginBase*>& plugins, CfgManager& opts);
-    bool End(CfgManager& opts);
+    bool ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, CfgManager& opts);
+    bool EndLoop(int iLoop, CfgManager& opts);
     
 private:    
     //---internal data

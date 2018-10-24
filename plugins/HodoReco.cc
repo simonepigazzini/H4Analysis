@@ -76,13 +76,25 @@ bool HodoReco::Begin(CfgManager& opts, uint64* index)
     //---create a position tree
     bool storeTree = opts.OptExist(instanceName_+".storeTree") ?
         opts.GetOpt<bool>(instanceName_+".storeTree") : true;
-    RegisterSharedData(new TTree("h1", "hodo1_tree"), "hodo1_tree", storeTree);
+
+    //---Register output trees (one per X or Y layer) if specified
+    RegisterSharedData(new TTree("h1X", "hodo1X_tree"), "hodo1X_tree", storeTree);
     hodoTrees_[0] = PositionTree(index, (TTree*)data_.back().obj);
     hodoTrees_[0].Init();
-    RegisterSharedData(new TTree("h2", "hodo2_tree"), "hodo2_tree", storeTree);
+    RegisterSharedData(new TTree("h1Y", "hodo1Y_tree"), "hodo1Y_tree", storeTree);
     hodoTrees_[1] = PositionTree(index, (TTree*)data_.back().obj);
     hodoTrees_[1].Init();
+    RegisterSharedData(new TTree("h2X", "hodo2X_tree"), "hodo2X_tree", storeTree);
+    hodoTrees_[2] = PositionTree(index, (TTree*)data_.back().obj);
+    hodoTrees_[2].Init();
+    RegisterSharedData(new TTree("h2Y", "hodo2Y_tree"), "hodo2Y_tree", storeTree);
+    hodoTrees_[3] = PositionTree(index, (TTree*)data_.back().obj);
+    hodoTrees_[3].Init();
 
+    //---Register volatile hodo hit for track reconstruction
+    for (int i=0; i<nPlanes_; ++i)
+	RegisterSharedData(&hodoHits_[i], "hodo_layer_"+to_string(i), false);
+    
     //---cluster size options
     if(!opts.OptExist(instanceName_+".minClusterSize") || !opts.OptExist(instanceName_+".maxClusterSize"))
     {
@@ -94,7 +106,7 @@ bool HodoReco::Begin(CfgManager& opts, uint64* index)
         minClusterSize_ = opts.GetOpt<int>(instanceName_+".minClusterSize");
         maxClusterSize_ = opts.GetOpt<int>(instanceName_+".maxClusterSize");
     }
-    
+
     return true;
 }
 
@@ -103,12 +115,8 @@ bool HodoReco::ProcessEvent(H4Tree& h4Tree, map<string, PluginBase*>& plugins, C
     //---clear output tree
     for(int i=0; i<nPlanes_; ++i)
     {
-        hodoTrees_[i].X.clear();
-        hodoTrees_[i].cluster_X_size.clear();
-        hodoTrees_[i].n_clusters_X=0;
-        hodoTrees_[i].Y.clear();
-        hodoTrees_[i].cluster_Y_size.clear();
-        hodoTrees_[i].n_clusters_Y=0;
+        hodoTrees_[i].Clear();
+        hodoHits_[i].hits_.clear();
     }
 
     std::map<int,std::map<int,bool> > hodoFiberOn;
@@ -143,12 +151,8 @@ bool HodoReco::ProcessEvent(H4Tree& h4Tree, map<string, PluginBase*>& plugins, C
         }
     }
     
-    for(int i=0; i<nPlanes_*2; ++i)
+    for(int i=0; i<nPlanes_; ++i)
     {
-        float offset=0;
-        if(opts.OptExist(instanceName_+".hodoCorrection.hodoAlignOffset",i))
-            offset=opts.GetOpt<float>("H4Hodo.hodoCorrection.hodoAlignOffset",i);
-
         std::sort(fibersOn[i].begin(), fibersOn[i].end());
         vector<vector<int> > clusters;
         for(auto& fiber : fibersOn[i])
@@ -159,36 +163,37 @@ bool HodoReco::ProcessEvent(H4Tree& h4Tree, map<string, PluginBase*>& plugins, C
                 clusters.emplace_back(vector<int>({fiber}));
         }
                 
+	
+	Tracking::TelescopeLayout fakeHodo();
+		
+	for(auto& cluster : clusters)
+        {
+	    if(cluster.size() >= minClusterSize_  && cluster.size() <= maxClusterSize_)
+            {
+		float value = 0;
+		for(auto& fiber : cluster)
+                    value += fiber;
+		value /= cluster.size();
 
-        if(i%2 == 0)
-        {
-            for(auto& cluster : clusters)
-            {
-                if(cluster.size() >= minClusterSize_  && cluster.size() <= maxClusterSize_)
+                if(i%2 == 0)
                 {
-                    float value = 0;
-                    for(auto& fiber : cluster)
-                        value += fiber;
-                    value /= cluster.size();
-                    hodoTrees_[i/nPlanes_].X.push_back(0.5*value + offset);
-                    hodoTrees_[i/nPlanes_].cluster_X_size.push_back(cluster.size());
-                    hodoTrees_[i/nPlanes_].n_clusters_X++;
+                    Tracking::TrackHit trackMeasure(0.5*value, 0);
+                    trackMeasure.setVarianceX(0.15*0.15);
+                    trackMeasure.setVarianceY(9999.);
+                    trackMeasure.calculateInverseVariance();
+                    hodoHits_[i].hits_.push_back(trackMeasure);
+                    hodoTrees_[i/nPlanes_].n_clusters++;
+                    hodoTrees_[i/nPlanes_].clusters.emplace_back(cluster.size(), 0.5*value, -999, cluster.size());
                 }
-            }
-        }
-        else
-        {
-            for(auto& cluster : clusters)
-            {
-                if(cluster.size() >= minClusterSize_  && cluster.size() <= maxClusterSize_)
+                else
                 {
-                    float value = 0;
-                    for(auto& fiber : cluster)
-                        value += fiber;
-                    value /= cluster.size();
-                    hodoTrees_[i/nPlanes_].Y.push_back(0.5*value + offset);
-                    hodoTrees_[i/nPlanes_].cluster_Y_size.push_back(cluster.size());
-                    hodoTrees_[i/nPlanes_].n_clusters_Y++;
+                    Tracking::TrackHit trackMeasure(0., -0.5*value);
+                    trackMeasure.setVarianceX(9999.);
+                    trackMeasure.setVarianceY(0.15*0.15);
+                    trackMeasure.calculateInverseVariance();
+                    hodoHits_[i].hits_.push_back(trackMeasure);
+                    hodoTrees_[i/nPlanes_].n_clusters++;
+                    hodoTrees_[i/nPlanes_].clusters.emplace_back(cluster.size(), -999, -0.5*value, cluster.size());
                 }
             }
         }

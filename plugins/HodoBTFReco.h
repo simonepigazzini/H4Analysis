@@ -24,7 +24,8 @@ private:
     map<int, int> ADC_to_PMT_map;
     map<int, int> PMT_to_hodoX_map;
     map<int, int> PMT_to_hodoY_map;
-    PositionTree  hodoTree_;
+    PositionTree  hodoTreeX_;
+    PositionTree  hodoTreeY_;
 
     vector<float> hodoXpos;
     vector<float> hodoYpos;

@@ -36,7 +36,7 @@ DICTHDRS  =  $(patsubst $(LINKDEF),,$(HDRS)) $(LINKDEF)
 ARCH  =  $(shell root-config --arch)
 
 ROOTCFLAGS    = $(shell root-config --cflags)
-ROOTGLIBS     = $(shell root-config --glibs) -lMinuit -lTreePlayer -lMathMore
+ROOTGLIBS     = $(shell root-config --glibs) -lMinuit -lTreePlayer -lMathMore -lGenVector
 
 
 
@@ -47,7 +47,7 @@ CPP  =  g++
 CPPFLAGS  = -Wall -Wno-sign-compare -Wno-overloaded-virtual -I$(DIR) $(ROOTCFLAGS)
 
 LD       =  g++
-LDFLAGS  =  -rdynamic -shared -O2
+LDFLAGS  =  -rdynamic -shared -O2 
 SONAME	 =  libH4Analysis.so
 SOFLAGS  =  -Wl,-soname,
 
@@ -90,7 +90,7 @@ test:
 
 $(BIN)%: $(PRG)%$(PRGSuf) $(HDRS) $(LIB)$(SONAME) Makefile
 	@echo " CXX $<"
-	@$ $(CPP) $(CPPFLAGS) $(GLIBS) -L$(LIB) -lH4Analysis -o $@ $<
+	@$ $(CPP) $(CPPFLAGS) $(GLIBS) -L$(LIB) -lH4Analysis -lWFAnalyzer -o $@ $<
 
 $(OBJ)%$(OBJSuf): $(SRC)%$(SRCSuf) Makefile
 	@echo " CXX $<"
@@ -98,7 +98,8 @@ $(OBJ)%$(OBJSuf): $(SRC)%$(SRCSuf) Makefile
 
 $(LIB)libH4Analysis.cc: $(DICTHDRS)
 	@echo "Generating dictionary..."
-	@$ rootcling -f $(LIB)libH4Analysis.cc -c -p ${CXXFLAGS} $(DICTHDRS)
+#	@$ rootcling -f $(LIB)libH4Analysis.cc -c -p ${CXXFLAGS} $(DICTHDRS)
+	@$ genreflex $(DICTHDRS) -o $(LIB)libH4Analysis.cc -l$(LIB)libH4Analysis.so -s src/classes_def.xml -Iinterface/
 
 $(LIB)libH4Analysis.o: $(LIB)libH4Analysis.cc
 	@echo " CXX $<"	

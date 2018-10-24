@@ -9,7 +9,7 @@ WFClassClock::WFClassClock(float tUnit):
 //**********Getters***********************************************************************
 
 //----------Get time of a clock pulse-----------------------------------------------------
-pair<float, float> WFClassClock::GetTime(string method, vector<float>& params)
+WFFitResults WFClassClock::GetTime(string method, vector<float>& params)
 {
     //---CLK
     if(method.find("CLK") != string::npos)
@@ -40,19 +40,20 @@ pair<float, float> WFClassClock::GetTime(string method, vector<float>& params)
     }
    
     cout << ">>>ERROR, WFClassClock: time reconstruction method <" << method << "> not supported" << endl;
-    return make_pair(-1000, -1);
+    return WFFitResults{-1, -1000, -1, 0};
 }
 
 //----------Get time of a clock pulse-----------------------------------------------------
-pair<float, float> WFClassClock::GetTimeLE(float thr, int nmFitSamples, int npFitSamples, int min, int max)
+WFFitResults WFClassClock::GetTimeLE(float thr, int nmFitSamples, int npFitSamples, int min, int max)
 {
     //---check if signal window is valid
     if(min==max && max==-1 && sWinMin_==sWinMax_ && sWinMax_==-1)
-        return make_pair(-1000, -1);
+      return WFFitResults{leThr_, -1000, -1, 0};
     //---setup signal window
     if(min!=-1 && max!=-1)
         SetSignalWindow(min, max);
     //---compute LED time value 
+    float A=0, B=0;
     if(thr != leThr_ || leSample_ == -1)
     {
         //---find first sample above thr on RISING edge
@@ -66,22 +67,21 @@ pair<float, float> WFClassClock::GetTimeLE(float thr, int nmFitSamples, int npFi
             }
         }
         //---interpolate -- A+Bx = amp
-        float A=0, B=0;
         chi2le_ = LinearInterpolation(A, B, leSample_-nmFitSamples, leSample_+npFitSamples);
         leTime_ = (leThr_ - A) / B;
     }
 
-    return make_pair(leTime_, chi2le_);
+    return WFFitResults{leThr_, leTime_, chi2le_, B};
 }
 
 //----------Get time of a clock pulse-----------------------------------------------------
 //---Each rising edge zero crossing is measured, the clock period is
 //---then extracted from a heuristic fit (cit Marc)
-pair<float, float> WFClassClock::GetTimeCLK(float wleft, float wright, int min, int max)
+WFFitResults WFClassClock::GetTimeCLK(float wleft, float wright, int min, int max)
 {
     //---check if signal window is valid
     if(min==max && max==-1 && sWinMin_==sWinMax_ && sWinMax_==-1)
-        return make_pair(-1000, -1);
+      return WFFitResults{-1, -1000, -1, 0};
     //---setup signal window
     if(min!=-1 && max!=-1)
         SetSignalWindow(min, max);
@@ -127,8 +127,5 @@ pair<float, float> WFClassClock::GetTimeCLK(float wleft, float wright, int min, 
         phase_err += (phase+i*period-t_clk)*(phase+i*period-t_clk);
     }
 
-    return make_pair(phase, std::sqrt(phase_err/(N-1)));
+    return WFFitResults{0, phase, std::sqrt(phase_err/(N-1)), 0};
 }
-
-
-

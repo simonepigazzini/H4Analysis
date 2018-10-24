@@ -12,9 +12,6 @@ typedef unsigned long long int uint64;
 
 using namespace std;
 
-/* #define FITPIX_MAX_HITS 5000 */
-/* #define FITPIX_MAX_CLUSTERS 5000 */
-
 class FitpixTree
 {
 public: 
@@ -44,18 +41,11 @@ public:
 
     uint64* index;
     int n_hits;
-    /* float* hitX; */
-    /* float* hitY; */
-    /* float* hitCharge; */
     std::vector<float> hitX;
     std::vector<float> hitY;
     std::vector<float> hitCharge;
     
     int n_clusters;
-    /* float* clusterX; */
-    /* float* clusterY; */
-    /* float* clusterCharge; */
-    /* int* clusterSize; */
     std::vector<float> clusterX;
     std::vector<float> clusterY;
     std::vector<float> clusterCharge;

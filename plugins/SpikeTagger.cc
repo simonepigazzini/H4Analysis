@@ -148,7 +148,7 @@ bool SpikeTagger::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins,
         const auto undershoot_window = opts.GetOpt<int>(instanceName_+".undershootFinderWindow");
         const auto analyzedWF = WFs_[channel]->GetSamples();
         const auto t_unit = WFs_[channel]->GetTUnit();
-        const int max_sample = static_cast<int>(std::round(WFs_[channel]->GetTimeCF(1).first / t_unit));
+        const int max_sample = static_cast<int>(std::round(WFs_[channel]->GetTimeCF(1).time / t_unit));
         if(max_sample+undershoot_window < analyzedWF->size())
         {
             auto undershoot_sample = std::min_element(analyzedWF->begin() + max_sample,
@@ -284,7 +284,7 @@ bool SpikeTagger::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins,
         //---fix WF window around maximum sample of largest hit in the event.
         //   also assuming all channels have the same sampling frequency (i.e. don't mix VFEs with V1742 channels)
         const float tUnit = WFs_[channelsNames_[spikesTree_.max_hit]]->GetTUnit();
-        const int max_sample = static_cast<int>(std::round(WFs_[channelsNames_[spikesTree_.max_hit]]->GetTimeCF(1).first / tUnit));
+        const int max_sample = static_cast<int>(std::round(WFs_[channelsNames_[spikesTree_.max_hit]]->GetTimeCF(1).time / tUnit));
         for(const auto& channel : channelsNames_)
         {
             //---skip dead channels
