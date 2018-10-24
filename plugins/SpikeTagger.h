@@ -4,6 +4,7 @@
 #include <iostream>
 #include <algorithm>
 #include <iterator>
+#include <cmath>
 
 #include "interface/PluginBase.h"
 #include "interface/WFTree.h"
