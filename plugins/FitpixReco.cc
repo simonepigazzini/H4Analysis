@@ -95,13 +95,13 @@ bool FitpixReco::ProcessEvent(H4Tree& h4Tree, map<string, PluginBase*>& plugins,
         double clusY=(clusters_[i].y() - ((double)FITPIX_PIXELS_Y/2.)) * FITPIX_PIXELSIZE;
 
         if ( clusters_[i].nhits() <= maxClusterSize_ )
-	{
+        {
             Tracking::TrackHit trackMeasure(clusX, clusY);
             trackMeasure.setVarianceX(0.016*0.016); //55 mum/sqrt(12)
             trackMeasure.setVarianceY(0.016*0.016);
             trackMeasure.calculateInverseVariance();
             fitpixHits_.hits_.push_back(trackMeasure);
-	}
+        }
 
         fitpixTree_.n_clusters++; 
         fitpixTree_.clusters.emplace_back(clusters_[i].nhits(), clusX, clusY, clusters_[i].charge());

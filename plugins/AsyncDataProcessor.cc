@@ -65,11 +65,11 @@ bool AsyncDataProcessor::Begin(CfgManager& opts, uint64* index)
             return r_status;
         }
         //---Get plugin permanent shared data
-	for(auto& shared : plugin->GetSharedData("", "TTree", true))
+        for(auto& shared : plugin->GetSharedData("", "TTree", true))
             RegisterSharedData(shared.obj, shared.tag, shared.permanent); 
 
         //---Get plugin transient shared data
-	for(auto& shared : plugin->GetSharedData("", "", false))
+        for(auto& shared : plugin->GetSharedData("", "", false))
             RegisterSharedData(shared.obj, shared.tag, shared.permanent); 
     }
     

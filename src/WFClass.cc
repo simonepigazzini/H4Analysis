@@ -287,7 +287,7 @@ float WFClass::GetSignalIntegral(int riseWin, int fallWin)
         if(iSample < 0)
             continue;
         if(iSample >= samples_.size())
-	    break;
+            break;
         integral += samples_.at(iSample);
     }
 

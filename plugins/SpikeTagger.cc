@@ -202,17 +202,17 @@ bool SpikeTagger::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins,
                 ++n_plus;
             }
             switch (i) {
-                case 0:
-                    spikesTree_.n_samples_above_75perc_max[outCh] = n_minus + n_plus;
-                    spikesTree_.tot_75perc_max[outCh] = (n_minus + n_plus) * WFs_[channel]->GetTUnit();
-                    break;
-                case 1:
-                    spikesTree_.n_samples_above_50perc_max[outCh] = n_minus + n_plus;
-                    spikesTree_.tot_50perc_max[outCh] = (n_minus + n_plus) * WFs_[channel]->GetTUnit();
-                    break;
-                case 2:
-                    spikesTree_.n_samples_above_25perc_max[outCh] = n_minus + n_plus;
-                    spikesTree_.tot_25perc_max[outCh] = (n_minus + n_plus) * WFs_[channel]->GetTUnit();
+            case 0:
+                spikesTree_.n_samples_above_75perc_max[outCh] = n_minus + n_plus;
+                spikesTree_.tot_75perc_max[outCh] = (n_minus + n_plus) * WFs_[channel]->GetTUnit();
+                break;
+            case 1:
+                spikesTree_.n_samples_above_50perc_max[outCh] = n_minus + n_plus;
+                spikesTree_.tot_50perc_max[outCh] = (n_minus + n_plus) * WFs_[channel]->GetTUnit();
+                break;
+            case 2:
+                spikesTree_.n_samples_above_25perc_max[outCh] = n_minus + n_plus;
+                spikesTree_.tot_25perc_max[outCh] = (n_minus + n_plus) * WFs_[channel]->GetTUnit();
             }
         }
 
@@ -225,23 +225,23 @@ bool SpikeTagger::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins,
                 const float ratio = WFs_[channel]->GetSamples()->at(max_sample + i) / sample_max;
 
                 switch (i) {
-                    case -3:
-                        spikesTree_.sample_max_minus3_over_sample_max[outCh] = ratio;
-                        break;
-                    case -2:
-                        spikesTree_.sample_max_minus2_over_sample_max[outCh] = ratio;
-                        break;
-                    case -1:
-                        spikesTree_.sample_max_minus1_over_sample_max[outCh] = ratio;
-                        break;
-                    case 1:
-                        spikesTree_.sample_max_plus1_over_sample_max[outCh] = ratio;
-                        break;
-                    case 2:
-                        spikesTree_.sample_max_plus2_over_sample_max[outCh] = ratio;
-                        break;
-                    case 3:
-                        spikesTree_.sample_max_plus3_over_sample_max[outCh] = ratio;
+                case -3:
+                    spikesTree_.sample_max_minus3_over_sample_max[outCh] = ratio;
+                    break;
+                case -2:
+                    spikesTree_.sample_max_minus2_over_sample_max[outCh] = ratio;
+                    break;
+                case -1:
+                    spikesTree_.sample_max_minus1_over_sample_max[outCh] = ratio;
+                    break;
+                case 1:
+                    spikesTree_.sample_max_plus1_over_sample_max[outCh] = ratio;
+                    break;
+                case 2:
+                    spikesTree_.sample_max_plus2_over_sample_max[outCh] = ratio;
+                    break;
+                case 3:
+                    spikesTree_.sample_max_plus3_over_sample_max[outCh] = ratio;
                 }
             }
         }

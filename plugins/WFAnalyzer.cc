@@ -105,7 +105,7 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
         int nParams = opts.OptExist(channel+".signalWin", 5) ? opts.GetOpt<int>(channel+".signalWin", 5) : 0;
         std::vector<float> max_params;
         for(int ipar = 0; ipar < nParams; ++ipar)
-          max_params.push_back( opts.GetOpt<float>(channel+".signalWin",6+ipar) );
+            max_params.push_back( opts.GetOpt<float>(channel+".signalWin",6+ipar) );
         WFFitResults interpolAmpMax = WFs_[channel]->GetInterpolatedAmpMax(-1,-1, opts.GetOpt<int>(channel+".signalWin", 2),opts.GetOpt<int>(channel+".signalWin", 3), max_function, max_params);
         digiTree_.pedestal[outCh] = baselineInfo.baseline;
         digiTree_.b_charge[outCh] = WFs_[channel]->GetIntegral(opts.GetOpt<int>(channel+".baselineInt", 0), 

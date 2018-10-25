@@ -93,7 +93,7 @@ bool HodoReco::Begin(CfgManager& opts, uint64* index)
 
     //---Register volatile hodo hit for track reconstruction
     for (int i=0; i<nPlanes_; ++i)
-	RegisterSharedData(&hodoHits_[i], "hodo_layer_"+to_string(i), false);
+        RegisterSharedData(&hodoHits_[i], "hodo_layer_"+to_string(i), false);
     
     //---cluster size options
     if(!opts.OptExist(instanceName_+".minClusterSize") || !opts.OptExist(instanceName_+".maxClusterSize"))
@@ -164,16 +164,16 @@ bool HodoReco::ProcessEvent(H4Tree& h4Tree, map<string, PluginBase*>& plugins, C
         }
                 
 	
-	Tracking::TelescopeLayout fakeHodo();
+        Tracking::TelescopeLayout fakeHodo();
 		
-	for(auto& cluster : clusters)
+        for(auto& cluster : clusters)
         {
-	    if(cluster.size() >= minClusterSize_  && cluster.size() <= maxClusterSize_)
+            if(cluster.size() >= minClusterSize_  && cluster.size() <= maxClusterSize_)
             {
-		float value = 0;
-		for(auto& fiber : cluster)
+                float value = 0;
+                for(auto& fiber : cluster)
                     value += fiber;
-		value /= cluster.size();
+                value /= cluster.size();
 
                 if(i%2 == 0)
                 {

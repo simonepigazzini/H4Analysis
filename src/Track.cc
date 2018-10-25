@@ -32,10 +32,10 @@ double Tracking::Track::chi2(const double* par)
         trackPar_(0)=par[0];
         trackPar_(1)=par[1];
         if (fitAngle_)
-	{
+        {
             trackPar_(2)=par[2];
             trackPar_(3)=par[3];
-	}
+        }
     }
   
     double chi2=0;

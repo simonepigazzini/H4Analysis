@@ -42,18 +42,18 @@ bool TrackReco::Begin(CfgManager& opts, uint64* index)
         tokens.assign(tkIter, tkIterEnd);
 
         if(tokens.size() != 2)
-	{
+        {
             cout << "[TrackReco::" << instanceName_ << "]: Wrong geometry input " << geoTag << endl;
             return false;
-	}
+        }
 
         TFile *f = TFile::Open(tokens[0].c_str(), "READ");
         Tracking::TelescopeLayout* layout = (Tracking::TelescopeLayout*)f->Get(tokens[1].c_str());
         if(!layout)
-	{
+        {
             cout << "[TrackReco::" << instanceName_ << "]: Cannot find object " << geoTag << endl;
             return false;
-	}
+        }
 
         tLayout_ = *((Tracking::TelescopeLayout*)layout->Clone("loadedLayout"));
         f->Close();
@@ -136,12 +136,12 @@ void TrackReco::cleanTracks()
     {
         //---want to have at least an hit on X and Y. Check the error
         if(track->covarianceMatrixStatus_ != 3 || 
-            sqrt(track->trackParCov_(0, 0))>20.  || 
-            sqrt(track->trackParCov_(1, 1))>20.  ||
-            track->chi2() > cleaningChi2Cut_)
-  	{
+           sqrt(track->trackParCov_(0, 0))>20.  || 
+           sqrt(track->trackParCov_(1, 1))>20.  ||
+           track->chi2() > cleaningChi2Cut_)
+        {
             tracks_.tracks_.erase( track );
-  	}
+        }
         else
             ++track;
     }
@@ -159,10 +159,10 @@ bool TrackReco::ProcessEvent(H4Tree& h4Tree, map<string, PluginBase*>& plugins, 
         std::vector<string> tokens;
         tokens.assign(tkIter, tkIterEnd);
         if(tokens.size() != 2)
-	{
+        {
             cout << "[TrackReco::" << instanceName_ << "]: Wrong input name " << hitLayer << endl;
             return false;
-	}
+        }
 
         auto shared_data = plugins[tokens[0]]->GetSharedData(tokens[0]+"_"+tokens[1], "", false);
 
