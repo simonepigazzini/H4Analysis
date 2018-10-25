@@ -182,8 +182,8 @@ bool HodoReco::ProcessEvent(H4Tree& h4Tree, map<string, PluginBase*>& plugins, C
                     trackMeasure.setVarianceY(9999.);
                     trackMeasure.calculateInverseVariance();
                     hodoHits_[i].hits_.push_back(trackMeasure);
-                    hodoTrees_[i/nPlanes_].n_clusters++;
-                    hodoTrees_[i/nPlanes_].clusters.emplace_back(cluster.size(), 0.5*value, -999, cluster.size());
+                    hodoTrees_[i].n_clusters++;
+                    hodoTrees_[i].clusters.emplace_back(cluster.size(), 0.5*value, -999, cluster.size());
                 }
                 else
                 {
@@ -192,8 +192,8 @@ bool HodoReco::ProcessEvent(H4Tree& h4Tree, map<string, PluginBase*>& plugins, C
                     trackMeasure.setVarianceY(0.15*0.15);
                     trackMeasure.calculateInverseVariance();
                     hodoHits_[i].hits_.push_back(trackMeasure);
-                    hodoTrees_[i/nPlanes_].n_clusters++;
-                    hodoTrees_[i/nPlanes_].clusters.emplace_back(cluster.size(), -999, -0.5*value, cluster.size());
+                    hodoTrees_[i].n_clusters++;
+                    hodoTrees_[i].clusters.emplace_back(cluster.size(), -999, -0.5*value, cluster.size());
                 }
             }
         }

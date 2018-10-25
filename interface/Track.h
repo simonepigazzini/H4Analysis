@@ -145,7 +145,7 @@ namespace Tracking {
 
         std::vector<TelescopeLayer> layers_;
 
-        ClassDef(TelescopeLayout, 4)
+        ClassDef(TelescopeLayout, 5)
     };
 
     //---Single track hit in a telescope layer
