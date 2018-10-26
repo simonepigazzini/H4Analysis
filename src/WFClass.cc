@@ -60,10 +60,12 @@ WFFitResults WFClass::GetInterpolatedAmpMax(int min, int max, int nmFitSamples, 
 
     //---fit the max
     TH1F h_max("h_max", "", nmFitSamples+npFitSamples+1, maxSample_-nmFitSamples, maxSample_+npFitSamples);
-    if(f_max_==NULL)
+    if(f_max_ == NULL)
         f_max_ = new TF1("f_max", function.c_str(), maxSample_-nmFitSamples-0.5, maxSample_+npFitSamples+0.5, TF1::EAddToList::kNo);
+    else
+        f_max_->SetRange(maxSample_-nmFitSamples-0.5, maxSample_+npFitSamples+0.5);
     for(unsigned int ipar = 0; ipar < params.size(); ++ipar)
-        f_max_->SetParameter(ipar,params.at(ipar));
+        f_max_->SetParameter(ipar, params.at(ipar));
     
     int bin=1;
     for(int iSample=maxSample_-nmFitSamples; iSample<=maxSample_+npFitSamples; ++iSample)
@@ -86,7 +88,7 @@ WFFitResults WFClass::GetInterpolatedAmpMax(int min, int max, int nmFitSamples, 
         fitAmpMax_ = 1000;
         fitChi2Max_ = -1;
     }
-        
+    
     return WFFitResults{fitAmpMax_, fitTimeMax_*tUnit_, fitChi2Max_, 0};
 }
 
