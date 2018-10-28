@@ -53,15 +53,19 @@ bool DigitizerReco::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugin
         int offset = event.digiMap.at(make_tuple(spill, digiBd, digiGr, digiCh));
         for(int iSample=offset; iSample<offset+nSamples_[channel]; ++iSample)
         {
-            //---H4DAQ bug: sometimes ADC value is out of bound.
-            //---skip everything if one channel is bad
-            if(event.digiSampleValue[iSample] > 1e6)
+	  //Set the start index cell
+	  if (iSample==offset)
+	    WFs[channel]->SetStartIndexCell(event.digiStartIndexCell[iSample]);
+
+	  //---H4DAQ bug: sometimes ADC value is out of bound.
+	  //---skip everything if one channel is bad
+	  if(event.digiSampleValue[iSample] > 1e6)
             {
-                evtStatus = false;
-                WFs[channel]->AddSample(4095);
+	      evtStatus = false;
+	      WFs[channel]->AddSample(4095);
             }
-            else
-                WFs[channel]->AddSample(event.digiSampleValue[iSample]);
+	  else
+	    WFs[channel]->AddSample(event.digiSampleValue[iSample]);
         }
         if(opts.OptExist(channel+".useTrigRef") && opts.GetOpt<bool>(channel+".useTrigRef"))
             WFs[channel]->SetTrigRef(trigRef);

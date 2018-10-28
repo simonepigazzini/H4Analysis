@@ -1,4 +1,7 @@
 <lcgdict>
+  <class name="DigitizerCalibration"/>
+  <class name="std::map<pair<int,int>,DigiChannelCalibration>"/>
+  <class name="DigiChannelCalibration"/>
   <class name="Tracking::TelescopeLayout"/>
   <class name="Tracking::TelescopeLayer"/>
   <class name="std::vector<Tracking::TelescopeLayer>"/>

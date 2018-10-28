@@ -42,6 +42,18 @@ float WFClass::GetAmpMax(int min, int max)
     return samples_.at(maxSample_);
 }
 
+WFFitResults WFClass::GetInterpolatedSample(int sample, int samplesLeft, int samplesRight)
+{
+  if (sample>0 && ( samplesLeft>0 || samplesRight>0 ) )
+    {
+      float A,B, chi2;
+      chi2 = LinearInterpolation(A, B, sample-samplesLeft, sample+samplesRight, sample); //get interpolated sample from left & right samples
+      return WFFitResults{ A, 0, chi2, B};
+    }
+  else
+    return {-1, -1000, -1, 0};
+}
+
 //----------Get the interpolated max/min amplitude wrt polarity---------------------------
 WFFitResults WFClass::GetInterpolatedAmpMax(int min, int max, int nmFitSamples, int npFitSamples, string function, vector<float> params)
 {
@@ -463,6 +475,36 @@ WFFitResults WFClass::TemplateFit(float offset, int lW, int hW)
     return WFFitResults{tempFitAmp_, tempFitTime_, TemplateChi2()/(fWinMax_-fWinMin_-2), 0};
 }
 
+//----------analytic fit to the WF--------------------------------------------------------
+void WFClass::AnalyticFit(TF1* f, int lW, int hW)
+{
+  f_fit_ = f;
+
+  fWinMin_ = lW;
+  fWinMax_ = hW;
+  //---setup minimization
+  ROOT::Math::Functor chi2(this, &WFClass::AnalyticChi2, f_fit_->GetNumberFreeParameters());
+  ROOT::Math::Minimizer* minimizer = ROOT::Math::Factory::CreateMinimizer("Minuit2", "Migrad");
+  minimizer->SetMaxFunctionCalls(100000);
+  minimizer->SetMaxIterations(1000);
+  minimizer->SetTolerance(1e-6);
+  minimizer->SetPrintLevel(0);
+  minimizer->SetFunction(chi2);
+  for (int iPar=0;iPar<f_fit_->GetNumberFreeParameters();++iPar)
+    {
+      double pmin,pmax;
+      f_fit_->GetParLimits(iPar,pmin,pmax);
+      minimizer->SetLimitedVariable(iPar, Form("p%d",iPar), f_fit_->GetParameter(iPar), (pmax-pmin)/1000., pmin, pmax );
+    }
+  //---fit
+  minimizer->Minimize();
+  for (int iPar=0;iPar<f_fit_->GetNumberFreeParameters();++iPar)
+    {
+      f_fit_->SetParameter(iPar,minimizer->X()[iPar]);
+      f_fit_->SetParError(iPar,sqrt(minimizer->CovMatrix(iPar,iPar)));
+    }
+}
+
 void WFClass::EmulatedWF(WFClass& wf,float rms, float amplitude, float time)
 {
     TRandom3 rnd(0);
@@ -560,7 +602,7 @@ float WFClass::BaselineRMS()
 }
 
 //----------Linear interpolation util-----------------------------------------------------
-float WFClass::LinearInterpolation(float& A, float& B, const int& min, const int& max)
+float WFClass::LinearInterpolation(float& A, float& B, const int& min, const int& max, const int& sampleToSkip)
 {
     //---definitions---
     float xx= 0.;
@@ -576,6 +618,8 @@ float WFClass::LinearInterpolation(float& A, float& B, const int& min, const int
     {
         if(iSample<0 || iSample>=int(samples_.size())) 
             continue;
+	if (sampleToSkip>=0 && iSample==sampleToSkip)
+	  continue;
         xx = iSample*iSample*tUnit_*tUnit_;
         xy = iSample*tUnit_*samples_[iSample];
         Sx = Sx + (iSample)*tUnit_;
@@ -626,6 +670,42 @@ double WFClass::TemplateChi2(const double* par)
         }
     }
 
+    return chi2;
+}
+
+//----------chi2 for analytic fit---------------------------------------------------------
+double WFClass::AnalyticChi2(const double* par)
+{
+
+  if (f_fit_ == NULL)
+    return -1;
+  
+  double chi2 = 0;
+  double delta = 0;
+
+  if(par)
+    for (int iPar=0; iPar<f_fit_->GetNumberFreeParameters();++iPar)
+      {
+	f_fit_->SetParameter(iPar,*(par+iPar));
+	//	std::cout << Form("Set par %d to %f",iPar,*(par+iPar)) << std::endl;
+      }
+
+  for(int iSample=fWinMin_; iSample<=fWinMax_; ++iSample)
+    {
+      if(iSample < 0 || iSample >= int(samples_.size()))
+        {
+	  //cout << ">>>WARNING: template fit out of samples rage (chi2 set to -1)" << endl;
+	  chi2 += 9999;
+        }
+      else
+        {
+	  //	  delta = (samples_[iSample] - f_fit_->Eval(iSample*tUnit_))/bRMS_;
+	  delta = (samples_[iSample] - f_fit_->Eval(iSample*tUnit_))/10.;
+	  chi2 += delta*delta;
+	  //std::cout << Form("%d: %f %f %f %f",iSample,samples_[iSample],f_fit_->Eval(iSample*tUnit_),delta,chi2) << std::endl;
+	}
+    }
+      
     return chi2;
 }
 
