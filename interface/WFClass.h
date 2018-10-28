@@ -140,7 +140,7 @@ public:
 
     //---utils---
     void                         Reset();
-    void                         AddSample(float sample) {samples_.push_back(polarity_*sample);};
+    void                         AddSample(float sample) {samples_.push_back(polarity_*sample);times_.push_back(samples_.size()-1.);};
     WFBaseline                   SubtractBaseline(int min=-1, int max=-1);
     WFFitResults                 TemplateFit(float offset=0., int lW=0, int hW=0);
     void                         AnalyticFit(TF1* f, int lW, int hW);
@@ -162,6 +162,8 @@ protected:
     
 protected:
     vector<double> samples_;
+    vector<double> calibSamples_;
+    vector<double> times_;
     DigiChannelCalibration* calibration_;
 
     int            startIndexCell_;
