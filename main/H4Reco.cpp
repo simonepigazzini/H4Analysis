@@ -230,7 +230,9 @@ int main(int argc, char* argv[])
             }
         
 	    //---Fill the main tree with info variables and increase event counter
-	    mainTree.time_stamp = dataLoader.GetTree().evtTimeStart;
+            mainTree.time_stamps.clear();
+            for(int iT=0; iT<dataLoader.GetTree().nEvtTimes; ++iT)
+                mainTree.time_stamps.push_back(dataLoader.GetTree().evtTime[iT]);
 	    mainTree.evt_flag = status;
 	    mainTree.run = dataLoader.GetTree().runNumber;
 	    mainTree.spill = dataLoader.GetTree().spillNumber;
