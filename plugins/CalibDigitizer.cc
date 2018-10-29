@@ -106,7 +106,7 @@ bool CalibDigitizer::ProcessEvent(H4Tree& h4Tree, map<string, PluginBase*>& plug
 
 	double chi2=WFs_[channel]->AnalyticFit(wFit,0,analizedWF->size()-50); //fit using most of the samples avoiding the last samples of the digitizer
 
-	if (chi2>50000)
+	if (chi2>50000 || wFit->GetParameter(1)<=900. ) //removing bad fits or empty channel
 	  continue;
 
 	thisFit_+=chi2;
@@ -155,6 +155,8 @@ bool CalibDigitizer::EndLoop(int iLoop, CfgManager& opts)
       int nSamples=opts.GetOpt<int>(channel+".nSamples");
       auto tUnit = opts.GetOpt<float>(channel+".tUnit");
       pair<int,int> channelID(opts.GetOpt<int>(channel+".digiGroup"),opts.GetOpt<int>(channel+".digiChannel"));
+      double deltaV_mean=0;
+      double deltaT_mean=0;
       for (int iSample=0;iSample<nSamples;++iSample)
 	{
 	  TVectorD params;
@@ -165,7 +167,19 @@ bool CalibDigitizer::EndLoop(int iLoop, CfgManager& opts)
 
 	  digiCalibration_.channelCalibrations_[channelID].calibrations_[iSample].deltaV+=params(0);
 	  digiCalibration_.channelCalibrations_[channelID].calibrations_[iSample].deltaT+=(params(1)/tUnit);
+	  deltaV_mean+=digiCalibration_.channelCalibrations_[channelID].calibrations_[iSample].deltaV;
+	  deltaT_mean+=digiCalibration_.channelCalibrations_[channelID].calibrations_[iSample].deltaT;
 	}
+
+      //forcethe calibrations not to shift the average V and T
+      deltaV_mean=deltaV_mean/(double)nSamples;
+      deltaT_mean=deltaT_mean/(double)nSamples;
+      for (int iSample=0;iSample<nSamples;++iSample)
+	{
+	  digiCalibration_.channelCalibrations_[channelID].calibrations_[iSample].deltaV-=deltaV_mean;
+	  digiCalibration_.channelCalibrations_[channelID].calibrations_[iSample].deltaT-=deltaT_mean;
+	}
+
       offset+=nSamples;
     }
 
