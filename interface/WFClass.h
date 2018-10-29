@@ -91,7 +91,9 @@ public:
     ~WFClass() {};
 
     //---getters---
-    inline const vector<double>* GetSamples() {return &samples_;};
+    inline const vector<double>* GetSamples() {return &calibSamples_;};
+    inline const vector<double>* GetTimes() {return &times_;};
+    inline const vector<double>* GetOriginalSamples() {return &samples_;};
     inline int                   GetStartIndexCell() {return startIndexCell_;}
     inline int                   GetBWinMin() {return bWinMin_;}
     inline int                   GetBWinMax() {return bWinMax_;}
@@ -119,6 +121,7 @@ public:
     inline float                 GetCFSlope() {return cfSlope_;};
     inline TF1*                  GetAmpFunc() { return f_max_; };
     inline TF1*                  GetFitFunc() { return f_fit_; };
+    inline DigiChannelCalibration* GetCalibration() { return calibration_; };
     float                        GetAmpMax(int min=-1, int max=-1);
     WFFitResults                 GetInterpolatedSample(int sample, int samplesLeft=-1, int samplesRight=-1);
     WFFitResults                 GetInterpolatedAmpMax(int min=-1, int max=-1, int nmFitSamples=7, int npFitSamples=7, string function="pol2", vector<float> params=vector<float>{});
@@ -129,21 +132,25 @@ public:
     float                        GetIntegral(int min=-1, int max=-1);
     float                        GetModIntegral(int min=-1, int max=-1);
     virtual float                GetSignalIntegral(int riseWin, int fallWin);
+
     //---setters---
     inline void                  SetTrigRef(float trigRef){trigRef_ = trigRef;};
+    inline void                  SetCalibration(DigiChannelCalibration* calib){calibration_=calib;};
+    inline void                  SetStartIndexCell(int cell){startIndexCell_=cell;};
     void                         SetSignalWindow(int min, int max);
     void                         SetSignalIntegralWindow(int min, int max);
     void                         SetBaselineWindow(int min, int max);
     void                         SetBaselineIntegralWindow(int min, int max);
     void                         SetTemplate(TH1* templateWF=NULL);
-    void                         SetStartIndexCell(int cell){startIndexCell_=cell;};
+
 
     //---utils---
     void                         Reset();
-    void                         AddSample(float sample) {samples_.push_back(polarity_*sample);times_.push_back(samples_.size()-1.);};
+    void                         ApplyCalibration();
+    void                         AddSample(float sample) {samples_.push_back(polarity_*sample);calibSamples_.push_back(polarity_*sample);times_.push_back(samples_.size()-1.);};
     WFBaseline                   SubtractBaseline(int min=-1, int max=-1);
     WFFitResults                 TemplateFit(float offset=0., int lW=0, int hW=0);
-    void                         AnalyticFit(TF1* f, int lW, int hW);
+    double                       AnalyticFit(TF1* f, int lW, int hW);
     void                         EmulatedWF(WFClass& wf, float rms, float amplitude, float time);
     void                         FFT(WFClass& wf, float tau, int cut);
     void                         Print();
@@ -164,6 +171,7 @@ protected:
     vector<double> samples_;
     vector<double> calibSamples_;
     vector<double> times_;
+
     DigiChannelCalibration* calibration_;
 
     int            startIndexCell_;

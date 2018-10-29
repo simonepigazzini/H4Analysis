@@ -237,7 +237,8 @@ int main(int argc, char* argv[])
     else
         cout << ">>> Processing H4DAQ run #" << run << " <<<" << endl;
 
-    while(iLoop<totLoops)
+    bool endLoop=true;
+    while(iLoop<totLoops && endLoop)
     {
 	int nEvents = 0;
 
@@ -310,12 +311,7 @@ int main(int argc, char* argv[])
 	for(auto& plugin : pluginSequence)
         {
 	    //---call endjob for each plugin        
-	    bool r_status = plugin->EndLoop(iLoop,opts);
-	    if(!r_status)
-            {
-		cout << ">>> ERROR: plugin returned bad flag from EndLoop() call: " << plugin->GetInstanceName() << endl;
-		exit(-1);
-            }
+	    endLoop &= plugin->EndLoop(iLoop,opts);
 
 	    //---get permanent data from each plugin and store them in the out file
 	    for(auto& shared : plugin->GetSharedData())

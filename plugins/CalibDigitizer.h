@@ -3,7 +3,9 @@
 
 #include "interface/PluginBase.h"
 #include "interface/WFClass.h"
+#include "interface/CalibDigiTree.h"
 #include "TLinearFitter.h"
+#include "TGraph.h"
 
 using namespace std;
 
@@ -35,10 +37,15 @@ private:
     string                      srcInstance_;
     vector<string>              channelsNames_;
 
+
     map<string, WFClass*>       WFs_;
     vector<TLinearFitter>       fitters_;
     
     DigitizerCalibration        digiCalibration_;
+    CalibDigiTree*              calibTree_;
+    
+    double                       prevFit_;
+    double                       thisFit_;
 };
 
 DEFINE_PLUGIN(CalibDigitizer);

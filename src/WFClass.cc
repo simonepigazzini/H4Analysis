@@ -12,7 +12,7 @@ WFClass::WFClass(int polarity, float tUnit):
     fitChi2Max_(-1), baseline_(-1), bRMS_(-1), cfSample_(-1), cfFrac_(-1), cfTime_(-1),
     leSample_(-1), leTime_(-1), chi2cf_(-1), chi2le_(-1),
     fWinMin_(-1), fWinMax_(-1), tempFitTime_(-1), tempFitAmp_(-1),
-    f_max_(NULL), interpolator_(NULL)
+    f_max_(NULL), f_fit_(NULL), interpolator_(NULL)
 {}
 //**********Getters***********************************************************************
 
@@ -417,6 +417,24 @@ void WFClass::Reset()
     times_.clear();
 } 
 
+void WFClass::ApplyCalibration()
+{
+  if (!calibration_)
+    {
+      std::cout << "[WFClass]::ERROR::No calibration available" << std::endl;
+      return;
+    }
+
+  //calibration is applied per cellIndex (not sampleIndex)
+  for (int iSample=0;iSample<samples_.size();++iSample)
+    {
+      int cellIndex=(iSample+startIndexCell_)%samples_.size();
+      DigiChannelCalibration::calibrationParameters cellCalibration=calibration_->calibrations_[cellIndex];
+      times_[iSample]=iSample-cellCalibration.deltaT;
+      calibSamples_[iSample]=samples_[iSample]+cellCalibration.deltaV;
+    }
+}
+
 //---------estimate the baseline in a given range and then subtract it from the signal----
 WFBaseline WFClass::SubtractBaseline(int min, int max)
 {
@@ -479,7 +497,7 @@ WFFitResults WFClass::TemplateFit(float offset, int lW, int hW)
 }
 
 //----------analytic fit to the WF--------------------------------------------------------
-void WFClass::AnalyticFit(TF1* f, int lW, int hW)
+double WFClass::AnalyticFit(TF1* f, int lW, int hW)
 {
   f_fit_ = f;
 
@@ -506,6 +524,8 @@ void WFClass::AnalyticFit(TF1* f, int lW, int hW)
       f_fit_->SetParameter(iPar,minimizer->X()[iPar]);
       f_fit_->SetParError(iPar,sqrt(minimizer->CovMatrix(iPar,iPar)));
     }
+
+  return minimizer->MinValue();
 }
 
 void WFClass::EmulatedWF(WFClass& wf,float rms, float amplitude, float time)
@@ -608,6 +628,7 @@ float WFClass::BaselineRMS()
 float WFClass::LinearInterpolation(float& A, float& B, const int& min, const int& max, const int& sampleToSkip)
 {
   TLinearFitter lf(1);
+  lf.SetFormula("hyp1");
   int usedSamples=0;
   for(int iSample=min; iSample<=max; ++iSample)
     {
@@ -726,7 +747,7 @@ double WFClass::AnalyticChi2(const double* par)
 	  //	  delta = (calibSamples_[iSample] - f_fit_->Eval(iSample*tUnit_))/bRMS_;
 	  delta = (calibSamples_[iSample] - f_fit_->Eval(times_[iSample]*tUnit_))/10.;
 	  chi2 += delta*delta;
-	  //std::cout << Form("%d: %f %f %f %f",iSample,calibSamples_[iSample],f_fit_->Eval(times_[iSample]*tUnit_),delta,chi2) << std::endl;
+	  //	  std::cout << Form("%d: %f %f %f %f %f",iSample,times_[iSample]*tUnit_,calibSamples_[iSample],f_fit_->Eval(times_[iSample]*tUnit_),delta,chi2) << std::endl;
 	}
     }
       
