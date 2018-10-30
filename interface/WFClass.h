@@ -45,6 +45,8 @@ class  DigiChannelCalibration
   struct calibrationParameters
   {
     double deltaV;
+    double slopeV;
+    double quadraticV;
     double deltaT;
   };
   
@@ -147,7 +149,12 @@ public:
     //---utils---
     void                         Reset();
     void                         ApplyCalibration();
-    void                         AddSample(float sample) {samples_.push_back(polarity_*sample);calibSamples_.push_back(polarity_*sample);times_.push_back(samples_.size()-1.);};
+    void                         AddSample(float sample) 
+    {
+      samples_.push_back(polarity_*sample); 
+      calibSamples_.push_back(polarity_*sample); //deltaV=0 
+      times_.push_back( (samples_.size()-1.)*tUnit_ ); //deltaT=0
+    };
     WFBaseline                   SubtractBaseline(int min=-1, int max=-1);
     WFFitResults                 TemplateFit(float offset=0., int lW=0, int hW=0);
     double                       AnalyticFit(TF1* f, int lW, int hW);

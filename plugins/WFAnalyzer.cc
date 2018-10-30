@@ -163,11 +163,10 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
         {
             auto analizedWF = WFs_[channel]->GetSamples();
             auto sampleTimes = WFs_[channel]->GetTimes();
-            float tUnit = WFs_[channel]->GetTUnit();
             for(unsigned int jSample=0; jSample<analizedWF->size(); ++jSample)
             {
                 outWFTree_.WF_ch.push_back(outCh);
-                outWFTree_.WF_time.push_back(sampleTimes->at(jSample)*tUnit);
+                outWFTree_.WF_time.push_back(sampleTimes->at(jSample));
                 outWFTree_.WF_val.push_back(analizedWF->at(jSample));
             }
         }
