@@ -37,6 +37,11 @@ private:
     string                      srcInstance_;
     vector<string>              channelsNames_;
 
+    bool                        fitDeltaV_;
+    bool                        fitSlopeV_;
+    bool                        fitQuadraticV_;
+    bool                        fitDeltaT_;
+    string                      functionType_;
 
     map<string, WFClass*>       WFs_;
     vector<TLinearFitter>       fitters_;
