@@ -24,16 +24,16 @@ public:
     //---utils---
     void Init();
     void Clear() 
-    {
-      hitX.clear();
-      hitY.clear();
-      hitCharge.clear();
+        {
+            hitX.clear();
+            hitY.clear();
+            hitCharge.clear();
 
-      clusterX.clear();
-      clusterY.clear();
-      clusterCharge.clear();
-      clusterSize.clear();
-    };
+            clusterX.clear();
+            clusterY.clear();
+            clusterCharge.clear();
+            clusterSize.clear();
+        };
 
     void Fill() {tree_->Fill();};
 

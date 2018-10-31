@@ -6,7 +6,6 @@ RecoTree::RecoTree(uint64* idx, TTree* tree)
 
     index=idx;
     start_time=0;
-    time_stamp=0;
     evt_flag=0;
     run=0;
     spill=0;
@@ -14,7 +13,7 @@ RecoTree::RecoTree(uint64* idx, TTree* tree)
     //---global branches
     tree_->Branch("index", index, "index/l");
     tree_->Branch("start_time", &start_time, "start_time/l");
-    tree_->Branch("time_stamp", &time_stamp, "time_stamp/l");
+    tree_->Branch("time_stamps", &time_stamps);
     tree_->Branch("evt_flag", &evt_flag, "evt_flag/i");    
     tree_->Branch("run", &run, "run/i");
     tree_->Branch("spill", &spill, "spill/i");

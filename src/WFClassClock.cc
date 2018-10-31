@@ -48,7 +48,7 @@ WFFitResults WFClassClock::GetTimeLE(float thr, int nmFitSamples, int npFitSampl
 {
     //---check if signal window is valid
     if(min==max && max==-1 && sWinMin_==sWinMax_ && sWinMax_==-1)
-      return WFFitResults{leThr_, -1000, -1, 0};
+        return WFFitResults{leThr_, -1000, -1, 0};
     //---setup signal window
     if(min!=-1 && max!=-1)
         SetSignalWindow(min, max);
@@ -81,7 +81,7 @@ WFFitResults WFClassClock::GetTimeCLK(float wleft, float wright, int min, int ma
 {
     //---check if signal window is valid
     if(min==max && max==-1 && sWinMin_==sWinMax_ && sWinMax_==-1)
-      return WFFitResults{-1, -1000, -1, 0};
+        return WFFitResults{-1, -1000, -1, 0};
     //---setup signal window
     if(min!=-1 && max!=-1)
         SetSignalWindow(min, max);

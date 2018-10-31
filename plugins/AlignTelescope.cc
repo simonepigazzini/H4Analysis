@@ -72,14 +72,14 @@ double AlignTelescope::globalChi2(const double* par)
     if (par) //--- set the actual fit parameters
     {
         for (int i=0;i<(tLayout_->layers_.size()-2);++i) //keep the first 2 layers as reference
-	{
+        {
             //--- set position and rotations
             for (int icoord=0;icoord<3;++icoord) 
                 alignedLayers[i+2].position_(icoord)=par[i*4+icoord];
             alignedLayers[i+2].setZRotation(par[i*4+3]);
 
             alignedTelescope.layers_[i+2]=alignedLayers[i+2]; //put misaligned layer in layout 
-	}
+        }
     }
 
     for (auto& track: tracks_.tracks_)

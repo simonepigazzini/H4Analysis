@@ -14,8 +14,9 @@
 #include "CfgManager/interface/CfgManagerT.h"
 
 #include "interface/PluginLoader.h"
-#include "interface/RecoTree.h"
 #include "interface/PluginBase.h"
+#include "interface/DataLoader.h"
+#include "interface/RecoTree.h"
 
 #include <netdb.h>
 #include <unistd.h>
@@ -72,67 +73,6 @@ void TrackProcess(float* cpu, float* mem, float* vsz, float* rss)
          << "time lasted: " << time << endl;
 }
                   
-//----------Get input files---------------------------------------------------------------
-void ReadInputFiles(CfgManager& opts, int& firstSpill, TChain* inTree)
-{
-    int nFiles=0;
-    string ls_command;
-    string file;
-    string path=opts.GetOpt<string>("h4reco.path2data");
-    string run=opts.GetOpt<string>("h4reco.run");    
-
-    //---Get file list searching in specified path (eos or locally)
-    if(path.find("/eos/cms") != string::npos)
-    {
-	// if ( getMachineDomain() != "cern.ch" )
-        //     ls_command = string("gfal-ls root://eoscms/"+path+run+" | grep 'root' > /tmp/"+run+".list");
-	// else
-        ls_command = string("ls "+path+run+" | grep 'root' > /tmp/"+run+".list");
-    }
-    else if(path.find("srm://") != string::npos)
-        ls_command = string("echo "+path+run+"/`gfal-ls "+path+run+
-                            "` | sed -e 's:^.*\\/cms\\/:root\\:\\/\\/xrootd-cms.infn.it\\/\\/:g' | grep 'root' > /tmp/"+run+".list");
-    else
-        ls_command = string("ls "+path+run+" | grep 'root' > /tmp/"+run+".list");
-    system(ls_command.c_str());
-
-    ifstream waveList(string("/tmp/"+run+".list").c_str(), ios::in);
-    while(waveList >> file && (opts.GetOpt<int>("h4reco.maxFiles")<0 || nFiles<opts.GetOpt<int>("h4reco.maxFiles")) )
-    {
-        //---skip files before specified spill
-        auto currentSpill = std::stoi(file.substr(0, file.size()-4));
-        if(firstSpill == -1 || (currentSpill >= firstSpill && currentSpill < firstSpill + opts.GetOpt<int>("h4reco.maxFiles")))
-        {
-            if(path.find("/eos/cms") != string::npos)
-            {
-                // if ( getMachineDomain() != "cern.ch" )
-                // {
-                //     std::cout << "+++ Adding file " << ("root://eoscms/"+path+run+"/"+file).c_str() << std::endl;
-                //     inTree->AddFile(("root://eoscms/"+path+run+"/"+file).c_str());
-                // }
-                // else
-                // {
-                std::cout << "+++ Adding file " << (path+run+"/"+file).c_str() << std::endl;
-                inTree->AddFile((path+run+"/"+file).c_str());
-                // }
-            }
-            else if(path.find("srm://") != string::npos)
-            {
-                std::cout << "+++ Adding file " << file << std::endl;
-                inTree->AddFile((file).c_str());
-            }
-            else
-            {
-                std::cout << "+++ Adding file " << (path+run+"/"+file).c_str() << std::endl;
-                inTree->AddFile((path+run+"/"+file).c_str());
-            }
-            ++nFiles;
-        }
-    }
-    std::cout << "+++ Added " << nFiles << " files with " << inTree->GetEntries() << " events" << std::endl;
-    return;
-}
-
 //**********MAIN**************************************************************************
 int main(int argc, char* argv[])
 {
@@ -158,11 +98,7 @@ int main(int argc, char* argv[])
         opts.SetOpt("h4reco.run", run);
     }
     if(argc > 3)
-    {
         spill = atoi(argv[3]);
-        vector<string> files(1, "1");
-        opts.SetOpt("h4reco.maxFiles", files);
-    }
     if(argc > 4)
     {
         nspills = atoi(argv[4]);
@@ -176,20 +112,22 @@ int main(int argc, char* argv[])
     string run = opts.GetOpt<string>("h4reco.run");
     int totLoops= opts.OptExist("h4reco.totLoops") ? opts.GetOpt<int>("h4reco.totLoops") : 1;
 
-    TChain* inTree = new TChain("H4tree");
-    ReadInputFiles(opts, spill, inTree);
-    H4Tree h4Tree(inTree);
+    //-----Load raw data-----
+    vector<string> spillOpt(1, to_string(spill));
+    opts.SetOpt("h4reco.firstSpill", spillOpt);
+    DataLoader dataLoader(opts);
 
     //-----output setup-----
     uint64 index=0;    
     TFile* outROOT;
     if(spill == -1)
         outROOT = new TFile(outSuffix+"run"+TString(run)+".root", "RECREATE");
-    else if (nspills == -1)
-        outROOT = new TFile(outSuffix+"run"+TString(run)+"_spill"+to_string(spill).c_str()+".root", "RECREATE");
-    else
+    else if(nspills == -1)
+        outROOT = new TFile(outSuffix+"run"+TString(run)+"_spill"+spillOpt.back()+".root", "RECREATE");
+    else {
         // TODO: generate correct file name if less than the requested number of spills are available
-        outROOT = new TFile(outSuffix+"run"+TString(run)+"_spills"+to_string(spill)+"-"+to_string(spill+nspills-1).c_str()+".root", "RECREATE");
+        outROOT = new TFile(outSuffix+"run"+TString(run)+"_spills"+spillOpt.back()+"-"+to_string(spill+nspills-1)+".root", "RECREATE");
+    }
     outROOT->cd();
     TDirectory* outDIR=outROOT;
 
@@ -280,38 +218,34 @@ int main(int argc, char* argv[])
 
 
 	//---events loop
-	while((h4Tree.NextEntry() && (nEvents < maxEvents || maxEvents == -1)) || (isSim && (nEvents < maxEvents)))
+	while((dataLoader.NextEvent() && (nEvents < maxEvents || maxEvents == -1)) || (isSim && (nEvents < maxEvents)))
         {
-	    if(nEvents % 1000 == 0)
+	    if(dataLoader.FirstEventInSpill())
             {
-		if(isSim)
-                    cout << ">>> Generated events: " << nEvents << "/"
-                         << maxEvents 
-                         << endl;
-		else                
-                    cout << ">>> Processed events: " << nEvents << "/"
-                         << (maxEvents<0 ? h4Tree.GetEntries() : min(h4Tree.GetEntries(), (uint64)maxEvents))
-                         << endl;
+                cout << ">>> Processed spills: " << dataLoader.GetNFilesProcessed() << "/" << dataLoader.GetNFiles() << endl;
+                cout << ">>> Processed events: " << nEvents << endl;
 		TrackProcess(cpu, mem, vsz, rss);
             }
         
 	    //---set index value run*1e10+spill*1e4+event
-	    index = h4Tree.runNumber*1e9 + h4Tree.spillNumber*1e5 + h4Tree.evtNumber;
+	    index = dataLoader.GetTree().runNumber*1e9 + dataLoader.GetTree().spillNumber*1e5 + dataLoader.GetTree().evtNumber;
 	    
 	    //---call ProcessEvent for each plugin and check the return status
 	    bool status=true;
 	    for(auto& plugin : pluginSequence)
             {
 	    	status &= plugin->Clear(); 
-	    	status &= plugin->ProcessEvent(h4Tree, pluginMap, opts);
+	    	status &= plugin->ProcessEvent(dataLoader.GetTree(), pluginMap, opts);
             }
         
 	    //---Fill the main tree with info variables and increase event counter
-	    mainTree.time_stamp = h4Tree.evtTimeStart;
+            mainTree.time_stamps.clear();
+            for(int iT=0; iT<dataLoader.GetTree().nEvtTimes; ++iT)
+                mainTree.time_stamps.push_back(dataLoader.GetTree().evtTime[iT]);
 	    mainTree.evt_flag = status;
-	    mainTree.run = h4Tree.runNumber;
-	    mainTree.spill = h4Tree.spillNumber;
-	    mainTree.event = h4Tree.evtNumber;
+	    mainTree.run = dataLoader.GetTree().runNumber;
+	    mainTree.spill = dataLoader.GetTree().spillNumber;
+	    mainTree.event = dataLoader.GetTree().evtNumber;
 	    mainTree.Fill();
 	    ++nEvents;
         }

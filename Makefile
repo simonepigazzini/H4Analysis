@@ -89,6 +89,7 @@ test:
 	@echo "BINS = $(BINS)"
 
 $(BIN)%: $(PRG)%$(PRGSuf) $(HDRS) $(LIB)$(SONAME) Makefile
+	@echo "Building main executable"
 	@echo " CXX $<"
 	@$ $(CPP) $(CPPFLAGS) $(GLIBS) -L$(LIB) -lH4Analysis -lWFAnalyzer -o $@ $<
 

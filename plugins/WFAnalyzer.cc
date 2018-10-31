@@ -101,12 +101,27 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
         WFs_[channel]->SetSignalIntegralWindow(opts.GetOpt<int>(channel+".signalInt", 0),
                                                opts.GetOpt<int>(channel+".signalInt", 1));
         WFBaseline baselineInfo = WFs_[channel]->SubtractBaseline();
-        string max_function = opts.OptExist(channel+".signalWin", 4) ? opts.GetOpt<string>(channel+".signalWin", 4) : "pol2";
-        int nParams = opts.OptExist(channel+".signalWin", 5) ? opts.GetOpt<int>(channel+".signalWin", 5) : 0;
-        std::vector<float> max_params;
-        for(int ipar = 0; ipar < nParams; ++ipar)
-          max_params.push_back( opts.GetOpt<float>(channel+".signalWin",6+ipar) );
-        WFFitResults interpolAmpMax = WFs_[channel]->GetInterpolatedAmpMax(-1,-1, opts.GetOpt<int>(channel+".signalWin", 2),opts.GetOpt<int>(channel+".signalWin", 3), max_function, max_params);
+        //FIXME MAREMMA MAIALA
+        WFFitResults interpolAmpMax;
+        if(opts.OptExist(channel+".signalWin", 4))
+        {
+            string max_function = opts.OptExist(channel+".signalWin", 4) ? opts.GetOpt<string>(channel+".signalWin", 4) : "pol2";
+            int nParams = opts.OptExist(channel+".signalWin", 5) ? opts.GetOpt<int>(channel+".signalWin", 5) : 0;
+            std::vector<float> max_params;
+            for(int ipar = 0; ipar < nParams; ++ipar)
+                max_params.push_back( opts.GetOpt<float>(channel+".signalWin", 6+ipar) );
+            interpolAmpMax = WFs_[channel]->GetInterpolatedAmpMax(-1,-1,
+                                                                  opts.GetOpt<int>(channel+".signalWin", 2),
+                                                                  opts.GetOpt<int>(channel+".signalWin", 3), max_function, max_params);
+        }
+        else
+        {
+            string max_function = opts.OptExist(channel+".signalWin", 3) ? opts.GetOpt<string>(channel+".signalWin", 3) : "pol2";
+            interpolAmpMax = WFs_[channel]->GetInterpolatedAmpMax(-1,-1,
+                                                                  opts.GetOpt<int>(channel+".signalWin", 2)/2,
+                                                                  opts.GetOpt<int>(channel+".signalWin", 2)/2,
+                                                                  max_function);
+        }
         digiTree_.pedestal[outCh] = baselineInfo.baseline;
         digiTree_.b_charge[outCh] = WFs_[channel]->GetIntegral(opts.GetOpt<int>(channel+".baselineInt", 0), 
                                                                opts.GetOpt<int>(channel+".baselineInt", 1));        
