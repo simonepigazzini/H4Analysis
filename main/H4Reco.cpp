@@ -97,8 +97,11 @@ int main(int argc, char* argv[])
         vector<string> run(1, argv[2]);
         opts.SetOpt("h4reco.run", run);
     }
-    if(argc > 3)
+    if(argc > 3) {
         spill = atoi(argv[3]);
+        vector<string> files(1, "1");
+        opts.SetOpt("h4reco.maxFiles", files);
+    }
     if(argc > 4)
     {
         nspills = atoi(argv[4]);
