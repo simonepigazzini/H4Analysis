@@ -36,7 +36,17 @@ struct WFFitResults
     double time;
     double chi2;
     double slope;
-};      
+};
+
+struct WFFitResultsScintPlusSpike
+{
+    double ampl_scint;
+    double time_scint;
+    double ampl_spike;
+    double time_spike;
+    double chi2;
+    double slope;
+};
 
 class WFClass : public TObject
 {
@@ -90,11 +100,14 @@ public:
     void                         SetBaselineWindow(int min, int max);
     void                         SetBaselineIntegralWindow(int min, int max);
     void                         SetTemplate(TH1* templateWF=NULL);
+    void                         SetTemplateScint(TH1* templateWF=NULL);
+    void                         SetTemplateSpike(TH1* templateWF=NULL);
     //---utils---
     void                         Reset();
     void                         AddSample(float sample) {samples_.push_back(polarity_*sample);};
     WFBaseline                   SubtractBaseline(int min=-1, int max=-1);
     WFFitResults                 TemplateFit(float offset=0., int lW=0, int hW=0);
+    WFFitResultsScintPlusSpike   TemplateFitScintPlusSpike(float offset=0., int lW=0, int hW=0);
     void                         EmulatedWF(WFClass& wf, float rms, float amplitude, float time);
     void                         FFT(WFClass& wf, float tau, int cut);
     void                         Print();
@@ -109,6 +122,7 @@ protected:
     float                        BaselineRMS();
     float                        LinearInterpolation(float& A, float& B, const int& min, const int& max);
     double                       TemplateChi2(const double* par=NULL);
+    double                       TemplatesChi2(const double* par=NULL);
     
 protected:
     vector<double> samples_;
@@ -148,8 +162,14 @@ protected:
     int            fWinMax_;
     float          tempFitTime_;
     float          tempFitAmp_;
+    float          tempFitTimeScint_;
+    float          tempFitAmpScint_;
+    float          tempFitTimeSpike_;
+    float          tempFitAmpSpike_;
     TF1*           f_max_;
     ROOT::Math::Interpolator* interpolator_;
+    ROOT::Math::Interpolator* interpolatorScint_;
+    ROOT::Math::Interpolator* interpolatorSpike_;
 };
 
 #endif

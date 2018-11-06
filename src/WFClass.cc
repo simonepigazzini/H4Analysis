@@ -11,7 +11,8 @@ WFClass::WFClass(int polarity, float tUnit):
     fitChi2Max_(-1), baseline_(-1), bRMS_(-1), cfSample_(-1), cfFrac_(-1), cfTime_(-1),
     leSample_(-1), leTime_(-1), chi2cf_(-1), chi2le_(-1),
     fWinMin_(-1), fWinMax_(-1), tempFitTime_(-1), tempFitAmp_(-1),
-    f_max_(NULL), interpolator_(NULL)
+    tempFitTimeScint_(-1), tempFitAmpScint_(-1), tempFitTimeSpike_(-1), tempFitAmpSpike_(-1),
+    f_max_(NULL), interpolator_(NULL), interpolatorScint_(NULL), interpolatorSpike_(NULL)
 {}
 //**********Getters***********************************************************************
 
@@ -349,7 +350,7 @@ void WFClass::SetTemplate(TH1* templateWF)
     //---check input
     if(!templateWF)
     {
-        cout << ">>>ERROR: template passed as input do not exist" << endl;
+        cout << ">>>ERROR: template passed as input does not exist" << endl;
         return;
     }
 
@@ -370,7 +371,64 @@ void WFClass::SetTemplate(TH1* templateWF)
     }
     interpolator_->SetData(x, y);
 
+    return;
+}
 
+//----------Set the scintillation plus spike fit templates--------------------------------
+void WFClass::SetTemplateScint(TH1* templateWF)
+{
+    //---check input
+    if(!templateWF)
+    {
+        cout << ">>>ERROR: scintillation template passed as input does not exist" << endl;
+        return;
+    }
+
+    //---reset template fit variables
+    if(interpolatorScint_)
+        return;
+
+    interpolatorScint_ = new ROOT::Math::Interpolator(0, ROOT::Math::Interpolation::kCSPLINE);
+    tempFitTimeScint_ = templateWF->GetBinCenter(templateWF->GetMaximumBin());
+    tempFitAmpScint_ = -1;
+
+    //---fill interpolator data
+    vector<double> x, y;
+    for(int iBin=1; iBin<=templateWF->GetNbinsX(); ++iBin)
+    {
+        x.push_back(templateWF->GetBinCenter(iBin)-tempFitTime_);
+        y.push_back(templateWF->GetBinContent(iBin));
+    }
+    interpolatorScint_->SetData(x, y);
+
+    return;
+}
+
+void WFClass::SetTemplateSpike(TH1* templateWF)
+{
+    //---check input
+    if(!templateWF)
+    {
+        cout << ">>>ERROR: spike template passed as input does not exist" << endl;
+        return;
+    }
+
+    //---reset template fit variables
+    if(interpolatorSpike_)
+        return;
+
+    interpolatorSpike_ = new ROOT::Math::Interpolator(0, ROOT::Math::Interpolation::kCSPLINE);
+    tempFitTimeSpike_ = templateWF->GetBinCenter(templateWF->GetMaximumBin());
+    tempFitAmpSpike_ = -1;
+
+    //---fill interpolator data
+    vector<double> x, y;
+    for(int iBin=1; iBin<=templateWF->GetNbinsX(); ++iBin)
+    {
+        x.push_back(templateWF->GetBinCenter(iBin)-tempFitTime_);
+        y.push_back(templateWF->GetBinContent(iBin));
+    }
+    interpolatorSpike_->SetData(x, y);
 
     return;
 }
@@ -441,7 +499,7 @@ WFFitResults WFClass::TemplateFit(float offset, int lW, int hW)
     {
         //---set template fit window around maximum, [min, max)
         BaselineRMS();
-        GetAmpMax();    
+        GetAmpMax();
         fWinMin_ = maxSample_ + int(offset/tUnit_) - lW;
         fWinMax_ = maxSample_ + int(offset/tUnit_) + hW;
         //---setup minimization
@@ -459,10 +517,44 @@ WFFitResults WFClass::TemplateFit(float offset, int lW, int hW)
         tempFitAmp_ = minimizer->X()[0];
         tempFitTime_ = minimizer->X()[1];
 
-        delete minimizer;        
+        delete minimizer;
     }
 
     return WFFitResults{tempFitAmp_, tempFitTime_, TemplateChi2()/(fWinMax_-fWinMin_-2), 0};
+}
+
+WFFitResultsScintPlusSpike WFClass::TemplateFitScintPlusSpike(float offset, int lW, int hW)
+{
+    if(tempFitAmpScint_ == -1 && tempFitAmpSpike_ == -1)
+    {
+        //---set template fit window around maximum, [min, max)
+        BaselineRMS();
+        GetAmpMax();
+        fWinMin_ = maxSample_ + int(offset/tUnit_) - lW;
+        fWinMax_ = maxSample_ + int(offset/tUnit_) + hW;
+        //---setup minimization
+        ROOT::Math::Functor chi2(this, &WFClass::TemplatesChi2, 2);
+        ROOT::Math::Minimizer* minimizer = ROOT::Math::Factory::CreateMinimizer("Minuit2", "Migrad");
+        minimizer->SetMaxFunctionCalls(100000);
+        minimizer->SetMaxIterations(1000);
+        minimizer->SetTolerance(1e-3);
+        minimizer->SetPrintLevel(0);
+        minimizer->SetFunction(chi2);
+        minimizer->SetLimitedVariable(0, "amplitude_scint", GetAmpMax(), 1e-2, 0., GetAmpMax()*2.);
+        minimizer->SetLimitedVariable(1, "deltaT_scint", maxSample_*tUnit_, 1e-2, fWinMin_*tUnit_, fWinMax_*tUnit_);
+        minimizer->SetLimitedVariable(2, "amplitude_spike", GetAmpMax(), 1e-2, 0., GetAmpMax()*2.);
+        minimizer->SetLimitedVariable(3, "deltaT_spike", maxSample_*tUnit_, 1e-2, fWinMin_*tUnit_, fWinMax_*tUnit_);
+        //---fit
+        minimizer->Minimize();
+        tempFitAmpScint_ = minimizer->X()[0];
+        tempFitTimeScint_ = minimizer->X()[1];
+        tempFitAmpSpike_ = minimizer->X()[2];
+        tempFitTimeSpike_ = minimizer->X()[3];
+
+        delete minimizer;
+    }
+
+    return WFFitResultsScintPlusSpike{tempFitAmpScint_, tempFitTimeScint_, tempFitAmpSpike_, tempFitTimeSpike_, TemplatesChi2()/(fWinMax_-fWinMin_-2), 0};
 }
 
 void WFClass::EmulatedWF(WFClass& wf,float rms, float amplitude, float time)
@@ -631,6 +723,36 @@ double WFClass::TemplateChi2(const double* par)
     return chi2;
 }
 
+//----------chi2 for scintillation plus spike template fit---------------------------------------------------------
+double WFClass::TemplatesChi2(const double* par)
+{
+    double chi2 = 0;
+    double delta = 0;
+    for(int iSample=fWinMin_; iSample<=fWinMax_; ++iSample)
+    {
+        if(iSample < 0 || iSample >= int(samples_.size()))
+        {
+            //cout << ">>>WARNING: template fit out of samples rage (chi2 set to -1)" << endl;
+            chi2 += 9999;
+        }
+        else
+        {
+            //---fit: par[0]*ref_shape_scint(t-par[1]) + par[2]*ref_shape_spike(t-par[3])
+            //---with par[0]=amplitude scintillation, par[1]=DeltaT scintillation
+            //---and  par[2]=amplitude spike, par[3]=DeltaT spike
+            //---if not fitting return chi2 value of best fit
+            const auto iSampleTime = iSample*tUnit_;
+            if(par)
+                delta = (samples_[iSample] - par[0]*interpolatorScint_->Eval(iSampleTime-par[1]) - par[2]*interpolatorSpike_->Eval(iSampleTime-par[3]))/bRMS_;
+            else
+                delta = (samples_[iSample] - tempFitAmpScint_*interpolatorScint_->Eval(iSampleTime-tempFitTimeScint_) - tempFitAmpSpike_*interpolatorSpike_->Eval(iSampleTime-tempFitTimeSpike_))/bRMS_;
+            chi2 += delta*delta;
+        }
+    }
+
+    return chi2;
+}
+
 void WFClass::Print()
 {
     std::cout << "+++ DUMP WF +++" << std::endl;
@@ -665,7 +787,13 @@ WFClass& WFClass::operator=(const WFClass& origin)
     fWinMax_ = origin.fWinMax_;
     tempFitTime_ = origin.tempFitTime_;
     tempFitAmp_ = origin.tempFitAmp_;
+    tempFitTimeScint_ = origin.tempFitTimeScint_;
+    tempFitAmpScint_ = origin.tempFitAmpScint_;
+    tempFitTimeSpike_ = origin.tempFitTimeSpike_;
+    tempFitAmpSpike_ = origin.tempFitAmpSpike_;
     interpolator_ = NULL;
+    interpolatorScint_ = NULL;
+    interpolatorSpike_ = NULL;
 
     return *this;
 }

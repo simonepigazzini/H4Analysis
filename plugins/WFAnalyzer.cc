@@ -23,7 +23,7 @@ bool WFAnalyzer::Begin(CfgManager& opts, uint64* index)
 
     int nSamples = 0;
     for(auto& channel : channelsNames_)
-    {        
+    {
         nSamples += opts.GetOpt<int>(channel+".nSamples");
         if(opts.OptExist(channel+".templateFit.file"))
         {            
@@ -31,6 +31,14 @@ bool WFAnalyzer::Begin(CfgManager& opts, uint64* index)
             TH1* wfTemplate=(TH1*)templateFile->Get((opts.GetOpt<string>(channel+".templateFit.file", 1)+templateTag).c_str());
             templates_[channel] = (TH1F*) wfTemplate->Clone();
             templates_[channel] -> SetDirectory(0);
+            templateFile->Close();
+        }
+        if(opts.OptExist(channel+".templateFit.spikeFile"))
+        {
+            TFile* templateFile = TFile::Open(opts.GetOpt<string>(channel+".templateFit.spikeFile", 0).c_str(), ".READ");
+            TH1* wfTemplate=(TH1*)templateFile->Get((opts.GetOpt<string>(channel+".templateFit.spikeFile", 1)+templateTag).c_str());
+            spikeTemplates_[channel] = (TH1F*) wfTemplate->Clone();
+            spikeTemplates_[channel] -> SetDirectory(0);
             templateFile->Close();
         }
         //---keep track of all the possible time reco method requested
@@ -156,9 +164,9 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
         }
 
         //---template fit (only specified channels)
-        WFFitResults fitResults{-1, -1000, -1};
         if(opts.OptExist(channel+".templateFit.file"))
         {
+            WFFitResults fitResults{-1, -1000, -1};
             WFs_[channel]->SetTemplate(templates_[channel]);
             fitResults = WFs_[channel]->TemplateFit(opts.GetOpt<float>(channel+".templateFit.fitWin", 0),
                                                     opts.GetOpt<int>(channel+".templateFit.fitWin", 1),
@@ -166,6 +174,21 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
             digiTree_.fit_ampl[outCh] = fitResults.ampl;
             digiTree_.fit_time[outCh] = fitResults.time;
             digiTree_.fit_chi2[outCh] = fitResults.chi2;
+
+            if(opts.OptExist(channel+".templateFit.spikeFile"))
+            {
+                WFFitResultsScintPlusSpike fitResultsScintPlusSpike{-1, -1000, -1, -1000, -1};
+                WFs_[channel]->SetTemplateScint(templates_[channel]);
+                WFs_[channel]->SetTemplateSpike(spikeTemplates_[channel]);
+                fitResultsScintPlusSpike = WFs_[channel]->TemplateFitScintPlusSpike(opts.GetOpt<float>(channel+".templateFit.fitWin", 0),
+                                                                                    opts.GetOpt<int>(channel+".templateFit.fitWin", 1),
+                                                                                    opts.GetOpt<int>(channel+".templateFit.fitWin", 2));
+                digiTree_.fit_ampl_scint[outCh] = fitResultsScintPlusSpike.ampl_scint;
+                digiTree_.fit_time_scint[outCh] = fitResultsScintPlusSpike.time_scint;
+                digiTree_.fit_ampl_spike[outCh] = fitResultsScintPlusSpike.ampl_spike;
+                digiTree_.fit_time_spike[outCh] = fitResultsScintPlusSpike.time_spike;
+                digiTree_.fit_chi2_scint_plus_spike[outCh] = fitResultsScintPlusSpike.chi2;
+            }
         }            
         //---calibration constant for each channel if needed
         if(opts.OptExist(channel+".calibration.calibrationConst"))

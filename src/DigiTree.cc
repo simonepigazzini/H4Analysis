@@ -32,6 +32,11 @@ void DigiTree::Init(vector<string>& names, vector<string>& timetypes)
     fit_ampl = new float[n_channels];
     fit_time = new float[n_channels];
     fit_chi2 = new float[n_channels];
+    fit_ampl_scint = new float[n_channels];
+    fit_time_scint = new float[n_channels];
+    fit_ampl_spike = new float[n_channels];
+    fit_time_spike = new float[n_channels];
+    fit_chi2_scint_plus_spike = new float[n_channels];
     calibration = new float[n_channels];
 
     //---channels branches
@@ -69,6 +74,11 @@ void DigiTree::Init(vector<string>& names, vector<string>& timetypes)
     tree_->Branch((prefix_+"fit_ampl").c_str(), fit_ampl, (prefix_+"fit_ampl["+size_var+"]/F").c_str());
     tree_->Branch((prefix_+"fit_time").c_str(), fit_time, (prefix_+"fit_time["+size_var+"]/F").c_str());
     tree_->Branch((prefix_+"fit_chi2").c_str(), fit_chi2, (prefix_+"fit_chi2["+size_var+"]/F").c_str());
+    tree_->Branch((prefix_+"fit_ampl_scint").c_str(), fit_ampl_scint, (prefix_+"fit_ampl_scint["+size_var+"]/F").c_str());
+    tree_->Branch((prefix_+"fit_time_scint").c_str(), fit_time_scint, (prefix_+"fit_time_scint["+size_var+"]/F").c_str());
+    tree_->Branch((prefix_+"fit_ampl_spike").c_str(), fit_ampl_spike, (prefix_+"fit_ampl_spike["+size_var+"]/F").c_str());
+    tree_->Branch((prefix_+"fit_time_spike").c_str(), fit_time_spike, (prefix_+"fit_time_spike["+size_var+"]/F").c_str());
+    tree_->Branch((prefix_+"fit_chi2_scint_plus_spike").c_str(), fit_chi2_scint_plus_spike, (prefix_+"fit_chi2_scint_plus_spike["+size_var+"]/F").c_str());
     tree_->Branch((prefix_+"calibration").c_str(), calibration, (prefix_+"calibration["+size_var+"]/F").c_str());
 }
 
