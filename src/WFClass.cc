@@ -396,7 +396,7 @@ void WFClass::SetTemplateScint(TH1* templateWF)
     vector<double> x, y;
     for(int iBin=1; iBin<=templateWF->GetNbinsX(); ++iBin)
     {
-        x.push_back(templateWF->GetBinCenter(iBin)-tempFitTime_);
+        x.push_back(templateWF->GetBinCenter(iBin)-tempFitTimeScint_);
         y.push_back(templateWF->GetBinContent(iBin));
     }
     interpolatorScint_->SetData(x, y);
@@ -425,7 +425,7 @@ void WFClass::SetTemplateSpike(TH1* templateWF)
     vector<double> x, y;
     for(int iBin=1; iBin<=templateWF->GetNbinsX(); ++iBin)
     {
-        x.push_back(templateWF->GetBinCenter(iBin)-tempFitTime_);
+        x.push_back(templateWF->GetBinCenter(iBin)-tempFitTimeSpike_);
         y.push_back(templateWF->GetBinContent(iBin));
     }
     interpolatorSpike_->SetData(x, y);
@@ -459,6 +459,10 @@ void WFClass::Reset()
     fWinMax_ = -1;
     tempFitTime_ = -1;
     tempFitAmp_ = -1;
+    tempFitTimeScint_ = -1;
+    tempFitAmpScint_ = -1;
+    tempFitTimeSpike_ = -1;
+    tempFitAmpSpike_ = -1;
     samples_.clear();
 } 
 
@@ -533,7 +537,7 @@ WFFitResultsScintPlusSpike WFClass::TemplateFitScintPlusSpike(float offset, int 
         fWinMin_ = maxSample_ + int(offset/tUnit_) - lW;
         fWinMax_ = maxSample_ + int(offset/tUnit_) + hW;
         //---setup minimization
-        ROOT::Math::Functor chi2(this, &WFClass::TemplatesChi2, 2);
+        ROOT::Math::Functor chi2(this, &WFClass::TemplatesChi2, 4);
         ROOT::Math::Minimizer* minimizer = ROOT::Math::Factory::CreateMinimizer("Minuit2", "Migrad");
         minimizer->SetMaxFunctionCalls(100000);
         minimizer->SetMaxIterations(1000);
@@ -544,6 +548,8 @@ WFFitResultsScintPlusSpike WFClass::TemplateFitScintPlusSpike(float offset, int 
         minimizer->SetLimitedVariable(1, "deltaT_scint", maxSample_*tUnit_, 1e-2, fWinMin_*tUnit_, fWinMax_*tUnit_);
         minimizer->SetLimitedVariable(2, "amplitude_spike", GetAmpMax(), 1e-2, 0., GetAmpMax()*2.);
         minimizer->SetLimitedVariable(3, "deltaT_spike", maxSample_*tUnit_, 1e-2, fWinMin_*tUnit_, fWinMax_*tUnit_);
+        //minimizer->SetFixedVariable(2, "amplitude_spike", 0.);
+        //minimizer->SetFixedVariable(3, "deltaT_spike", 0.);
         //---fit
         minimizer->Minimize();
         tempFitAmpScint_ = minimizer->X()[0];
@@ -554,7 +560,7 @@ WFFitResultsScintPlusSpike WFClass::TemplateFitScintPlusSpike(float offset, int 
         delete minimizer;
     }
 
-    return WFFitResultsScintPlusSpike{tempFitAmpScint_, tempFitTimeScint_, tempFitAmpSpike_, tempFitTimeSpike_, TemplatesChi2()/(fWinMax_-fWinMin_-2), 0};
+    return WFFitResultsScintPlusSpike{tempFitAmpScint_, tempFitTimeScint_, tempFitAmpSpike_, tempFitTimeSpike_, TemplatesChi2()/(fWinMax_-fWinMin_-4), 0};
 }
 
 void WFClass::EmulatedWF(WFClass& wf,float rms, float amplitude, float time)
