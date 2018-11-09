@@ -12,7 +12,8 @@ WFClass::WFClass(int polarity, float tUnit):
     leSample_(-1), leTime_(-1), chi2cf_(-1), chi2le_(-1),
     fWinMin_(-1), fWinMax_(-1), tempFitTime_(-1), tempFitAmp_(-1),
     tempFitTimeScint_(-1), tempFitAmpScint_(-1), tempFitTimeSpike_(-1), tempFitAmpSpike_(-1),
-    f_max_(NULL), interpolator_(NULL), interpolatorScint_(NULL), interpolatorSpike_(NULL)
+    tempFitConverged_(false), f_max_(NULL),
+    interpolator_(NULL), interpolatorScint_(NULL), interpolatorSpike_(NULL)
 {}
 //**********Getters***********************************************************************
 
@@ -463,6 +464,7 @@ void WFClass::Reset()
     tempFitAmpScint_ = -1;
     tempFitTimeSpike_ = -1;
     tempFitAmpSpike_ = -1;
+    tempFitConverged_ = false;
     samples_.clear();
 } 
 
@@ -551,7 +553,7 @@ WFFitResultsScintPlusSpike WFClass::TemplateFitScintPlusSpike(float offset, int 
         //minimizer->SetFixedVariable(2, "amplitude_spike", 0.);
         //minimizer->SetFixedVariable(3, "deltaT_spike", 0.);
         //---fit
-        minimizer->Minimize();
+        tempFitConverged_ = minimizer->Minimize();
         tempFitAmpScint_ = minimizer->X()[0];
         tempFitTimeScint_ = minimizer->X()[1];
         tempFitAmpSpike_ = minimizer->X()[2];
@@ -560,7 +562,7 @@ WFFitResultsScintPlusSpike WFClass::TemplateFitScintPlusSpike(float offset, int 
         delete minimizer;
     }
 
-    return WFFitResultsScintPlusSpike{tempFitAmpScint_, tempFitTimeScint_, tempFitAmpSpike_, tempFitTimeSpike_, TemplatesChi2()/(fWinMax_-fWinMin_-4), 0};
+    return WFFitResultsScintPlusSpike{tempFitAmpScint_, tempFitTimeScint_, tempFitAmpSpike_, tempFitTimeSpike_, TemplatesChi2()/(fWinMax_-fWinMin_-4), tempFitConverged_};
 }
 
 void WFClass::EmulatedWF(WFClass& wf,float rms, float amplitude, float time)
@@ -797,6 +799,7 @@ WFClass& WFClass::operator=(const WFClass& origin)
     tempFitAmpScint_ = origin.tempFitAmpScint_;
     tempFitTimeSpike_ = origin.tempFitTimeSpike_;
     tempFitAmpSpike_ = origin.tempFitAmpSpike_;
+    tempFitConverged_ = origin.tempFitConverged_;
     interpolator_ = NULL;
     interpolatorScint_ = NULL;
     interpolatorSpike_ = NULL;

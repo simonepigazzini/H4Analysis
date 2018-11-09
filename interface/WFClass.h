@@ -45,7 +45,7 @@ struct WFFitResultsScintPlusSpike
     double ampl_spike;
     double time_spike;
     double chi2;
-    double slope;
+    bool converged;
 };
 
 class WFClass : public TObject
@@ -166,6 +166,7 @@ protected:
     float          tempFitAmpScint_;
     float          tempFitTimeSpike_;
     float          tempFitAmpSpike_;
+    bool           tempFitConverged_;
     TF1*           f_max_;
     ROOT::Math::Interpolator* interpolator_;
     ROOT::Math::Interpolator* interpolatorScint_;

@@ -188,6 +188,7 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
                 digiTree_.fit_ampl_spike[outCh] = fitResultsScintPlusSpike.ampl_spike;
                 digiTree_.fit_time_spike[outCh] = fitResultsScintPlusSpike.time_spike;
                 digiTree_.fit_chi2_scint_plus_spike[outCh] = fitResultsScintPlusSpike.chi2;
+                digiTree_.fit_converged_scint_plus_spike[outCh] = fitResultsScintPlusSpike.converged;
             }
         }            
         //---calibration constant for each channel if needed
