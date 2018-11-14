@@ -167,6 +167,8 @@ protected:
     float          tempFitTimeSpike_;
     float          tempFitAmpSpike_;
     bool           tempFitConverged_;
+    float          tempTimeMaxScint_;
+    float          tempTimeMaxSpike_;
     TF1*           f_max_;
     ROOT::Math::Interpolator* interpolator_;
     ROOT::Math::Interpolator* interpolatorScint_;
