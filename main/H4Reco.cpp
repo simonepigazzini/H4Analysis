@@ -1,11 +1,14 @@
 #ifndef __H4_RECO__
 #define __H4_RECO__
 
+#include <netdb.h>
 #include <unistd.h>
 #include <csignal>
+#include <exception>
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <regex>
 
 #include "TFile.h"
 #include "TChain.h"
@@ -18,10 +21,8 @@
 #include "interface/DataLoader.h"
 #include "interface/RecoTree.h"
 
-#include <netdb.h>
-#include <unistd.h>
-
-string getMachineDomain()
+//**********UTILS*************************************************************************
+std::string getMachineDomain()
 {
     char hn[254];
     char *dn;
@@ -65,14 +66,37 @@ void TrackProcess(float* cpu, float* mem, float* vsz, float* rss)
     if(rss[0]>rss[1])
         rss[1] = rss[0];
     //---print statistics
-    cout << "-----Machine stats---current/max-----" << endl
+    cout << "\033[0m""-----Machine stats---current/max-----" << endl
          << "CPU(%): " << cpu[0] << "/" << cpu[1] << endl
          << "MEM(%): " << mem[0] << "/" << mem[1] << endl
          << "VSZ(M): " << vsz[0] << "/" << vsz[1] << endl
          << "RSS(M): " << rss[0] << "/" << rss[1] << endl
          << "time lasted: " << time << endl;
 }
-                  
+
+//----------Exception handler-------------------------------------------------------------
+//---This fuction is meant to provide debug information by printing
+//---the last called Plugin::Method while re-throwing the original exception
+void HandleException(std::exception_ptr eptr, PluginBase* plugin)
+{
+    try
+    {
+        if (eptr)
+        {
+            std::rethrow_exception(eptr);
+        }
+    }
+    catch(const std::exception& e)
+    {
+        auto plugin_type = std::regex_replace(typeid(plugin).name(), std::regex(".*[0-9]+"), "");
+        std::cout << "\033[1;31m" << ">>>>> H4Reco ERROR! <<<<<" << "\033[0m" << std::endl
+                  << "Error in: " << "\033[1;33m" << plugin_type << "::" << plugin->GetCurrentMethod() << "\033[0m" << std::endl
+                  << "Instance name: " << "\033[1;33m" << plugin->GetInstanceName() << "\033[0m" << std::endl
+                  << "Caught exception: " << e.what() << std::endl;
+        exit(-1);
+    }
+}
+
 //**********MAIN**************************************************************************
 int main(int argc, char* argv[])
 {
@@ -82,6 +106,9 @@ int main(int argc, char* argv[])
         return -1;
     }
 
+    //---exception handler---
+    std::exception_ptr eptr;
+    
     //---memory consumption tracking---
     float cpu[2]{0}, mem[2]={0}, vsz[2]={0}, rss[2]={0};
 
@@ -158,12 +185,23 @@ int main(int argc, char* argv[])
     for(auto& plugin : pluginSequence)
     {
         //---call Begin() methods and check the return status
-        bool r_status = plugin->Begin(opts, &index);
-        if(!r_status)
+        try
         {
-            cout << ">>> ERROR: plugin returned bad flag from Begin() call: " << plugin->GetInstanceName() << endl;
-            exit(-1);
+            //---fake call to base class for debug porpouses
+            plugin->PluginBase::Begin(pluginMap, opts, &index);
+            //---real call
+            bool r_status = plugin->Begin(pluginMap, opts, &index);
+            if(!r_status)
+            {
+                cout << ">>> ERROR: plugin returned bad flag from Begin() call: " << plugin->GetInstanceName() << endl;
+                exit(-1);
+            }
         }
+        catch(...)
+        {
+            eptr = std::current_exception();
+        }
+        HandleException(eptr, plugin);
     }
             
 
@@ -172,31 +210,43 @@ int main(int argc, char* argv[])
     bool isSim = opts.OptExist("h4reco.generateEvents") ? opts.GetOpt<bool>("h4reco.generateEvents") : false;
 
     if(isSim)
-        cout << ">>> Processing H4DAQ simulation <<<" << endl;
+        cout << "\033[1;36m" << ">>> Processing H4DAQ simulation <<<" << "\033[0m" << endl;
     else
-        cout << ">>> Processing H4DAQ run #" << run << " <<<" << endl;
+        cout << "\033[1;36m" << ">>> Processing H4DAQ run #" << run << " <<<" << "\033[0m" << endl;
 
-    while(iLoop<totLoops)
+    bool endLoop=true;
+    while(iLoop<totLoops && endLoop)
     {
 	int nEvents = 0;
 
 	if (totLoops>1)
         {
-	    cout << ">>> Starting iteration #" << iLoop << " <<<" << endl;
-	    outDIR=outROOT->mkdir(Form("Iter_%d",iLoop));
+	    cout << "\033[1;36m" << ">>> Starting iteration #" << iLoop << " <<<" << "\033[0m" << endl;
+	    outDIR=outROOT->mkdir(("Iter_"+to_string(iLoop)).c_str());
         }
 
 	//---begin loop
 	mainTree.tree_->Reset();
 	for(auto& plugin : pluginSequence)
         {
-	    //---call Begin() methods and check the return status
-	    bool r_status = plugin->BeginLoop(iLoop, opts);
-	    if(!r_status)
+	    //---call BeginLoop() methods and check the return status
+            try
             {
-		cout << ">>> ERROR: plugin returned bad flag from BeginLoop() call: " << plugin->GetInstanceName() << endl;
-		exit(-1);
+                //---fake call to base class for debug porpouses
+                plugin->PluginBase::BeginLoop(iLoop, pluginMap, opts);
+                //---real call
+                bool r_status = plugin->BeginLoop(iLoop, pluginMap, opts);
+                if(!r_status)
+                {
+                    cout << ">>> ERROR: plugin returned bad flag from BeginLoop() call: " << plugin->GetInstanceName() << endl;
+                    exit(-1);
+                }
             }
+            catch(...)
+            {
+                eptr = std::current_exception();
+            }
+            HandleException(eptr, plugin);
 	    
 	    //---Get plugin shared data
 	    for(auto& shared : plugin->GetSharedData("", "TTree", true))
@@ -213,8 +263,8 @@ int main(int argc, char* argv[])
         {
 	    if(dataLoader.FirstEventInSpill())
             {
-                cout << ">>> Processed spills: " << dataLoader.GetNFilesProcessed() << "/" << dataLoader.GetNFiles() << endl;
-                cout << ">>> Processed events: " << nEvents << endl;
+                cout << "\033[1;36m" << ">>> Processed spills: " << dataLoader.GetNFilesProcessed() << "/" << dataLoader.GetNFiles() << endl;
+                cout << ">>> Processed events: " << nEvents << "\033[0m" << endl;
 		TrackProcess(cpu, mem, vsz, rss);
             }
         
@@ -225,8 +275,18 @@ int main(int argc, char* argv[])
 	    bool status=true;
 	    for(auto& plugin : pluginSequence)
             {
-	    	status &= plugin->Clear(); 
-	    	status &= plugin->ProcessEvent(dataLoader.GetTree(), pluginMap, opts);
+                try
+                {
+                    //---fake call to base class for debug porpouses
+                    plugin->PluginBase::ProcessEvent(dataLoader.GetTree(), pluginMap, opts);
+                    //---real call
+                    status &= plugin->ProcessEvent(dataLoader.GetTree(), pluginMap, opts);
+                }
+                catch(...)
+                {
+                    eptr = std::current_exception();
+                }
+                HandleException(eptr, plugin);
             }
         
 	    //---Fill the main tree with info variables and increase event counter
@@ -244,13 +304,19 @@ int main(int argc, char* argv[])
 	//---end
 	for(auto& plugin : pluginSequence)
         {
-	    //---call endjob for each plugin        
-	    bool r_status = plugin->EndLoop(iLoop,opts);
-	    if(!r_status)
+	    //---call endjob for each plugin
+            try
             {
-		cout << ">>> ERROR: plugin returned bad flag from EndLoop() call: " << plugin->GetInstanceName() << endl;
-		exit(-1);
+                //---fake call to base class for debug porpouses
+                plugin->PluginBase::EndLoop(iLoop, pluginMap, opts);
+                //---real call
+                endLoop &= plugin->EndLoop(iLoop, pluginMap, opts);
             }
+            catch(...)
+            {
+                eptr = std::current_exception();
+            }
+            HandleException(eptr, plugin);
 
 	    //---get permanent data from each plugin and store them in the out file
 	    for(auto& shared : plugin->GetSharedData())
@@ -281,12 +347,24 @@ int main(int argc, char* argv[])
     for(auto& plugin : pluginSequence)
     {
         //---call endjob for each plugin        
-        bool r_status = plugin->End(opts);
-        if(!r_status)
+        try
         {
-            cout << ">>> ERROR: plugin returned bad flag from End() call: " << plugin->GetInstanceName() << endl;
-            exit(-1);
+            //---fake call to base class for debug porpouses
+            plugin->PluginBase::End(pluginMap, opts);
+            //---real call
+            bool r_status = plugin->End(pluginMap, opts);
+
+            if(!r_status)
+            {
+                cout << ">>> ERROR: plugin returned bad flag from End() call: " << plugin->GetInstanceName() << endl;
+                exit(-1);
+            }
         }
+        catch(...)
+        {
+            eptr = std::current_exception();
+        }
+        HandleException(eptr, plugin);
     }
     
     //---close

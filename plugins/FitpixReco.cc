@@ -2,7 +2,7 @@
 
 //**********Utils*************************************************************************
 //----------Begin-------------------------------------------------------------------------
-bool FitpixReco::Begin(CfgManager& opts, uint64* index)
+bool FitpixReco::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint64* index)
 {
     //---create a position tree
     bool storeTree = opts.OptExist(instanceName_+".storeTree") ?
@@ -35,7 +35,12 @@ bool FitpixReco::Begin(CfgManager& opts, uint64* index)
 //----------ProcessEvent------------------------------------------------------------------
 bool FitpixReco::ProcessEvent(H4Tree& h4Tree, map<string, PluginBase*>& plugins, CfgManager& opts)
 {
-
+    //---Event by event cleanup
+    hits_.clear();
+    clusters_.clear();
+    fitpixTree_.Clear();
+    fitpixHits_.hits_.clear();
+    
     std::vector<FPHit*> clustered_hits;
 
     for(unsigned int i=0; i<h4Tree.nAdcChannels; ++i)
@@ -110,16 +115,5 @@ bool FitpixReco::ProcessEvent(H4Tree& h4Tree, map<string, PluginBase*>& plugins,
     //---fill output tree
     fitpixTree_.Fill();
 
-    return true;
-}
-
-//----------Event by event cleanup--------------------------------------------------------
-bool FitpixReco::Clear()
-{
-    hits_.clear();
-    clusters_.clear();
-    fitpixTree_.Clear();
-    fitpixHits_.hits_.clear();
-    
     return true;
 }

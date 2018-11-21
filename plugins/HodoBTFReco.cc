@@ -2,7 +2,7 @@
 
 //**********Utils*************************************************************************
 //----------Begin*************************************************************************
-bool HodoBTFReco::Begin(CfgManager& opts, uint64* index)
+bool HodoBTFReco::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint64* index)
 {
     // PMT In - PNT Out  [both 0->63]
     ADC_to_PMT_map.insert(pair<int,int>(0,35));

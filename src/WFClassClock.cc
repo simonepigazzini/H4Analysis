@@ -87,19 +87,17 @@ WFFitResults WFClassClock::GetTimeCLK(float wleft, float wright, int min, int ma
         SetSignalWindow(min, max);
 
     double S=0, S2=0, T=0, ST=0; 
-    vector<double> times, clkZeros;
-    for(int iSample=0; iSample<samples_.size(); ++iSample)
-        times.push_back(iSample*tUnit_);
-    TGraph gClockEdge(samples_.size(), times.data(), samples_.data());
-    TF1 fClockEdge("fClockEdge", "[0]*tanh((x-[1])/[2])+[3]", min*tUnit_, max*tUnit_);
+    vector<double> clkZeros;
+    TGraph gClockEdge(samples_.size(), times_.data(), samples_.data());
+    TF1 fClockEdge("fClockEdge", "[0]*tanh((x-[1])/[2])+[3]", times_[min], times_[max]);
     
     for(int iSample=min; iSample<max; ++iSample)
     {
         if(samples_.at(iSample) < 0 && samples_.at(iSample+1) > 0)
         {
             //---edge fit
-            auto t0 = iSample*tUnit_;
-            if(t0+wleft > min*tUnit_ && t0+wright < max*tUnit_)
+            auto t0 = times_[iSample];
+            if(t0+wleft > times_[min] && t0+wright < times_[max])
             {
                 fClockEdge.SetParameters(300., t0, 0.5, 0.);
                 gClockEdge.Fit(&fClockEdge, "QRSO", "goff", t0+wleft, t0+wright);
@@ -120,12 +118,93 @@ WFFitResults WFClassClock::GetTimeCLK(float wleft, float wright, int min, int ma
     auto N = clkZeros.size();
     double period = (ST-S*T/N)/(S2-S*S/N);
     double phase = (T-S*period)/N;
-    double phase_err=0;
+    TH1F h_phase_err("h_phase_err", "", 75, -1, 1);
     for(unsigned int i=1; i<N; ++i)
     {
-        auto t_clk = clkZeros[i]-(clkZeros[0]-phase);
-        phase_err += (phase+i*period-t_clk)*(phase+i*period-t_clk);
+        auto t_clk = clkZeros[i]-clkZeros[0];
+        h_phase_err.Fill(i*period-t_clk);
+        //phase_err += (phase+i*period-t_clk)*(phase+i*period-t_clk);
+    }
+    auto phase_err = h_phase_err.Fit("gaus", "QRSO", "goff")->Parameter(2);    
+    phase_err = h_phase_err.GetRMS();
+    
+//    return WFFitResults{0, phase, std::sqrt(phase_err/(N-1)), 0};
+    return WFFitResults{0, phase, phase_err, -1, 0};
+}
+
+//----------template fit to the WF--------------------------------------------------------
+//---Template fit of each single clock cycle
+WFFitResults WFClassClock::TemplateFit(float offset, int lW, int hW)
+{
+    if(tempFitAmp_ == -1)
+    {
+        BaselineRMS();
+        GetAmpMax();
+        bRMS_ = 10.;
+        int N=0;
+        double S=0, S2=0, T=0, ST=0; 
+        vector<double> clkZeros;
+
+        //---cycles loop
+        for(int iSample=sWinMin_; iSample<sWinMax_; ++iSample)
+        {
+            //---single clock cycle fit
+            if(samples_.at(iSample) < 0 && samples_.at(iSample+1) > 0)
+            {
+                auto t0 = (times_.at(iSample+1)+times_.at(iSample))/2.;
+                //---set template fit window around zero crossing, [min, max)
+                fWinMin_ = iSample - lW;
+                fWinMax_ = iSample + hW;
+                //---setup minimization
+                std::default_random_engine generator;
+                std::uniform_real_distribution<float> rnd_t0(times_.at(iSample), times_.at(iSample+1));
+                ROOT::Math::Functor chi2(this, &WFClassClock::TemplateChi2, 2);
+                ROOT::Math::Minimizer* minimizer = ROOT::Math::Factory::CreateMinimizer("Minuit2", "Migrad");
+                minimizer->SetMaxFunctionCalls(100000);
+                minimizer->SetMaxIterations(1000);
+                minimizer->SetTolerance(1e-2);
+                minimizer->SetPrintLevel(-1);
+                minimizer->SetFunction(chi2);
+                minimizer->SetLimitedVariable(0, "amplitude", GetAmpMax(), 1e-2, GetAmpMax()*0.8, GetAmpMax()*1.2);
+                minimizer->SetLimitedVariable(1, "deltaT", t0, 1e-3, times_[fWinMin_], times_[fWinMax_]);
+                //---fit
+                minimizer->Minimize();
+                int tries=0;
+                while(minimizer->Status() != 0 && tries < 1000)
+                {
+                    minimizer->SetVariableValue(1, rnd_t0(generator));
+                    minimizer->Minimize();
+                    ++tries;
+                }    
+                if(tempFitAmp_ == -1)
+                    tempFitAmp_ = minimizer->X()[0];
+                tempFitTime_ = minimizer->X()[1];
+                clkZeros.push_back(minimizer->X()[1]);
+                //---fill variables
+                ++N;
+                S += N;
+                S2 += N*N;
+                T += clkZeros.back();
+                ST += N*clkZeros.back();
+                
+                ++iSample;
+                
+                delete minimizer;        
+            }
+        }
+
+        //---compute clock period, phase and phase error
+        double period = (ST-S*T/N)/(S2-S*S/N);
+        tempFitTime_ = (T-S*period)/N;
+        TH1F h_phase_err("h_phase_err", "", 75, -1, 1);
+        for(unsigned int i=1; i<N; ++i)
+        {
+            auto t_clk = clkZeros[i]-clkZeros[0];
+            h_phase_err.Fill(i*period-t_clk);
+        }
+        tempFitTimeErr_ = h_phase_err.GetRMS();
+        //tempFitTimeErr_ = h_phase_err.Fit("gaus", "QRSO", "goff")->Parameter(2);
     }
 
-    return WFFitResults{0, phase, std::sqrt(phase_err/(N-1)), 0};
+    return WFFitResults{tempFitAmp_, tempFitTime_, tempFitTimeErr_, TemplateChi2()/(hW-lW), 0};
 }

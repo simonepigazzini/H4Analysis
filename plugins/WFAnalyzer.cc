@@ -1,7 +1,7 @@
 #include "WFAnalyzer.h"
 
 //----------Utils-------------------------------------------------------------------------
-bool WFAnalyzer::Begin(CfgManager& opts, uint64* index)
+bool WFAnalyzer::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint64* index)
 {
     //---inputs---
     if(!opts.OptExist(instanceName_+".srcInstanceName"))
@@ -28,9 +28,31 @@ bool WFAnalyzer::Begin(CfgManager& opts, uint64* index)
         if(opts.OptExist(channel+".templateFit.file"))
         {            
             TFile* templateFile = TFile::Open(opts.GetOpt<string>(channel+".templateFit.file", 0).c_str(), ".READ");
-            TH1* wfTemplate=(TH1*)templateFile->Get((opts.GetOpt<string>(channel+".templateFit.file", 1)+templateTag).c_str());
-            templates_[channel] = (TH1F*) wfTemplate->Clone();
-            templates_[channel] -> SetDirectory(0);
+            if(templateFile)
+            {
+                TH1* wfTemplate=(TH1*)templateFile->Get((opts.GetOpt<string>(channel+".templateFit.file", 1)+templateTag).c_str());
+                if(wfTemplate)
+                {
+                    templates_[channel] = (TH1F*) wfTemplate->Clone();
+                    templates_[channel] -> SetDirectory(0);
+                }
+                else
+                {
+                    cout << ">>> WFAnalyzer ERROR: template " 
+                         << opts.GetOpt<string>(channel+".templateFit.file", 1)
+                         << " not found in "
+                         << opts.GetOpt<string>(channel+".templateFit.file", 0)
+                         << endl;
+                    return false;
+                }                
+            }
+            else
+            {
+                cout << ">>> WFAnalyzer ERROR: template file " 
+                     << opts.GetOpt<string>(channel+".templateFit.file", 0)
+                     << " not found" << endl;
+                return false;
+            }
             templateFile->Close();
         }
         //---keep track of all the possible time reco method requested
@@ -144,19 +166,21 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
             {
                 WFFitResults timeInfo = WFs_[channel]->GetTime(timeRecoTypes_[iT], timeOpts_[channel+"."+timeRecoTypes_[iT]]);
                 digiTree_.time[outCh+iT*channelsNames_.size()] = timeInfo.time;
+                digiTree_.time_error[outCh+iT*channelsNames_.size()] = timeInfo.error;                
                 digiTree_.time_chi2[outCh+iT*channelsNames_.size()] = timeInfo.chi2;
                 digiTree_.time_slope[outCh+iT*channelsNames_.size()] = timeInfo.slope;
             }
             else
             {
                 digiTree_.time[outCh+iT*channelsNames_.size()] = -99;
+                digiTree_.time_error[outCh+iT*channelsNames_.size()] = -99;
                 digiTree_.time_chi2[outCh+iT*channelsNames_.size()] = -99;
                 digiTree_.time_slope[outCh+iT*channelsNames_.size()] = -99;
             }
         }
 
         //---template fit (only specified channels)
-        WFFitResults fitResults{-1, -1000, -1};
+        WFFitResults fitResults{-1, -1000, -1, -1, -1};
         if(opts.OptExist(channel+".templateFit.file"))
         {
             WFs_[channel]->SetTemplate(templates_[channel]);
@@ -165,6 +189,7 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
                                                     opts.GetOpt<int>(channel+".templateFit.fitWin", 2));
             digiTree_.fit_ampl[outCh] = fitResults.ampl;
             digiTree_.fit_time[outCh] = fitResults.time;
+            digiTree_.fit_terr[outCh] = fitResults.error;            
             digiTree_.fit_chi2[outCh] = fitResults.chi2;
         }            
         //---calibration constant for each channel if needed
@@ -177,11 +202,11 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
         if(fillWFtree)
         {
             auto analizedWF = WFs_[channel]->GetSamples();
-            float tUnit = WFs_[channel]->GetTUnit();
+            auto sampleTimes = WFs_[channel]->GetTimes();
             for(unsigned int jSample=0; jSample<analizedWF->size(); ++jSample)
             {
                 outWFTree_.WF_ch.push_back(outCh);
-                outWFTree_.WF_time.push_back(jSample*tUnit);
+                outWFTree_.WF_time.push_back(sampleTimes->at(jSample));
                 outWFTree_.WF_val.push_back(analizedWF->at(jSample));
             }
         }

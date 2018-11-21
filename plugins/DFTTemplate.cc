@@ -1,7 +1,7 @@
 #include "DFTTemplate.h"
 
 //----------Utils-------------------------------------------------------------------------
-bool DFTTemplate::Begin(CfgManager& opts, uint64* index)
+bool DFTTemplate::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint64* index)
 {
 
     //---register shared FFTs

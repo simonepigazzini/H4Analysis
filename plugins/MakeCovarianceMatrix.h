@@ -18,9 +18,9 @@ public:
     ~MakeCovarianceMatrix(){};
 
     //---utils---
-    bool Begin(CfgManager& opts, uint64* index);
+    bool Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint64* index);
     bool ProcessEvent(const H4Tree& event, map<string, PluginBase*>& plugins, CfgManager& opts);
-    bool EndLoop(int iLoop, CfgManager& opts);
+    bool EndLoop(int iLoop, map<string, PluginBase*>& plugins, CfgManager& opts);
     
 private:    
     //---internal data

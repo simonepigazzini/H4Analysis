@@ -16,8 +16,8 @@ using namespace std;
 class TrackPar
 {
 public:
-    TrackPar() {};
-    ~TrackPar() {};
+    TrackPar() {}
+    ~TrackPar() {}
 
     double x() { return  value[0]; }
     double y() { return  value[1]; }
@@ -36,6 +36,8 @@ public:
 
     std::vector<double> value;
     std::vector<double> covariance;
+
+//    ClassDef(TrackPar, 1)
 };
 
 class TrackTree

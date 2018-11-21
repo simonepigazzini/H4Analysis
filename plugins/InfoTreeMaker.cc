@@ -2,7 +2,7 @@
 
 //**********Utils*************************************************************************
 //----------Begin-------------------------------------------------------------------------
-bool InfoTreeMaker::Begin(CfgManager& opts, uint64* index)
+bool InfoTreeMaker::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint64* index)
 {
     index_ = index;
     //---Register the output file

@@ -6,7 +6,7 @@
 #include "Math/RotationZ.h"
 
 //----------Begin-------------------------------------------------------------------------
-bool TrackReco::Begin(CfgManager& opts, uint64* index)
+bool TrackReco::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint64* index)
 {
     //---create a position tree
     bool storeTree = opts.OptExist(instanceName_+".storeTree") ?
@@ -30,38 +30,31 @@ bool TrackReco::Begin(CfgManager& opts, uint64* index)
         opts.GetOpt<float>(instanceName_+".cleaningChi2Cut") : 100; 
   
     //---inputs---
-    std::string geoTag = opts.GetOpt<string>(instanceName_+".geometrySource");
+    auto geoTag = opts.GetOpt<vector<string> >(instanceName_+".geometrySource");
 
-    if(geoTag.find(".root") != std::string::npos)
+    if(geoTag.size() > 1)
     {
-        //Load geometry from root file
-        std::regex separator_re("::");
-        std::sregex_token_iterator tkIter(geoTag.begin(), geoTag.end(), separator_re, -1);
-        std::sregex_token_iterator tkIterEnd;
-        std::vector<string> tokens;
-        tokens.assign(tkIter, tkIterEnd);
-
-        if(tokens.size() != 2)
+        //---Load geometry from root file
+        TFile* geoFile = TFile::Open(geoTag[0].c_str(), "READ");
+        if(!geoFile)
         {
-            cout << "[TrackReco::" << instanceName_ << "]: Wrong geometry input " << geoTag << endl;
+            cout << "[TrackReco::" << instanceName_ << "]: Cannot open file " << geoTag[0] << endl;
             return false;
-        }
-
-        TFile *f = TFile::Open(tokens[0].c_str(), "READ");
-        Tracking::TelescopeLayout* layout = (Tracking::TelescopeLayout*)f->Get(tokens[1].c_str());
+        }            
+        Tracking::TelescopeLayout* layout = (Tracking::TelescopeLayout*)geoFile->Get(geoTag[1].c_str());
         if(!layout)
         {
-            cout << "[TrackReco::" << instanceName_ << "]: Cannot find object " << geoTag << endl;
+            cout << "[TrackReco::" << instanceName_ << "]: Cannot find object " << geoTag[1] << endl;
             return false;
         }
 
         tLayout_ = *((Tracking::TelescopeLayout*)layout->Clone("loadedLayout"));
-        f->Close();
+        geoFile->Close();
     }
     else
     {
         //---load from cfg
-        tLayout_ = Tracking::TelescopeLayout(opts, geoTag);
+        tLayout_ = Tracking::TelescopeLayout(opts, geoTag[0]);
     }
 
     hitProducers_ = opts.GetOpt<vector<string> >(instanceName_+".hitProducers");
@@ -72,7 +65,7 @@ bool TrackReco::Begin(CfgManager& opts, uint64* index)
     return true;
 }
 
-bool TrackReco::BeginLoop(int iLoop, CfgManager& opts)
+bool TrackReco::BeginLoop(int iLoop, map<string, PluginBase*>& plugins, CfgManager& opts)
 {
     tLayout_.Print();
     return true;

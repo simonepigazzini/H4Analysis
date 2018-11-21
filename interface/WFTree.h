@@ -26,7 +26,8 @@ public:
     //---utils---
     void Init();
     void Fill();
-
+    void Reset();
+    
     TTree* tree_; 
     string suffix_;
 

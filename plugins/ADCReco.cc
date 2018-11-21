@@ -1,7 +1,7 @@
 #include "ADCReco.h"
 
 //----------Begin-------------------------------------------------------------------------
-bool ADCReco::Begin(CfgManager& opts, uint64* index)
+bool ADCReco::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint64* index)
 {
     chNames_ = opts.GetOpt<vector<string> >(GetInstanceName()+".chNames");
     nChannels_ = chNames_.size();

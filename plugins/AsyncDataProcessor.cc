@@ -11,7 +11,7 @@ AsyncDataProcessor::AsyncDataProcessor():
 {}
     
 //---------Begin--------------------------------------------------------------------------
-bool AsyncDataProcessor::Begin(CfgManager& opts, uint64* index)
+bool AsyncDataProcessor::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint64* index)
 {
     if(!opts.OptExist(instanceName_+".srcPath"))
     {
@@ -58,7 +58,7 @@ bool AsyncDataProcessor::Begin(CfgManager& opts, uint64* index)
     for(auto& plugin : pluginSequence_)
     {
         //---call Begin() methods and check the return status
-        bool r_status = plugin->Begin(opts, index);
+        bool r_status = plugin->Begin(plugins, opts, index);
         if(!r_status)
         {
             cout << ">>> ERROR: plugin returned bad flag from Begin() call: " << plugin->GetInstanceName() << endl;
@@ -120,11 +120,6 @@ bool AsyncDataProcessor::ProcessEvent(H4Tree& event, map<string, PluginBase*>& p
 
     //---Event loop. Match RC event with asynchronous DR events
     bool status=true;
-
-    for(auto& plugin : pluginSequence_)
-    {
-        status &= plugin->Clear(); //clearing for every event!
-    }
 
     if(opts.OptExist(instanceName_+".asyncEventSelection") && dataSelector_->EvalInstance())
     {

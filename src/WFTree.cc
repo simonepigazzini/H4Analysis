@@ -26,8 +26,20 @@ void WFTree::Init()
 
 void WFTree::Fill()
 {
+    //---fill tree
     tree_->Fill();
+
+    //---automatically reset after filling
+    Reset();
+}
+
+void WFTree::Reset()
+{
+    //---clear containers but preserve size
     WF_ch.clear();
     WF_time.clear();
     WF_val.clear();
+    WF_ch.reserve(WF_samples);
+    WF_time.reserve(WF_samples);
+    WF_val.reserve(WF_samples);
 }        

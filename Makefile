@@ -41,10 +41,10 @@ ROOTGLIBS     = $(shell root-config --glibs) -lMinuit -lTreePlayer -lMathMore -l
 
 
 CXX  =  g++
-CXXFLAGS  = -Wall -Wno-sign-compare -Wno-overloaded-virtual -O2 -fPIC -I$(DIR) $(ROOTCFLAGS) 
+CXXFLAGS  = -Wall -Wno-sign-compare -Wno-overloaded-virtual -O2 -fPIC -fopenmp -I$(DIR) $(ROOTCFLAGS) 
 
 CPP  =  g++
-CPPFLAGS  = -Wall -Wno-sign-compare -Wno-overloaded-virtual -I$(DIR) $(ROOTCFLAGS)
+CPPFLAGS  = -Wall -Wno-sign-compare -Wno-overloaded-virtual -fopenmp -I$(DIR) $(ROOTCFLAGS)
 
 LD       =  g++
 LDFLAGS  =  -rdynamic -shared -O2 
@@ -97,10 +97,10 @@ $(OBJ)%$(OBJSuf): $(SRC)%$(SRCSuf) Makefile
 	@echo " CXX $<"
 	@$ $(CXX) -c $(CXXFLAGS) -o $@ $< 
 
-$(LIB)libH4Analysis.cc: $(DICTHDRS)
+$(LIB)libH4Analysis.cc: $(DICTHDRS) src/classes_def.xml
 	@echo "Generating dictionary..."
 #	@$ rootcling -f $(LIB)libH4Analysis.cc -c -p ${CXXFLAGS} $(DICTHDRS)
-	@$ genreflex $(DICTHDRS) -o $(LIB)libH4Analysis.cc -l$(LIB)libH4Analysis.so -s src/classes_def.xml -Iinterface/
+	@$ genreflex $(DICTHDRS) -o $@ -s src/classes_def.xml -Iinterface/
 
 $(LIB)libH4Analysis.o: $(LIB)libH4Analysis.cc
 	@echo " CXX $<"	
@@ -110,10 +110,10 @@ $(LIB)$(SONAME): $(OBJS) $(LIB)libH4Analysis.o
 	@echo "Linking $(SONAME):"
 	@$ $(LD) $(LDFLAGS) $(OBJS) $(LIB)libH4Analysis.o -o $(LIB)$(SONAME) $(SOFLAGS)$(SONAME) $(GLIBS)
 
-$(LIB)lib%$(LIBSuf): $(PLG)%$(SRCSuf) $(PLG)%$(HDRSuf) $(OBJS)
+$(LIB)lib%$(LIBSuf): $(PLG)%$(SRCSuf) $(PLG)%$(HDRSuf) $(OBJS) $(LIB)$(SONAME)
 	@echo "Creating plugin library " $@
 	@echo " CXX $<"	
-	@$ $(LD) $(CXXFLAGS) $(LDFLAGS) -o $@ $< $(SOFLAGS)lib$*.so $(GLIBS)
+	@$ $(LD) $(CXXFLAGS) $(LDFLAGS) -o $@ $< $(GLIBS) -L$(LIB) -lH4Analysis
 
 dynTTree:
 	cd DynamicTTree && $(MAKE)

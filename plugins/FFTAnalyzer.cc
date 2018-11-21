@@ -6,7 +6,7 @@ FFTAnalyzer::FFTAnalyzer():
 {}
 
 //----------Utils-------------------------------------------------------------------------
-bool FFTAnalyzer::Begin(CfgManager& opts, uint64* index)
+bool FFTAnalyzer::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint64* index)
 {
 
     //---register shared FFTs
@@ -245,7 +245,7 @@ bool FFTAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins,
     return true;
 }
 
-bool FFTAnalyzer::EndLoop(int iLoop,CfgManager& opts)
+bool FFTAnalyzer::EndLoop(int iLoop, map<string, PluginBase*>& plugins, CfgManager& opts)
 {
     for(auto& channel : channelsNames_)
         for(auto& tmpl : templatesNames_)

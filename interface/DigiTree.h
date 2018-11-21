@@ -41,6 +41,7 @@ public:
     float*        b_rms;
     float*        time;
     float*        time_chi2;
+    float*        time_error;    
     float*        time_slope;
     float*        maximum;
     float*        time_maximum;
@@ -51,6 +52,7 @@ public:
     float*        charge_sig;
     float*        fit_ampl;
     float*        fit_time;
+    float*        fit_terr;    
     float*        fit_chi2;
     int*          channels;
     int*          time_types;

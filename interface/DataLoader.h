@@ -21,9 +21,10 @@ public:
     ~DataLoader() {};
 
     //----getters---
-    inline H4Tree& GetTree() {return *inTree_;};
-    inline int&    GetNFiles() {return nFiles_;};
-    inline int     GetNFilesProcessed() {return nFiles_-fileList_.size();};
+    inline H4Tree&  GetTree() {return *inTree_;};
+    inline int      GetNFiles() {return fileList_.size();};
+    inline int      GetNFilesProcessed() {return iFile_;};
+    inline long int GetCurrentEntry() {return inTree_->GetCurrentEntry();};
     
     //---utils---    
     bool NextEvent();
@@ -36,7 +37,7 @@ protected:
 private:
     CfgManager     opts_;
     vector<string> fileList_;
-    int            nFiles_;
+    int            iFile_;
     TFile*         currentFile_;
     H4Tree*        inTree_;
     bool           firstEventInSpill_;    
