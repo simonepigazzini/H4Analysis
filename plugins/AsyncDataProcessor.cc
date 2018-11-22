@@ -99,30 +99,34 @@ bool AsyncDataProcessor::ProcessEvent(H4Tree& event, map<string, PluginBase*>& p
         deltaT_ = 1e7;
         
         //---get new file and data tree
+        //   if the file is not found no event the spill is skipped by the async plugins
         currentSpill_ = event.spillNumber;
         char formatted_spill_number[5];
         std::sprintf(formatted_spill_number, "%04d", currentSpill_);
         asyncDataFile_ = TFile::Open((opts.GetOpt<string>(instanceName_+".srcPath")+"/"+
                                       to_string(event.runNumber)+"/"+
                                       formatted_spill_number+".root").c_str(), "READ");
-        h4Tree_ = new H4Tree((TTree*)asyncDataFile_->Get("H4tree"));
+        if(asyncDataFile_)
+        {
+            h4Tree_ = new H4Tree((TTree*)asyncDataFile_->Get("H4tree"));
 
-        //---Initialize TTreeFormula
-        //   The TTreeFormula specified by 'asyncEventSelection' is used
-        //   to select events in the RC tree that are matched to the ones
-        //   collected by the asynchrohous DR.
-        //   The whole logic somehow assume that the number of events recorded
-        //   by RC is always >= than those recorded by any DR
-        auto selection = opts.OptExist(instanceName_+".asyncEventSelection") ?
-            opts.GetOpt<string>(instanceName_+".asyncEventSelection") : "1";
-        dataSelector_ = new TTreeFormula((instanceName_+"_selector").c_str(), selection.c_str(), event.GetTTreePtr());
+            //---Initialize TTreeFormula
+            //   The TTreeFormula specified by 'asyncEventSelection' is used
+            //   to select events in the RC tree that are matched to the ones
+            //   collected by the asynchrohous DR.
+            //   The whole logic somehow assume that the number of events recorded
+            //   by RC is always >= than those recorded by any DR
+            if(opts.OptExist(instanceName_+".asyncEventSelection"))
+                dataSelector_ = new TTreeFormula((instanceName_+"_selector").c_str(),
+                                                 opts.GetOpt<string>(instanceName_+".asyncEventSelection").c_str(),
+                                                 event.GetTTreePtr());
+        }
     }
 
     //---Event loop. Match RC event with asynchronous DR events
-    bool status=true;
-
-    if(opts.OptExist(instanceName_+".asyncEventSelection") && dataSelector_->EvalInstance())
+    if(dataSelector_ && dataSelector_->EvalInstance())
     {
+        bool status=true;
         int retries=0;
         while(h4Tree_->NextEntry())
         {
@@ -150,11 +154,11 @@ bool AsyncDataProcessor::ProcessEvent(H4Tree& event, map<string, PluginBase*>& p
         }
        
         for(auto& plugin : pluginSequence_)
-        {
             status &= plugin->ProcessEvent(*h4Tree_, plugins, opts);
-        }
+
+        return status;
     }
-    
-    return true;
+
+    return false;
 }
 
