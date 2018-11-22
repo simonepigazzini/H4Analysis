@@ -5,6 +5,7 @@
 #include "TMath.h"
 #include "TLinearFitter.h"
 #include "TGraphErrors.h"
+#include "TROOT.h"
 
 //**********Constructors******************************************************************
 WFClass::WFClass(int polarity, float tUnit, DigiChannelCalibration* calibration):
@@ -17,6 +18,7 @@ WFClass::WFClass(int polarity, float tUnit, DigiChannelCalibration* calibration)
     f_max_(NULL), f_fit_(NULL), interpolator_(NULL)
 {
     calibration_ = calibration;
+    gROOT->ProcessLine("gErrorIgnoreLevel = kWarning;");
 }
 //**********Getters***********************************************************************
 
@@ -532,7 +534,7 @@ WFFitResults WFClass::TemplateFit(float offset, int lW, int hW)
         delete minimizer;        
     }
 
-    return WFFitResults{tempFitAmp_, tempFitTime_, tempFitTimeErr_, TemplateChi2()/(fWinMax_-fWinMin_-2), 0};
+    return WFFitResults{tempFitAmp_, tempFitTime_, tempFitTimeErr_, TemplateChi2()/(fWinMax_-fWinMin_+1-2), 0};
 }
 
 //----------analytic fit to the WF--------------------------------------------------------
@@ -699,7 +701,7 @@ double WFClass::TemplateChi2(const double* par)
     {
         if(iSample < 0 || iSample >= int(samples_.size()))
         {
-            //cout << ">>>WARNING: template fit out of samples rage (chi2 set to -1)" << endl;
+            //cout << ">>>WARNING: template fit out of samples rage (chi2 set to 9999)" << endl;
             chi2 += 9999;
         }
         else

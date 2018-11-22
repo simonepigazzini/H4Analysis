@@ -163,7 +163,7 @@ WFFitResults WFClassClock::TemplateFit(float offset, int lW, int hW)
                 minimizer->SetMaxFunctionCalls(100000);
                 minimizer->SetMaxIterations(1000);
                 minimizer->SetTolerance(1e-2);
-                minimizer->SetPrintLevel(-1);
+                minimizer->SetPrintLevel(0);
                 minimizer->SetFunction(chi2);
                 minimizer->SetLimitedVariable(0, "amplitude", GetAmpMax(), 1e-2, GetAmpMax()*0.8, GetAmpMax()*1.2);
                 minimizer->SetLimitedVariable(1, "deltaT", t0, 1e-3, times_[fWinMin_], times_[fWinMax_]);

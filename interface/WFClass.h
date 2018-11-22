@@ -16,6 +16,7 @@
 #include "TMath.h"
 #include "TH1F.h"
 #include "TF1.h"
+#include "TError.h"
 
 #include "interface/H4Tree.h"
 
