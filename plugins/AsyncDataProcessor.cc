@@ -88,13 +88,17 @@ bool AsyncDataProcessor::ProcessEvent(H4Tree& event, map<string, PluginBase*>& p
         //---clean data from previous spill
         if(h4Tree_)
         {
-            h4Tree_->GetTTreePtr()->Delete();            
+            h4Tree_->GetTTreePtr()->Delete();
             delete h4Tree_;
+            h4Tree_ = NULL;
         }
         if(asyncDataFile_ && asyncDataFile_->IsOpen())
             asyncDataFile_->Close();
         if(dataSelector_)
+        {
             dataSelector_->Delete();
+            dataSelector_ = NULL;
+        }
 
         deltaT_ = 1e7;
         
@@ -116,10 +120,9 @@ bool AsyncDataProcessor::ProcessEvent(H4Tree& event, map<string, PluginBase*>& p
             //   collected by the asynchrohous DR.
             //   The whole logic somehow assume that the number of events recorded
             //   by RC is always >= than those recorded by any DR
-            if(opts.OptExist(instanceName_+".asyncEventSelection"))
-                dataSelector_ = new TTreeFormula((instanceName_+"_selector").c_str(),
-                                                 opts.GetOpt<string>(instanceName_+".asyncEventSelection").c_str(),
-                                                 event.GetTTreePtr());
+            auto selection = opts.OptExist(instanceName_+".asyncEventSelection") ?
+                opts.GetOpt<string>(instanceName_+".asyncEventSelection") : "1";
+            dataSelector_ = new TTreeFormula((instanceName_+"_selector").c_str(), selection.c_str(), event.GetTTreePtr());
         }
     }
 
