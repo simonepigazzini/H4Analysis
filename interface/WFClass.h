@@ -126,7 +126,9 @@ public:
     float                          GetIntegral(int min=-1, int max=-1);
     float                          GetModIntegral(int min=-1, int max=-1);
     virtual float                  GetSignalIntegral(int riseWin, int fallWin);
-
+    virtual float                  GetPeriod() { return -1; };
+    virtual float                  GetTemplateFitPeriod() { return -1; };
+    
     //---setters---
     inline void                    SetTrigRef(float trigRef){trigRef_ = trigRef;};
     inline void                    SetCalibration(DigiChannelCalibration* calib){calibration_=calib;};
@@ -203,10 +205,10 @@ protected:
     float          chi2te_;
     int            fWinMin_;
     int            fWinMax_;
-    float          tempFitTime_;
-    float          tempFitTimeErr_;
-    float          tempFitAmp_;
-    float          tempFitAmpShift_;
+    float          tmplFitTime_;
+    float          tmplFitTimeErr_;
+    float          tmplFitAmp_;
+    float          tmplFitAmpShift_;
     TF1*           f_max_;
     TF1*           f_fit_;
     ROOT::Math::Interpolator* interpolator_;

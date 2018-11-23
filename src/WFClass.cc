@@ -14,7 +14,7 @@ WFClass::WFClass(int polarity, float tUnit, DigiChannelCalibration* calibration)
     bWinMin_(-1), bWinMax_(-1),  maxSample_(-1), fitAmpMax_(-1), fitTimeMax_(-1),
     fitChi2Max_(-1), baseline_(-1), bRMS_(-1), cfSample_(-1), cfFrac_(-1), cfTime_(-1),
     leSample_(-1), leTime_(-1), chi2cf_(-1), chi2le_(-1),
-    fWinMin_(-1), fWinMax_(-1), tempFitTime_(-1), tempFitTimeErr_(-1), tempFitAmp_(-1), tempFitAmpShift_(0),
+    fWinMin_(-1), fWinMax_(-1), tmplFitTime_(-1), tmplFitTimeErr_(-1), tmplFitAmp_(-1), tmplFitAmpShift_(0),
     f_max_(NULL), f_fit_(NULL), interpolator_(NULL)
 {
     calibration_ = calibration;
@@ -386,14 +386,14 @@ void WFClass::SetTemplate(TH1* templateWF)
         return;
 
     interpolator_ = new ROOT::Math::Interpolator(0, ROOT::Math::Interpolation::kCSPLINE);
-    tempFitTime_ = templateWF->GetBinCenter(templateWF->GetMaximumBin());
-    tempFitAmp_ = -1;
+    tmplFitTime_ = templateWF->GetBinCenter(templateWF->GetMaximumBin());
+    tmplFitAmp_ = -1;
 
     //---fill interpolator data
     vector<double> x, y;
     for(int iBin=1; iBin<=templateWF->GetNbinsX(); ++iBin)
     {
-        x.push_back(templateWF->GetBinCenter(iBin));//-tempFitTime_);
+        x.push_back(templateWF->GetBinCenter(iBin));//-tmplFitTime_);
         y.push_back(templateWF->GetBinContent(iBin));
     }
     interpolator_->SetData(x, y);
@@ -425,10 +425,10 @@ void WFClass::Reset()
     chi2le_ = -1;
     fWinMin_ = -1;
     fWinMax_ = -1;
-    tempFitTime_ = -1;
-    tempFitTimeErr_ = -1;    
-    tempFitAmp_ = -1;
-    tempFitAmpShift_ = 0;    
+    tmplFitTime_ = -1;
+    tmplFitTimeErr_ = -1;    
+    tmplFitAmp_ = -1;
+    tmplFitAmpShift_ = 0;    
     uncalibSamples_.clear();
     calibSamples_.clear();
     times_.clear();
@@ -508,7 +508,7 @@ WFBaseline WFClass::SubtractBaseline(int min, int max)
 //----------template fit to the WF--------------------------------------------------------
 WFFitResults WFClass::TemplateFit(float offset, int lW, int hW)
 {
-    if(tempFitAmp_ == -1)
+    if(tmplFitAmp_ == -1)
     {
         //---set template fit window around maximum, [min, max)
         BaselineRMS();
@@ -527,14 +527,14 @@ WFFitResults WFClass::TemplateFit(float offset, int lW, int hW)
         minimizer->SetLimitedVariable(1, "deltaT", times_[maxSample_], 1e-2, times_[fWinMin_], times_[fWinMax_]);
         //---fit
         minimizer->Minimize();
-        tempFitAmp_ = minimizer->X()[0];
-        tempFitTime_ = minimizer->X()[1];
-        tempFitTimeErr_ = minimizer->Errors()[1];
+        tmplFitAmp_ = minimizer->X()[0];
+        tmplFitTime_ = minimizer->X()[1];
+        tmplFitTimeErr_ = minimizer->Errors()[1];
 
         delete minimizer;        
     }
 
-    return WFFitResults{tempFitAmp_, tempFitTime_, tempFitTimeErr_, TemplateChi2()/(fWinMax_-fWinMin_+1-2), 0};
+    return WFFitResults{tmplFitAmp_, tmplFitTime_, tmplFitTimeErr_, TemplateChi2()/(fWinMax_-fWinMin_+1-2), 0};
 }
 
 //----------analytic fit to the WF--------------------------------------------------------
@@ -575,7 +575,7 @@ void WFClass::EmulatedWF(WFClass& wf,float rms, float amplitude, float time)
 
     wf.Reset();
 
-    if (tempFitTime_ == -1)
+    if (tmplFitTime_ == -1)
     {
         std::cout << "ERROR: no TEMPLATE for this WF" << std::endl;
         return;
@@ -583,7 +583,7 @@ void WFClass::EmulatedWF(WFClass& wf,float rms, float amplitude, float time)
 
     for (unsigned int i=0; i<samples_.size();++i)
     {
-        float emulatedSample=amplitude*interpolator_->Eval(i*tUnit_-tempFitTime_-(time-tempFitTime_));
+        float emulatedSample=amplitude*interpolator_->Eval(i*tUnit_-tmplFitTime_-(time-tmplFitTime_));
         emulatedSample+=rnd.Gaus(0,rms);
         wf.AddSample(emulatedSample);
     }
@@ -696,7 +696,9 @@ double WFClass::TemplateChi2(const double* par)
 {
     double chi2 = 0;
     double delta = 0;
-#pragma omp parallel for reduction(+:chi2)     
+#ifdef PARALLEL
+#pragma omp parallel for reduction(+:chi2)
+#endif    
     for(int iSample=fWinMin_; iSample<=fWinMax_; ++iSample)
     {
         if(iSample < 0 || iSample >= int(samples_.size()))
@@ -711,7 +713,7 @@ double WFClass::TemplateChi2(const double* par)
             if(par)
                 delta = (samples_.at(iSample) - par[0]*interpolator_->Eval(times_.at(iSample)-par[1]))/bRMS_;
             else
-                delta = (samples_.at(iSample) - tempFitAmp_*interpolator_->Eval(times_.at(iSample)-tempFitTime_))/bRMS_;
+                delta = (samples_.at(iSample) - tmplFitAmp_*interpolator_->Eval(times_.at(iSample)-tmplFitTime_))/bRMS_;
             chi2 += delta*delta;
         }
     }
@@ -790,10 +792,10 @@ WFClass& WFClass::operator=(const WFClass& origin)
     chi2le_ = origin.chi2le_;
     fWinMin_ = origin.fWinMin_;
     fWinMax_ = origin.fWinMax_;
-    tempFitTime_ = origin.tempFitTime_;
-    tempFitTimeErr_ = origin.tempFitTimeErr_;
-    tempFitAmp_ = origin.tempFitAmp_;
-    tempFitAmpShift_ = origin.tempFitAmpShift_;    
+    tmplFitTime_ = origin.tmplFitTime_;
+    tmplFitTimeErr_ = origin.tmplFitTimeErr_;
+    tmplFitAmp_ = origin.tmplFitAmp_;
+    tmplFitAmpShift_ = origin.tmplFitAmpShift_;    
     interpolator_ = NULL;
 
     return *this;

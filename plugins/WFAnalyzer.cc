@@ -178,6 +178,7 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
                 digiTree_.time_slope[outCh+iT*channelsNames_.size()] = -99;
             }
         }
+        digiTree_.period[outCh] = WFs_[channel]->GetPeriod();
 
         //---template fit (only specified channels)
         WFFitResults fitResults{-1, -1000, -1, -1, -1};
@@ -191,6 +192,7 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
             digiTree_.fit_time[outCh] = fitResults.time;
             digiTree_.fit_terr[outCh] = fitResults.error;            
             digiTree_.fit_chi2[outCh] = fitResults.chi2;
+            digiTree_.fit_period[outCh] = WFs_[channel]->GetTemplateFitPeriod();
         }            
         //---calibration constant for each channel if needed
         if(opts.OptExist(channel+".calibration.calibrationConst"))

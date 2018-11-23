@@ -18,8 +18,14 @@ public:
     //---getters---
     WFFitResults GetTime(string method, vector<float>& params) override;
     WFFitResults GetTimeLE(float thr = 0, int nmFitSamples=2, int npFitSamples=2, int min=-1, int max=-1) override;
-    WFFitResults GetTimeCLK(float wleft=-1.3, float wright=1.3, int min=130, int max=900);
+    WFFitResults GetTimeCLK(float wleft=-1.3, float wright=1.3, int min=130, int max=900);    
     WFFitResults TemplateFit(float offset=0., int lW=0, int hW=0) override;
+    float        GetPeriod() override { return clkPeriod_; };
+    float        GetTemplateFitPeriod() override { return clkPeriod_; };
+
+private:
+    float clkPeriod_;
+    float tmplFitPeriod_;
 };
 
 #endif
