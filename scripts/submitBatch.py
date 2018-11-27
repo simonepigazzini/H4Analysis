@@ -151,8 +151,15 @@ def getNumberOfSpills (run, path, cfg):
                     path2data = words[1]
                     break
 
-    # find the number of files in the directory and take this as the number of spills
-    nspills = len([name for name in os.listdir(path2data+'/'+run+'/') if os.path.isfile(path2data+'/'+run+'/'+name)])
+    datafiles = [name for name in os.listdir(path2data+'/'+run+'/') if os.path.isfile(path2data+'/'+run+'/'+name)]
+
+    ## find the number of files in the directory and take this as the number of spills
+    #nspills = len(datafiles)
+
+    # use the spill number of the last file as the number of spills assuming a file name like "spill number".root
+    spills = [int(datafile.replace('.root', '')) for datafile in datafiles]
+    spills.sort()
+    nspills = spills[-1]
     return nspills
 
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
