@@ -10,6 +10,7 @@
 #include "interface/WFClassNINO.h"
 #include "interface/WFClassClock.h"
 #include "interface/WFViewer.h"
+#include "interface/RecoEventAnalyzer.h"
 
 class WFAnalyzer: public PluginBase
 {
@@ -32,6 +33,7 @@ private:
     vector<string>              timeRecoTypes_;
     map<string, vector<float> > timeOpts_;
     DigiTree                    digiTree_;
+    RecoEventAnalyzer           eventAnalyzer_;
     WFTree                      outWFTree_;
     map<string, WFClass*>       WFs_;
     map<string, TH1*>           templates_;

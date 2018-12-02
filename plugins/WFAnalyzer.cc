@@ -13,6 +13,16 @@ bool WFAnalyzer::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint
     channelsNames_ = opts.GetOpt<vector<string> >(instanceName_+".channelsNames");
     timeRecoTypes_ = opts.GetOpt<vector<string> >(instanceName_+".timeRecoTypes");
 
+    //---load WFs from source instance shared data
+    for(auto& channel : channelsNames_)
+    {
+        auto shared_data = plugins[srcInstance_]->GetSharedData(srcInstance_+"_"+channel, "", false);
+        if(shared_data.size() != 0)
+            WFs_[channel] = (WFClass*)shared_data.at(0).obj;
+        else
+            cout << "[WFAnalizer::" << instanceName_ << "]: channels samples not found check DigiReco step" << endl; 
+    }
+    
     //---channels setup
     string templateTag="";
     if(opts.OptExist(instanceName_+".templateTags"))
@@ -34,7 +44,8 @@ bool WFAnalyzer::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint
                 if(wfTemplate)
                 {
                     templates_[channel] = (TH1F*) wfTemplate->Clone();
-                    templates_[channel] -> SetDirectory(0);
+                    templates_[channel]->SetDirectory(0);
+                    WFs_[channel]->SetTemplate(templates_[channel]);
                 }
                 else
                 {
@@ -80,6 +91,8 @@ bool WFAnalyzer::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint
         outWFTree_.Init();
     }
 
+    eventAnalyzer_ = RecoEventAnalyzer(plugins, index);
+    
     return true;
 }
 
@@ -90,16 +103,6 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
     bool fillWFtree=false;
     if(opts.GetOpt<int>(instanceName_+".fillWFtree"))
         fillWFtree = *digiTree_.index % opts.GetOpt<int>(instanceName_+".WFtreePrescale") == 0;
-
-    //---load WFs from source instance shared data
-    for(auto& channel : channelsNames_)
-    {
-        auto shared_data = plugins[srcInstance_]->GetSharedData(srcInstance_+"_"+channel, "", false);
-        if(shared_data.size() != 0)
-            WFs_[channel] = (WFClass*)shared_data.at(0).obj;
-        else
-            cout << "[WFAnalizer::" << instanceName_ << "]: channels samples not found check DigiReco step" << endl; 
-    }
 
     //---compute reco variables
     for(auto& channel : channelsNames_)
@@ -184,7 +187,6 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
         WFFitResults fitResults{-1, -1000, -1, -1, -1};
         if(opts.OptExist(channel+".templateFit.file"))
         {
-            WFs_[channel]->SetTemplate(templates_[channel]);
             fitResults = WFs_[channel]->TemplateFit(opts.GetOpt<float>(channel+".templateFit.fitWin", 0),
                                                     opts.GetOpt<int>(channel+".templateFit.fitWin", 1),
                                                     opts.GetOpt<int>(channel+".templateFit.fitWin", 2));
@@ -222,6 +224,6 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
     //---WFs
     if(fillWFtree)
         outWFTree_.Fill();
-
+    
     return true;
 }

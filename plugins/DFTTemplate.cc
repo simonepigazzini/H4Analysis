@@ -34,8 +34,8 @@ bool DFTTemplate::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uin
         vector<string> newOpts={""};
         newOpts[0] = to_string(tOversampling);
         opts.SetOpt(oversampledName+".tUnit", newOpts);
-        newOpts[0] = to_string(orig_n_sample*opts.GetOpt<float>(channel+".tUnit")/tOversampling);
-        opts.SetOpt(oversampledName+".nSamples", newOpts);                
+        newOpts[0] = to_string(int(orig_n_sample*opts.GetOpt<float>(channel+".tUnit")/tOversampling));
+        opts.SetOpt(oversampledName+".nSamples", newOpts);
     }
 
     return true;

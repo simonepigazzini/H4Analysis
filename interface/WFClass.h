@@ -7,6 +7,7 @@
 #include <vector>
 #include <cmath>
 #include <algorithm>
+#include <random>
 
 #include "Math/Interpolator.h"
 #include "Math/Minimizer.h"
@@ -211,6 +212,8 @@ protected:
     float          tmplFitAmpShift_;
     TF1*           f_max_;
     TF1*           f_fit_;
+    float          interpolatorMin_;
+    float          interpolatorMax_;         
     ROOT::Math::Interpolator* interpolator_;
 };
 

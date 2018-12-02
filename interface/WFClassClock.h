@@ -1,8 +1,6 @@
 #ifndef __WFCLASS_CLOCK_H__
 #define __WFCLASS_CLOCK_H__
 
-#include <random>
-
 #include "WFClass.h"
 #include "TGraph.h"
 

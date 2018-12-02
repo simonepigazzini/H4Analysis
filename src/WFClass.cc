@@ -383,7 +383,7 @@ void WFClass::SetTemplate(TH1* templateWF)
 
     //---reset template fit variables
     if(interpolator_)
-        return;
+        delete interpolator_;
 
     interpolator_ = new ROOT::Math::Interpolator(0, ROOT::Math::Interpolation::kCSPLINE);
     tmplFitTime_ = templateWF->GetBinCenter(templateWF->GetMaximumBin());
@@ -397,7 +397,9 @@ void WFClass::SetTemplate(TH1* templateWF)
         y.push_back(templateWF->GetBinContent(iBin));
     }
     interpolator_->SetData(x, y);
-
+    interpolatorMin_ = templateWF->GetBinCenter(1);
+    interpolatorMax_ = templateWF->GetBinCenter(templateWF->GetNbinsX());
+    
     return;
 }
 
@@ -508,7 +510,8 @@ WFBaseline WFClass::SubtractBaseline(int min, int max)
 //----------template fit to the WF--------------------------------------------------------
 WFFitResults WFClass::TemplateFit(float offset, int lW, int hW)
 {
-    if(tmplFitAmp_ == -1)
+    double tmplFitChi2=0;
+    if(tmplFitAmp_ == -1 && samples_[maxSample_]>100.)
     {
         //---set template fit window around maximum, [min, max)
         BaselineRMS();
@@ -516,7 +519,8 @@ WFFitResults WFClass::TemplateFit(float offset, int lW, int hW)
         fWinMin_ = maxSample_ + int(offset/tUnit_) - lW;
         fWinMax_ = maxSample_ + int(offset/tUnit_) + hW;
         //---setup minimization
-        ROOT::Math::Functor chi2(this, &WFClass::TemplateChi2, 3);
+        auto t0 = GetInterpolatedAmpMax().time;
+        ROOT::Math::Functor chi2(this, &WFClass::TemplateChi2, 2);
         ROOT::Math::Minimizer* minimizer = ROOT::Math::Factory::CreateMinimizer("Minuit2", "Migrad");
         minimizer->SetMaxFunctionCalls(100000);
         minimizer->SetMaxIterations(1000);
@@ -524,17 +528,18 @@ WFFitResults WFClass::TemplateFit(float offset, int lW, int hW)
         minimizer->SetPrintLevel(0);
         minimizer->SetFunction(chi2);
         minimizer->SetLimitedVariable(0, "amplitude", GetAmpMax(), 1e-2, 0., GetAmpMax()*2.);
-        minimizer->SetLimitedVariable(1, "deltaT", times_[maxSample_], 1e-2, times_[fWinMin_], times_[fWinMax_]);
+        minimizer->SetLimitedVariable(1, "deltaT", t0, 1e-2, times_[fWinMin_], times_[fWinMax_]);        
         //---fit
         minimizer->Minimize();
         tmplFitAmp_ = minimizer->X()[0];
         tmplFitTime_ = minimizer->X()[1];
         tmplFitTimeErr_ = minimizer->Errors()[1];
 
-        delete minimizer;        
+        delete minimizer;
     }
 
     return WFFitResults{tmplFitAmp_, tmplFitTime_, tmplFitTimeErr_, TemplateChi2()/(fWinMax_-fWinMin_+1-2), 0};
+    //return WFFitResults{tmplFitAmp_, tmplFitTime_, tmplFitTimeErr_, tmplFitChi2, 0};
 }
 
 //----------analytic fit to the WF--------------------------------------------------------
@@ -701,7 +706,8 @@ double WFClass::TemplateChi2(const double* par)
 #endif    
     for(int iSample=fWinMin_; iSample<=fWinMax_; ++iSample)
     {
-        if(iSample < 0 || iSample >= int(samples_.size()))
+        if(iSample < 0 || iSample >= int(samples_.size()) ||
+           (par && (times_.at(iSample)-par[1] < interpolatorMin_ || times_.at(iSample)-par[1] > interpolatorMax_) ) )
         {
             //cout << ">>>WARNING: template fit out of samples rage (chi2 set to 9999)" << endl;
             chi2 += 9999;
@@ -711,11 +717,11 @@ double WFClass::TemplateChi2(const double* par)
             //---fit: par[0]*ref_shape(t-par[1]) par[0]=amplitude, par[1]=DeltaT
             //---if not fitting return chi2 value of best fit
             if(par)
-                delta = (samples_.at(iSample) - par[0]*interpolator_->Eval(times_.at(iSample)-par[1]))/bRMS_;
+                delta = (samples_.at(iSample) - par[0]*interpolator_->Eval(iSample*tUnit_-par[1]))/bRMS_;
             else
                 delta = (samples_.at(iSample) - tmplFitAmp_*interpolator_->Eval(times_.at(iSample)-tmplFitTime_))/bRMS_;
             chi2 += delta*delta;
-        }
+       }
     }
 
     return chi2;
