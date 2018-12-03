@@ -524,11 +524,11 @@ WFFitResults WFClass::TemplateFit(float offset, int lW, int hW)
         ROOT::Math::Minimizer* minimizer = ROOT::Math::Factory::CreateMinimizer("Minuit2", "Migrad");
         minimizer->SetMaxFunctionCalls(100000);
         minimizer->SetMaxIterations(1000);
-        minimizer->SetTolerance(1e-3);
+        minimizer->SetTolerance(1e-4);
         minimizer->SetPrintLevel(0);
         minimizer->SetFunction(chi2);
         minimizer->SetLimitedVariable(0, "amplitude", GetAmpMax(), 1e-2, 0., GetAmpMax()*2.);
-        minimizer->SetLimitedVariable(1, "deltaT", t0, 1e-2, times_[fWinMin_], times_[fWinMax_]);        
+        minimizer->SetLimitedVariable(1, "deltaT", t0, 1e-3, times_[fWinMin_], times_[fWinMax_]);        
         //---fit
         minimizer->Minimize();
         tmplFitAmp_ = minimizer->X()[0];
