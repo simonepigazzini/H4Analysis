@@ -196,7 +196,7 @@ WFFitResults WFClassClock::TemplateFit(float offset, int lW, int hW)
         //---compute clock period, phase and phase error
         tmplFitPeriod_ = (ST-S*T/N)/(S2-S*S/N);
         tmplFitTime_ = (T-S*tmplFitPeriod_)/N;
-        TH1F h_phase_err("h_phase_err", "", 75, -1, 1);
+        TH1F h_phase_err("h_phase_err", "", 100, -0.05, 0.05);
         for(unsigned int i=1; i<N; ++i)
         {
             auto t_clk = clkZeros[i]-clkZeros[0];

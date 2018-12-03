@@ -717,9 +717,9 @@ double WFClass::TemplateChi2(const double* par)
             //---fit: par[0]*ref_shape(t-par[1]) par[0]=amplitude, par[1]=DeltaT
             //---if not fitting return chi2 value of best fit
             if(par)
-                delta = (samples_.at(iSample) - par[0]*interpolator_->Eval(iSample*tUnit_-par[1]))/bRMS_;
+                delta = (samples_.at(iSample) - par[0]*interpolator_->Eval(times_[iSample]-par[1]))/bRMS_;
             else
-                delta = (samples_.at(iSample) - tmplFitAmp_*interpolator_->Eval(times_.at(iSample)-tmplFitTime_))/bRMS_;
+                delta = (samples_.at(iSample) - tmplFitAmp_*interpolator_->Eval(times_[iSample]-tmplFitTime_))/bRMS_;
             chi2 += delta*delta;
        }
     }
