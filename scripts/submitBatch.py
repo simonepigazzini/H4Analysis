@@ -104,7 +104,7 @@ if __name__ == '__main__':
     args = parser.parse_args ()
 
     ## check ntuple version
-    stageOutDir = args.storage+'ntuples_'+args.version+'/'
+    stageOutDir = args.storage+'/ntuples_'+args.version+'/'
     
     if args.batch == 'lxbatch':
         if getoutput('ls '+stageOutDir) == "":
@@ -130,7 +130,7 @@ if __name__ == '__main__':
             for run in runs_file:
                 args.runs.append(run.rstrip())
 
-    getstatusoutput('tar --exclude-vcs --exclude="*.root" -cjf '+job_dir+'/job.tar -C '+local_path+' .')
+    getstatusoutput('tar --exclude-vcs --exclude="*ntuples*" -cjf '+job_dir+'/job.tar -C '+local_path+' .')
     
     ## create jobs
     print 'submitting', len(args.runs), 'jobs to queue', args.queue
