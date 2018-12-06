@@ -9,6 +9,7 @@
 #include <fstream>
 #include <string>
 #include <regex>
+#include <experimental/filesystem>
 
 #include "TFile.h"
 #include "TChain.h"
@@ -20,6 +21,8 @@
 #include "interface/PluginBase.h"
 #include "interface/DataLoader.h"
 #include "interface/RecoTree.h"
+
+namespace fs = std::experimental::filesystem;
 
 //**********UTILS*************************************************************************
 std::string getMachineDomain()
@@ -125,7 +128,7 @@ int main(int argc, char* argv[])
     }
     if(argc > 3)
         spill = atoi(argv[3]);
-    string outSuffix = opts.GetOpt<string>("h4reco.outNameSuffix");
+    auto out_file_name = opts.GetOpt<string>("h4reco.outNameSuffix");
     bool storeTree = opts.OptExist("h4reco.storeTree") ?
         opts.GetOpt<bool>("h4reco.storeTree") : true;
 
@@ -138,14 +141,15 @@ int main(int argc, char* argv[])
     DataLoader dataLoader(opts);
 
     //-----output setup-----
-    uint64 index=0;    
-    TFile* outROOT;
+    uint64 index=0;
     if(spill == -1)
-        outROOT = new TFile(outSuffix+TString(run)+".root", "RECREATE");
+        out_file_name += run+".root";
     else if(opts.GetOpt<int>("h4reco.maxFiles") > 1)
-        outROOT = new TFile(outSuffix+TString(run)+"_"+spillOpt.back()+".root", "RECREATE");
+        out_file_name += run+"_"+spillOpt.back()+".root";
     else
-        outROOT = new TFile(outSuffix+"/"+TString(run)+"/"+to_string(spill).c_str()+".root", "RECREATE");
+        out_file_name += "/"+run+"/"+to_string(spill)+".root";
+    fs::create_directories(fs::absolute(fs::path(out_file_name.substr(0, out_file_name.find_last_of("/")+1))));
+    auto* outROOT = new TFile(out_file_name.c_str(), "RECREATE");
     outROOT->cd();
     TDirectory* outDIR=outROOT;
 

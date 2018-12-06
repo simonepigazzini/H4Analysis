@@ -93,7 +93,7 @@ test:
 $(BIN)%: $(PRG)%$(PRGSuf) $(HDRS) $(LIB)$(SONAME) Makefile
 	@echo "Building main executable"
 	@echo " CXX $<"
-	@$ $(CPP) $(CPPFLAGS) $(GLIBS) -L$(LIB) -lH4Analysis -lWFAnalyzer -o $@ $<
+	@$ $(CPP) $(CPPFLAGS) $(GLIBS) -L$(LIB) -lH4Analysis -lWFAnalyzer -o $@ $< -lstdc++fs
 
 $(OBJ)%$(OBJSuf): $(SRC)%$(SRCSuf) Makefile
 	@echo " CXX $<"
