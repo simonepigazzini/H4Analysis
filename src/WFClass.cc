@@ -393,12 +393,12 @@ void WFClass::SetTemplate(TH1* templateWF)
     vector<double> x, y;
     for(int iBin=1; iBin<=templateWF->GetNbinsX(); ++iBin)
     {
-        x.push_back(templateWF->GetBinCenter(iBin));//-tmplFitTime_);
+        x.push_back(templateWF->GetBinCenter(iBin)-tmplFitTime_);
         y.push_back(templateWF->GetBinContent(iBin));
     }
     interpolator_->SetData(x, y);
-    interpolatorMin_ = templateWF->GetBinCenter(1);
-    interpolatorMax_ = templateWF->GetBinCenter(templateWF->GetNbinsX());
+    interpolatorMin_ = templateWF->GetBinCenter(1)-tmplFitTime_;
+    interpolatorMax_ = templateWF->GetBinCenter(templateWF->GetNbinsX())-tmplFitTime_;
     
     return;
 }
@@ -700,7 +700,7 @@ float WFClass::LinearInterpolation(float& A, float& B, const int& min, const int
 double WFClass::TemplateChi2(const double* par)
 {
     double chi2 = 0;
-    double delta = 0;
+    double delta2 = 0;
 #ifdef PARALLEL
 #pragma omp parallel for reduction(+:chi2)
 #endif    
@@ -715,12 +715,20 @@ double WFClass::TemplateChi2(const double* par)
         else
         {
             //---fit: par[0]*ref_shape(t-par[1]) par[0]=amplitude, par[1]=DeltaT
-            //---if not fitting return chi2 value of best fit
+            //---if not fitting return chi2 value of best fit            
             if(par)
-                delta = (samples_.at(iSample) - par[0]*interpolator_->Eval(times_[iSample]-par[1]))/bRMS_;
+            {
+                //auto deriv = par[0]*interpolator_->Deriv(times_[iSample]-par[1]);
+                auto err2 = bRMS_*bRMS_;// + pow(tUnit_/sqrt(12)*deriv/2, 2);
+                delta2 = pow((samples_.at(iSample) - par[0]*interpolator_->Eval(times_[iSample]-par[1])), 2)/err2;
+            }
             else
-                delta = (samples_.at(iSample) - tmplFitAmp_*interpolator_->Eval(times_[iSample]-tmplFitTime_))/bRMS_;
-            chi2 += delta*delta;
+            {
+                //auto deriv = tmplFitAmp_*interpolator_->Deriv(times_[iSample]-tmplFitTime_);
+                auto err2 = bRMS_*bRMS_;// + pow(tUnit_/sqrt(12)*deriv/2, 2);
+                delta2 = pow((samples_.at(iSample) - tmplFitAmp_*interpolator_->Eval(times_[iSample]-tmplFitTime_)), 2)/err2;
+            }
+            chi2 += delta2;
        }
     }
 

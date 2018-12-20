@@ -1,5 +1,8 @@
 #include "FFTAnalyzer.h"
 
+#include "TLinearFitter.h"
+#include <algorithm>
+
 //----------Constructor-------------------------------------------------------------------
 FFTAnalyzer::FFTAnalyzer():
     n_tot_(0)
@@ -88,26 +91,29 @@ bool FFTAnalyzer::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uin
         //---create tree branches:
         //   array size is determined by DigitizerReco channels
         index_ = index;
+        n_ch_ = channelsNames_.size();
         current_ch_ = new int[n_tot_];
-        freqs_ = new float[n_tot_];
         re_ = new float[n_tot_];
         im_ = new float[n_tot_];        
         amplitudes_ = new float[n_tot_];
         phases_ = new float[n_tot_];
+        phase_adj_ = new float[n_tot_];
+        dt_ = new float[n_ch_];        
         fftTree_ = (TTree*)data_.back().obj;
         fftTree_->Branch("index", index_, "index/l");
         fftTree_->Branch("n_tot", &n_tot_, "n_tot/i");
+        fftTree_->Branch("n_ch", &n_ch_, "n_ch/i");
         fftTree_->Branch("ch", current_ch_, "ch[n_tot]/I");        
-        fftTree_->Branch("freq", freqs_, "freq[n_tot]/F");
         fftTree_->Branch("re", re_, "re[n_tot]/F");
         fftTree_->Branch("im", im_, "im[n_tot]/F");
         fftTree_->Branch("ampl", amplitudes_, "ampl[n_tot]/F");
         fftTree_->Branch("phi", phases_, "phi[n_tot]/F");
+        fftTree_->Branch("phi_adj", phase_adj_, "phi_adj[n_tot]/F");
+        fftTree_->Branch("dt", dt_, "dt[n_ch]/F");
         //---set default values
         for(unsigned int i=0; i<n_tot_; ++i)
         {
             current_ch_[i]=-1;
-            freqs_[i] = -1;
             re_[i] = -10;
             im_[i] = -10;
             amplitudes_[i]=-1;
@@ -167,6 +173,10 @@ bool FFTAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins,
             var_map["Phase"] = FFTs_[channel]->GetPhases()->data();
             if(fftTree_ || templatesNames_.size() != 0)
             {
+                float shift=0;
+                vector<double> x(int(opts.GetOpt<float>(channel+".maxPhaseFitFreq")*wf->GetTUnit()*n_samples));
+                generate(x.begin(), x.end(), [n=-1, wf, n_samples] () mutable { ++n; return n/(wf->GetTUnit()*n_samples); });   
+                TLinearFitter phase_fit(1, "x[0]", "");
                 for(int k=0; k<n_samples; ++k)
                 {
                     for(auto& tmpl : templatesNames_){
@@ -176,13 +186,23 @@ bool FFTAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins,
                     {
                         int index =  channelsMap_[channel] * n_samples + k;
                         current_ch_[index] = channelsMap_[channel];
-                        freqs_[index] = (k%(n_samples));
                         re_[index] = oRe[index];
                         im_[index] = oIm[index];
                         amplitudes_[index] = var_map["Ampl"][k];
                         phases_[index] = var_map["Phase"][k];
+                        if(k>0 && var_map["Phase"][k] > var_map["Phase"][k-1])
+                            shift -= 2*TMath::Pi();
+                        phase_adj_[index] = shift;
+                        if(k < x.size())
+                            phase_fit.AddPoint(&x[k], (phases_[index]+shift)/wf->GetTUnit());
                     }
                 }
+                if(fftTree_)
+                {
+                    phase_fit.Eval();
+                    dt_[channelsMap_[channel]] = phase_fit.GetParameter(0);
+                }
+                
             }
             delete fftr2c;
         }

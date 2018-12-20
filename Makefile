@@ -53,7 +53,7 @@ LDFLAGS  =  -rdynamic -shared -O2
 SONAME	 =  libH4Analysis.so
 SOFLAGS  =  -Wl,-soname,
 
-GLIBS   =  -lm -L./DynamicTTree/lib -L./CfgManager/lib -Wl,-rpath=lib/:DynamicTTree/lib/:CfgManager/lib/ -lDTT -lCFGMan $(ROOTGLIBS)
+GLIBS   =  -lm -L./DynamicTTree/lib -L./CfgManager/lib -Wl,-rpath=$(DIR)/lib/:$(DIR)/DynamicTTree/lib/:$(DIR)/CfgManager/lib/ -lDTT -lCFGMan $(ROOTGLIBS)
 
 
 
@@ -102,7 +102,7 @@ $(OBJ)%$(OBJSuf): $(SRC)%$(SRCSuf) Makefile
 $(LIB)libH4Analysis.cc: $(DICTHDRS) src/classes_def.xml
 	@echo "Generating dictionary..."
 #	@$ rootcling -f $(LIB)libH4Analysis.cc -c -p ${CXXFLAGS} $(DICTHDRS)
-	@$ genreflex $(DICTHDRS) -o $@ -s src/classes_def.xml -Iinterface/
+	@$ genreflex $(DICTHDRS) -o $@ -s src/classes_def.xml -I$(DIR)/interface/
 
 $(LIB)libH4Analysis.o: $(LIB)libH4Analysis.cc
 	@echo " CXX $<"	

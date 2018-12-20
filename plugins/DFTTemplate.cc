@@ -1,4 +1,6 @@
 #include "DFTTemplate.h"
+#include "TRandom.h"
+#include <complex>
 
 //----------Utils-------------------------------------------------------------------------
 bool DFTTemplate::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint64* index)
@@ -69,22 +71,35 @@ bool DFTTemplate::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins,
         ampl_spectrum.Fit(&ampl_extrapolation, "QRSO");
         while(Re.size() < n_samples)
         {
-            Re.insert(Re.begin()+(Re.size()/2), 2,
-                      ampl_extrapolation.Eval(Re.size()/oversamplingMap_[channel].second));
-            if(Im.size() < orig_n_sample*2)
-            {
-                auto insert_point = Im.size()/2;
-                Im.insert(Im.begin()+insert_point, -(2*TMath::Pi()*(Im.size()-orig_n_sample)/orig_n_sample-TMath::Pi()));
-                Im.insert(Im.begin()+insert_point, 2*TMath::Pi()*(Im.size()-orig_n_sample)/orig_n_sample-TMath::Pi());
-            }
-            else if(Im.size() < orig_n_sample*3)
-            {
-                auto insert_point = Im.size()/2;
-                Im.insert(Im.begin()+insert_point, -(-2*TMath::Pi()*(Im.size()-orig_n_sample*2)/(orig_n_sample*2)+TMath::Pi()));
-                Im.insert(Im.begin()+insert_point, 2*TMath::Pi()*(Im.size()-orig_n_sample)/orig_n_sample-TMath::Pi());
-            }
-            else                
-                Im.insert(Im.begin()+(Im.size()/2), 2, 0.);
+            auto mag = ampl_extrapolation.Eval(Re.size()/oversamplingMap_[channel].second);
+            auto phase = gRandom->Uniform(-TMath::Pi(), TMath::Pi());
+            // Re.insert(Re.begin()+(Re.size()/2), 2,
+            //           ampl_extrapolation.Eval(Re.size()/oversamplingMap_[channel].second));
+            // if(Im.size() < orig_n_sample*2)
+            // {
+            //     // auto insert_point = Im.size()/2;
+            //     // Im.insert(Im.begin()+insert_point, -(2*TMath::Pi()*(Im.size()-orig_n_sample)/orig_n_sample-TMath::Pi()));
+            //     // Im.insert(Im.begin()+insert_point, 2*TMath::Pi()*(Im.size()-orig_n_sample)/orig_n_sample-TMath::Pi());
+            //     ph1 = -(2*TMath::Pi()*(Im.size()-orig_n_sample)/orig_n_sample-TMath::Pi());
+            //     ph2 = 2*TMath::Pi()*(Im.size()-orig_n_sample)/orig_n_sample-TMath::Pi();
+            // }
+            // else if(Im.size() < orig_n_sample*3)
+            // {
+            //     // auto insert_point = Im.size()/2;
+            //     // Im.insert(Im.begin()+insert_point, -(-2*TMath::Pi()*(Im.size()-orig_n_sample*2)/(orig_n_sample*2)+TMath::Pi()));
+            //     // Im.insert(Im.begin()+insert_point, 2*TMath::Pi()*(Im.size()-orig_n_sample)/orig_n_sample-TMath::Pi());
+            //     ph1 = -(-2*TMath::Pi()*(Im.size()-orig_n_sample*2)/(orig_n_sample*2)+TMath::Pi());
+            //     ph2 = 2*TMath::Pi()*(Im.size()-orig_n_sample)/orig_n_sample-TMath::Pi();
+            // }
+            // else                
+            //     Im.insert(Im.begin()+(Im.size()/2), 2, 0.);
+            auto insert_point = Im.size()/2;
+            complex c1 = polar(mag, phase);
+            complex c2 = polar(mag, -phase);
+            Re.insert(Re.begin()+insert_point, c1.real());
+            Re.insert(Re.begin()+insert_point, c2.real());
+            Im.insert(Im.begin()+insert_point, c1.imag());
+            Im.insert(Im.begin()+insert_point, c2.imag());
         }
         //---construct FFT and oversampled WF
         auto fftc2r = TVirtualFFT::FFT(1, &n_samples, "C2R");

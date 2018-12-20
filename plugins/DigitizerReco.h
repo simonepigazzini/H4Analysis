@@ -29,7 +29,7 @@ private:
     //---internal data
     map<string, int>            nSamples_;
     vector<string>              channelsNames_;
-    map<string, WFClass*>       WFs;
+    map<string, WFClass*>       WFs_;
     DigitizerCalibration        digitizerCalib_; 
 };
 

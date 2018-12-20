@@ -46,12 +46,12 @@ bool DigitizerReco::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, u
         if(opts.OptExist(channel+".type"))
         {
             if(opts.GetOpt<string>(channel+".type") == "NINO")
-                WFs[channel] = new WFClassNINO(opts.GetOpt<int>(channel+".polarity"), tUnit);
+                WFs_[channel] = new WFClassNINO(opts.GetOpt<int>(channel+".polarity"), tUnit);
             else if(opts.GetOpt<string>(channel+".type") == "Clock")
-                WFs[channel] = new WFClassClock(tUnit);
+                WFs_[channel] = new WFClassClock(tUnit);
         }
         else
-            WFs[channel] = new WFClass(opts.GetOpt<int>(channel+".polarity"), tUnit);
+            WFs_[channel] = new WFClass(opts.GetOpt<int>(channel+".polarity"), tUnit);
         
         //---set channel calibration if available
         unsigned int digiBd = opts.GetOpt<unsigned int>(channel+".digiBoard");
@@ -59,10 +59,10 @@ bool DigitizerReco::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, u
         unsigned int digiCh = opts.GetOpt<unsigned int>(channel+".digiChannel");
         auto ch_key = make_tuple(digiBd, digiGr, digiCh);
         if(digitizerCalib_.find(ch_key) != digitizerCalib_.end())
-            WFs[channel]->SetCalibration(&digitizerCalib_[ch_key]);
+            WFs_[channel]->SetCalibration(&digitizerCalib_[ch_key]);
 
         //---register WF in the shared data
-        RegisterSharedData(WFs[channel], channel, false);
+        RegisterSharedData(WFs_[channel], channel, false);
     }
     
     return true;
@@ -87,8 +87,8 @@ bool DigitizerReco::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugin
     bool evtStatus = true;
     for(auto& channel : channelsNames_)
     {
-        //---reset and read new WFs
-        WFs[channel]->Reset();
+        //---reset and read new WFs_
+        WFs_[channel]->Reset();
         unsigned int digiBd = opts.GetOpt<unsigned int>(channel+".digiBoard");
         unsigned int digiGr = opts.GetOpt<unsigned int>(channel+".digiGroup");
         unsigned int digiCh = opts.GetOpt<unsigned int>(channel+".digiChannel");
@@ -97,22 +97,22 @@ bool DigitizerReco::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugin
         {
             //Set the start index cell
             if (iSample==offset)
-                WFs[channel]->SetStartIndexCell(event.digiStartIndexCell[iSample]);
+                WFs_[channel]->SetStartIndexCell(event.digiStartIndexCell[iSample]);
 
             //---H4DAQ bug: sometimes ADC value is out of bound.
             //---skip everything if one channel is bad
             if(event.digiSampleValue[iSample] > 1e6)
             {
                 evtStatus = false;
-                WFs[channel]->AddSample(4095);
+                WFs_[channel]->AddSample(4095);
             }
             else
-                WFs[channel]->AddSample(event.digiSampleValue[iSample]);
+                WFs_[channel]->AddSample(event.digiSampleValue[iSample]);
         }
         if(opts.OptExist(channel+".useTrigRef") && opts.GetOpt<bool>(channel+".useTrigRef"))
-            WFs[channel]->SetTrigRef(trigRef);
-        if(WFs[channel]->GetCalibration())
-            WFs[channel]->ApplyCalibration();
+            WFs_[channel]->SetTrigRef(trigRef);
+        if(WFs_[channel]->GetCalibration())
+            WFs_[channel]->ApplyCalibration();
     }
 
     if(!evtStatus)
