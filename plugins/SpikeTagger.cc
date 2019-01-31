@@ -1,7 +1,7 @@
 #include "SpikeTagger.h"
 
 //----------Utils-------------------------------------------------------------------------
-bool SpikeTagger::Begin(CfgManager& opts, uint64* index)
+bool SpikeTagger::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint64* index)
 {
     //---inputs---
     if(!opts.OptExist(instanceName_+".srcInstanceName"))

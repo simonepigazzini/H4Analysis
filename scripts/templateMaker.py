@@ -1,8 +1,8 @@
 #!/bin/python3
 
 import os
-from commands import getstatusoutput
-#import subprocess
+#from commands import getstatusoutput
+from subprocess import getstatusoutput
 
 import ROOT
 
@@ -90,7 +90,7 @@ if __name__ == '__main__':
             cfg.SetOpt(args.wfr_instance+'.channelsNames', vstring(1, ch+'_T'))            
             if args.debug:            
                 cfg.Print(args.dftt_instance)
-            new_cfg_file = base_dir+'tmp/'+args.template_cfg.strip('.cfg')+'_'+ch+'_TMPL.cfg'
+            new_cfg_file = base_dir+'tmp/'+args.template_cfg.split("/")[-1].strip('.cfg')+'_'+ch+'_TMPL.cfg'
             cfg.WriteToFile(new_cfg_file, True)
 
             print('>>> Running reconstruction on run', run, '...')

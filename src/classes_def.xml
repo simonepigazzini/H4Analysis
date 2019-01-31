@@ -1,9 +1,14 @@
 <lcgdict>
+  <class name="TrackPar"/>
+  <class name="vector<TrackPar>"/>
+  <class name="DigitizerCalibration"/>  
+  <class name="tuple<unsigned int,unsigned int,unsigned int>"/>
+  <class name="std::unordered_map<const bgc_key_t, DigiChannelCalibration, key_hash, key_equal>"/>
+  <class name="calibrationParameters"/>
+  <class name="DigiChannelCalibration"/>
   <class name="Tracking::TelescopeLayout"/>
   <class name="Tracking::TelescopeLayer"/>
   <class name="std::vector<Tracking::TelescopeLayer>"/>
-  <class name="TrackPar"/>
-  <class name="std::vector<TrackPar>"/>
   <class name="PositionMeasurement"/>
   <class name="std::vector<PositionMeasurement>"/>
   <class name="MCPAnalyzer"/>

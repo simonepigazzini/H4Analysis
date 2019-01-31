@@ -13,7 +13,7 @@
 #include <time.h>
 
 //----------Begin-------------------------------------------------------------------------
-bool AlignTelescope::Begin(CfgManager& opts, uint64* index)
+bool AlignTelescope::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint64* index)
 {  
     //---inputs---
     srcInstance_ = opts.GetOpt<string>(instanceName_+".srcInstance");
@@ -25,7 +25,7 @@ bool AlignTelescope::Begin(CfgManager& opts, uint64* index)
 }
 
 //----------Begin-------------------------------------------------------------------------
-bool AlignTelescope::BeginLoop(int iLoop, CfgManager& opts)
+bool AlignTelescope::BeginLoop(int iLoop, map<string, PluginBase*>& plugins, CfgManager& opts)
 {  
     tracks_.tracks_.clear();
     return true;
@@ -161,14 +161,14 @@ void AlignTelescope::minimize()
     delete minimizer;        
 }
 
-bool AlignTelescope::EndLoop(int iLoop, CfgManager& opts)
+bool AlignTelescope::EndLoop(int iLoop, map<string, PluginBase*>& plugins, CfgManager& opts)
 {
     minimize();
     return true;
 }
 
 
-bool AlignTelescope::End(CfgManager& opts)
+bool AlignTelescope::End(map<string, PluginBase*>& plugins, CfgManager& opts)
 {
     return true;
 }

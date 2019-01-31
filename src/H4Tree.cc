@@ -19,7 +19,7 @@ void H4Tree::Init()
         }
     }
 
-    NextEntry(-1);
+    NextEntry(GetTTreePtr()->GetEntriesFast()+1);
 }
 
 H4Tree::~H4Tree()

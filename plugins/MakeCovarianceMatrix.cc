@@ -1,7 +1,7 @@
 #include "plugins/MakeCovarianceMatrix.h"
 
 //----------Utils-------------------------------------------------------------------------
-bool MakeCovarianceMatrix::Begin(CfgManager& opts, uint64* index)
+bool MakeCovarianceMatrix::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint64* index)
 {
     digiInstance_ = opts.GetOpt<string>(instanceName_+".digiInstanceName");
     channelsNames_ = opts.GetOpt<vector<string> >(instanceName_+".channelsNames");
@@ -46,7 +46,7 @@ bool MakeCovarianceMatrix::ProcessEvent(const H4Tree& event, map<string, PluginB
     return true;
 }
 
-bool MakeCovarianceMatrix::EndLoop(int iLoop,CfgManager& opts)
+bool MakeCovarianceMatrix::EndLoop(int iLoop, map<string, PluginBase*>& plugins, CfgManager& opts)
 {
     for(auto& channel : channelsNames_)
     {        

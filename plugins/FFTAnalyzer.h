@@ -24,20 +24,22 @@ public:
     ~FFTAnalyzer(){};
 
     //---utils---
-    bool Begin(CfgManager& opts, uint64* index);
+    bool Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint64* index);
     bool ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, CfgManager& opts);
-    bool EndLoop(int iLoop, CfgManager& opts);
+    bool EndLoop(int iLoop, map<string, PluginBase*>& plugins, CfgManager& opts);
     
 private:    
     //---internal data
     uint64*                   index_;
     unsigned int              n_tot_;
+    unsigned int              n_ch_;
     int*                      current_ch_;
-    float*                    freqs_;
     float*                    re_;
     float*                    im_;
     float*                    amplitudes_;
     float*                    phases_;
+    float*                    phase_adj_;
+    float*                    dt_;
     string                    fftType_;
     string                    srcInstance_;
     vector<string>            channelsNames_;
