@@ -558,7 +558,7 @@ WFFitResultsScintPlusSpike WFClass::TemplateFitScintPlusSpike(float offset, int 
         minimizer->SetLimitedVariable(0, "amplitude_scint", GetAmpMax(), 1e-2, 0., GetAmpMax()*2.);
         minimizer->SetLimitedVariable(1, "deltaT_scint", maxSample_*tUnit_+deltaTPeakShift, 1e-2, fWinMin_*tUnit_+deltaTPeakShift, fWinMax_*tUnit_+deltaTPeakShift);
         minimizer->SetLimitedVariable(2, "amplitude_spike", GetAmpMax(), 1e-2, 0., GetAmpMax()*2.);
-        minimizer->SetLimitedVariable(3, "deltaT_spike", maxSample_*tUnit_+deltaTPeakShift, 1e-2, fWinMin_*tUnit_+deltaTPeakShift, fWinMax_*tUnit_+deltaTPeakShift);
+        minimizer->SetLimitedVariable(3, "deltaT_scint_minus_deltaT_spike", tempTimeMaxScint_ - tempTimeMaxSpike_, 1e-2, 0., fWinMax_*tUnit_);
         //---fit
         tempFitConverged_ = minimizer->Minimize();
 
@@ -567,14 +567,15 @@ WFFitResultsScintPlusSpike WFClass::TemplateFitScintPlusSpike(float offset, int 
             minimizer->SetVariableValue(0, GetAmpMax()/2.);
             minimizer->SetVariableValue(1, maxSample_*tUnit_+deltaTPeakShift);
             minimizer->SetVariableValue(2, GetAmpMax()/2.);
-            minimizer->SetVariableValue(3, maxSample_*tUnit_+deltaTPeakShift);
+            minimizer->SetVariableValue(3, tempTimeMaxScint_ - tempTimeMaxSpike_);
             tempFitConverged_ = minimizer->Minimize();
         }
 
-        tempFitAmpScint_ = minimizer->X()[0];
-        tempFitTimeScint_ = minimizer->X()[1];
-        tempFitAmpSpike_ = minimizer->X()[2];
-        tempFitTimeSpike_ = minimizer->X()[3];
+        const auto minparams = minimizer->X();
+        tempFitAmpScint_ = minparams[0];
+        tempFitTimeScint_ = minparams[1];
+        tempFitAmpSpike_ = minparams[2];
+        tempFitTimeSpike_ = minparams[1] - minparams[3];
 
         delete minimizer;
     }
@@ -768,7 +769,8 @@ double WFClass::TemplatesChi2(const double* par)
             //---if not fitting return chi2 value of best fit
             const auto iSampleTime = iSample*tUnit_;
             if(par)
-                delta = (samples_[iSample] - par[0]*interpolatorScint_->Eval(iSampleTime-par[1]) - par[2]*interpolatorSpike_->Eval(iSampleTime-par[3]))/bRMS_;
+                //delta = (samples_[iSample] - par[0]*interpolatorScint_->Eval(iSampleTime-par[1]) - par[2]*interpolatorSpike_->Eval(iSampleTime-par[3]))/bRMS_;
+                delta = (samples_[iSample] - par[0]*interpolatorScint_->Eval(iSampleTime-par[1]) - par[2]*interpolatorSpike_->Eval(iSampleTime-(par[1]-par[3])))/bRMS_;
             else
                 delta = (samples_[iSample] - tempFitAmpScint_*interpolatorScint_->Eval(iSampleTime-tempFitTimeScint_) - tempFitAmpSpike_*interpolatorSpike_->Eval(iSampleTime-tempFitTimeSpike_))/bRMS_;
             chi2 += delta*delta;
