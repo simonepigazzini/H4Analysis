@@ -96,11 +96,13 @@ WFFitResults WFClass::GetInterpolatedAmpMax(int min, int max, int nmFitSamples, 
     double brms=BaselineRMS();
     for(int iSample=maxSample_-nmFitSamples; iSample<=maxSample_+npFitSamples; ++iSample)
     {
-        times[bin] = times_.at(iSample);
-        samples[bin] = samples_.at(iSample);
-        xerr[bin] = 0.;
-        yerr[bin] = brms;
-        ++bin;
+        if (iSample < times_.size() && iSample < samples_.size()) {
+            times[bin] = times_[iSample];
+            samples[bin] = samples_[iSample];
+            xerr[bin] = 0.;
+            yerr[bin] = brms;
+            ++bin;
+        }
     }
 
     TGraphErrors h_max(nmFitSamples+npFitSamples+1, times, samples, xerr, yerr);
