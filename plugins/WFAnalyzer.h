@@ -10,6 +10,7 @@
 #include "interface/WFClassNINO.h"
 #include "interface/WFClassClock.h"
 #include "interface/WFViewer.h"
+#include "interface/RecoEventAnalyzer.h"
 
 class WFAnalyzer: public PluginBase
 {
@@ -21,9 +22,9 @@ public:
     ~WFAnalyzer(){};
 
     //---utils---
-    bool Begin(CfgManager& opts, uint64* index);
+    bool Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint64* index);
     bool ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, CfgManager& opts);
-    bool End(CfgManager& opts) { return true; };
+    bool End(map<string, PluginBase*>& plugins, CfgManager& opts) { return true; };
     
 private:    
     //---internal data
@@ -32,6 +33,7 @@ private:
     vector<string>              timeRecoTypes_;
     map<string, vector<float> > timeOpts_;
     DigiTree                    digiTree_;
+    RecoEventAnalyzer           eventAnalyzer_;
     WFTree                      outWFTree_;
     map<string, WFClass*>       WFs_;
     map<string, TH1*>           templates_;

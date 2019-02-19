@@ -11,7 +11,7 @@ AsyncDataProcessor::AsyncDataProcessor():
 {}
     
 //---------Begin--------------------------------------------------------------------------
-bool AsyncDataProcessor::Begin(CfgManager& opts, uint64* index)
+bool AsyncDataProcessor::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint64* index)
 {
     if(!opts.OptExist(instanceName_+".srcPath"))
     {
@@ -58,7 +58,7 @@ bool AsyncDataProcessor::Begin(CfgManager& opts, uint64* index)
     for(auto& plugin : pluginSequence_)
     {
         //---call Begin() methods and check the return status
-        bool r_status = plugin->Begin(opts, index);
+        bool r_status = plugin->Begin(plugins, opts, index);
         if(!r_status)
         {
             cout << ">>> ERROR: plugin returned bad flag from Begin() call: " << plugin->GetInstanceName() << endl;
@@ -88,46 +88,48 @@ bool AsyncDataProcessor::ProcessEvent(H4Tree& event, map<string, PluginBase*>& p
         //---clean data from previous spill
         if(h4Tree_)
         {
-            h4Tree_->GetTTreePtr()->Delete();            
+            h4Tree_->GetTTreePtr()->Delete();
             delete h4Tree_;
+            h4Tree_ = NULL;
         }
         if(asyncDataFile_ && asyncDataFile_->IsOpen())
             asyncDataFile_->Close();
         if(dataSelector_)
+        {
             dataSelector_->Delete();
+            dataSelector_ = NULL;
+        }
 
         deltaT_ = 1e7;
         
         //---get new file and data tree
+        //   if the file is not found no event the spill is skipped by the async plugins
         currentSpill_ = event.spillNumber;
         char formatted_spill_number[5];
         std::sprintf(formatted_spill_number, "%04d", currentSpill_);
         asyncDataFile_ = TFile::Open((opts.GetOpt<string>(instanceName_+".srcPath")+"/"+
                                       to_string(event.runNumber)+"/"+
                                       formatted_spill_number+".root").c_str(), "READ");
-        h4Tree_ = new H4Tree((TTree*)asyncDataFile_->Get("H4tree"));
+        if(asyncDataFile_)
+        {
+            h4Tree_ = new H4Tree((TTree*)asyncDataFile_->Get("H4tree"));
 
-        //---Initialize TTreeFormula
-        //   The TTreeFormula specified by 'asyncEventSelection' is used
-        //   to select events in the RC tree that are matched to the ones
-        //   collected by the asynchrohous DR.
-        //   The whole logic somehow assume that the number of events recorded
-        //   by RC is always >= than those recorded by any DR
-        auto selection = opts.OptExist(instanceName_+".asyncEventSelection") ?
-            opts.GetOpt<string>(instanceName_+".asyncEventSelection") : "1";
-        dataSelector_ = new TTreeFormula((instanceName_+"_selector").c_str(), selection.c_str(), event.GetTTreePtr());
+            //---Initialize TTreeFormula
+            //   The TTreeFormula specified by 'asyncEventSelection' is used
+            //   to select events in the RC tree that are matched to the ones
+            //   collected by the asynchrohous DR.
+            //   The whole logic somehow assume that the number of events recorded
+            //   by RC is always >= than those recorded by any DR
+            auto selection = opts.OptExist(instanceName_+".asyncEventSelection") ?
+                opts.GetOpt<string>(instanceName_+".asyncEventSelection") : "1";
+            dataSelector_ = new TTreeFormula((instanceName_+"_selector").c_str(), selection.c_str(), event.GetTTreePtr());
+        }
     }
 
     //---Event loop. Match RC event with asynchronous DR events
-    bool status=true;
-
-    for(auto& plugin : pluginSequence_)
+    if(dataSelector_ && dataSelector_->EvalInstance())
     {
-        status &= plugin->Clear(); //clearing for every event!
-    }
-
-    if(opts.OptExist(instanceName_+".asyncEventSelection") && dataSelector_->EvalInstance())
-    {
+        bool status=true;
         int retries=0;
         while(h4Tree_->NextEntry())
         {
@@ -155,11 +157,11 @@ bool AsyncDataProcessor::ProcessEvent(H4Tree& event, map<string, PluginBase*>& p
         }
        
         for(auto& plugin : pluginSequence_)
-        {
             status &= plugin->ProcessEvent(*h4Tree_, plugins, opts);
-        }
+
+        return status;
     }
-    
-    return true;
+
+    return false;
 }
 

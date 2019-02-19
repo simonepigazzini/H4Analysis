@@ -61,20 +61,21 @@ typedef std::unordered_map<const bgc_key_t, int, key_hash, key_equal> bgc_map_t;
     DATA(unsigned int,  nPatterns)              \
     DATA(unsigned int,  nDigiSamples)
 
-#define DATA_VECT_TABLE                                 \
-    DATA(unsigned int, evtTimeBoard, nEvtTimes)         \
-    DATA(uint64,       evtTime, nEvtTimes)              \
-    DATA(unsigned int, adcBoard, MAX_ADC_CHANNELS)      \
-    DATA(unsigned int, adcChannel, MAX_ADC_CHANNELS)    \
-    DATA(unsigned int, adcData, MAX_ADC_CHANNELS)       \
-    DATA(unsigned int, tdcChannel, MAX_TDC_CHANNELS)    \
-    DATA(unsigned int, tdcData, MAX_TDC_CHANNELS)       \
-    DATA(unsigned int, pattern, nPatterns)              \
-    DATA(unsigned int, patternBoard, nPatterns)         \
-    DATA(unsigned int, patternChannel, nPatterns)       \
-    DATA(unsigned int, digiBoard, nDigiSamples)         \
-    DATA(unsigned int, digiGroup, nDigiSamples)         \
-    DATA(unsigned int, digiChannel, nDigiSamples)       \
+#define DATA_VECT_TABLE                                     \
+    DATA(unsigned int, evtTimeBoard, nEvtTimes)             \
+    DATA(uint64,       evtTime, nEvtTimes)                  \
+    DATA(unsigned int, adcBoard, MAX_ADC_CHANNELS)          \
+    DATA(unsigned int, adcChannel, MAX_ADC_CHANNELS)        \
+    DATA(unsigned int, adcData, MAX_ADC_CHANNELS)           \
+    DATA(unsigned int, tdcChannel, MAX_TDC_CHANNELS)        \
+    DATA(unsigned int, tdcData, MAX_TDC_CHANNELS)           \
+    DATA(unsigned int, pattern, nPatterns)                  \
+    DATA(unsigned int, patternBoard, nPatterns)             \
+    DATA(unsigned int, patternChannel, nPatterns)           \
+    DATA(unsigned int, digiBoard, nDigiSamples)             \
+    DATA(unsigned int, digiGroup, nDigiSamples)             \
+    DATA(unsigned int, digiChannel, nDigiSamples)           \
+    DATA(unsigned int, digiStartIndexCell, nDigiSamples)    \
     DATA(uint16_t,     digiSampleValue, nDigiSamples)
 
 #include "DynamicTTree/interface/DynamicTTreeInterface.h"

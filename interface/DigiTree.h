@@ -41,7 +41,9 @@ public:
     float*        b_rms;
     float*        time;
     float*        time_chi2;
+    float*        time_error;    
     float*        time_slope;
+    float*        period;    
     float*        maximum;
     float*        time_maximum;
     float*        amp_max;
@@ -51,7 +53,9 @@ public:
     float*        charge_sig;
     float*        fit_ampl;
     float*        fit_time;
+    float*        fit_terr;    
     float*        fit_chi2;
+    float*        fit_period;
     float*        fit_ampl_scint;
     float*        fit_time_scint;
     float*        fit_ampl_spike;

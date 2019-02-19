@@ -1,7 +1,7 @@
 #include "WFAnalyzer.h"
 
 //----------Utils-------------------------------------------------------------------------
-bool WFAnalyzer::Begin(CfgManager& opts, uint64* index)
+bool WFAnalyzer::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint64* index)
 {
     //---inputs---
     if(!opts.OptExist(instanceName_+".srcInstanceName"))
@@ -13,6 +13,16 @@ bool WFAnalyzer::Begin(CfgManager& opts, uint64* index)
     channelsNames_ = opts.GetOpt<vector<string> >(instanceName_+".channelsNames");
     timeRecoTypes_ = opts.GetOpt<vector<string> >(instanceName_+".timeRecoTypes");
 
+    //---load WFs from source instance shared data
+    for(auto& channel : channelsNames_)
+    {
+        auto shared_data = plugins[srcInstance_]->GetSharedData(srcInstance_+"_"+channel, "", false);
+        if(shared_data.size() != 0)
+            WFs_[channel] = (WFClass*)shared_data.at(0).obj;
+        else
+            cout << "[WFAnalizer::" << instanceName_ << "]: channels samples not found check DigiReco step" << endl; 
+    }
+    
     //---channels setup
     string templateTag="";
     if(opts.OptExist(instanceName_+".templateTags"))
@@ -28,9 +38,32 @@ bool WFAnalyzer::Begin(CfgManager& opts, uint64* index)
         if(opts.OptExist(channel+".templateFit.file"))
         {            
             TFile* templateFile = TFile::Open(opts.GetOpt<string>(channel+".templateFit.file", 0).c_str(), ".READ");
-            TH1* wfTemplate=(TH1*)templateFile->Get((opts.GetOpt<string>(channel+".templateFit.file", 1)+templateTag).c_str());
-            templates_[channel] = (TH1F*) wfTemplate->Clone();
-            templates_[channel] -> SetDirectory(0);
+            if(templateFile)
+            {
+                TH1* wfTemplate=(TH1*)templateFile->Get((opts.GetOpt<string>(channel+".templateFit.file", 1)+templateTag).c_str());
+                if(wfTemplate)
+                {
+                    templates_[channel] = (TH1F*) wfTemplate->Clone();
+                    templates_[channel]->SetDirectory(0);
+                    WFs_[channel]->SetTemplate(templates_[channel]);
+                }
+                else
+                {
+                    cout << ">>> WFAnalyzer ERROR: template " 
+                         << opts.GetOpt<string>(channel+".templateFit.file", 1)
+                         << " not found in "
+                         << opts.GetOpt<string>(channel+".templateFit.file", 0)
+                         << endl;
+                    return false;
+                }                
+            }
+            else
+            {
+                cout << ">>> WFAnalyzer ERROR: template file " 
+                     << opts.GetOpt<string>(channel+".templateFit.file", 0)
+                     << " not found" << endl;
+                return false;
+            }
             templateFile->Close();
         }
         if(opts.OptExist(channel+".templateFit.spikeFile"))
@@ -66,6 +99,8 @@ bool WFAnalyzer::Begin(CfgManager& opts, uint64* index)
         outWFTree_.Init();
     }
 
+    eventAnalyzer_ = RecoEventAnalyzer(plugins, index);
+    
     return true;
 }
 
@@ -76,16 +111,6 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
     bool fillWFtree=false;
     if(opts.GetOpt<int>(instanceName_+".fillWFtree"))
         fillWFtree = *digiTree_.index % opts.GetOpt<int>(instanceName_+".WFtreePrescale") == 0;
-
-    //---load WFs from source instance shared data
-    for(auto& channel : channelsNames_)
-    {
-        auto shared_data = plugins[srcInstance_]->GetSharedData(srcInstance_+"_"+channel, "", false);
-        if(shared_data.size() != 0)
-            WFs_[channel] = (WFClass*)shared_data.at(0).obj;
-        else
-            cout << "[WFAnalizer::" << instanceName_ << "]: channels samples not found check DigiReco step" << endl; 
-    }
 
     //---compute reco variables
     for(auto& channel : channelsNames_)
@@ -152,32 +177,36 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
             {
                 WFFitResults timeInfo = WFs_[channel]->GetTime(timeRecoTypes_[iT], timeOpts_[channel+"."+timeRecoTypes_[iT]]);
                 digiTree_.time[outCh+iT*channelsNames_.size()] = timeInfo.time;
+                digiTree_.time_error[outCh+iT*channelsNames_.size()] = timeInfo.error;                
                 digiTree_.time_chi2[outCh+iT*channelsNames_.size()] = timeInfo.chi2;
                 digiTree_.time_slope[outCh+iT*channelsNames_.size()] = timeInfo.slope;
             }
             else
             {
                 digiTree_.time[outCh+iT*channelsNames_.size()] = -99;
+                digiTree_.time_error[outCh+iT*channelsNames_.size()] = -99;
                 digiTree_.time_chi2[outCh+iT*channelsNames_.size()] = -99;
                 digiTree_.time_slope[outCh+iT*channelsNames_.size()] = -99;
             }
         }
+        digiTree_.period[outCh] = WFs_[channel]->GetPeriod();
 
         //---template fit (only specified channels)
+        WFFitResults fitResults{-1, -1000, -1, -1, -1};
         if(opts.OptExist(channel+".templateFit.file"))
         {
-            WFFitResults fitResults{-1, -1000, -1};
-            WFs_[channel]->SetTemplate(templates_[channel]);
             fitResults = WFs_[channel]->TemplateFit(opts.GetOpt<float>(channel+".templateFit.fitWin", 0),
                                                     opts.GetOpt<int>(channel+".templateFit.fitWin", 1),
                                                     opts.GetOpt<int>(channel+".templateFit.fitWin", 2));
             digiTree_.fit_ampl[outCh] = fitResults.ampl;
             digiTree_.fit_time[outCh] = fitResults.time;
+            digiTree_.fit_terr[outCh] = fitResults.error;            
             digiTree_.fit_chi2[outCh] = fitResults.chi2;
+            digiTree_.fit_period[outCh] = WFs_[channel]->GetTemplateFitPeriod();
 
+            WFFitResultsScintPlusSpike fitResultsScintPlusSpike{-1, -1000, -1, -1000, -1};
             if(opts.OptExist(channel+".templateFit.spikeFile"))
             {
-                WFFitResultsScintPlusSpike fitResultsScintPlusSpike{-1, -1000, -1, -1000, -1};
                 WFs_[channel]->SetTemplateScint(templates_[channel]);
                 WFs_[channel]->SetTemplateSpike(spikeTemplates_[channel]);
                 fitResultsScintPlusSpike = WFs_[channel]->TemplateFitScintPlusSpike(opts.GetOpt<float>(channel+".templateFit.fitWin", 0),
@@ -201,11 +230,11 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
         if(fillWFtree)
         {
             auto analizedWF = WFs_[channel]->GetSamples();
-            float tUnit = WFs_[channel]->GetTUnit();
+            auto sampleTimes = WFs_[channel]->GetTimes();
             for(unsigned int jSample=0; jSample<analizedWF->size(); ++jSample)
             {
                 outWFTree_.WF_ch.push_back(outCh);
-                outWFTree_.WF_time.push_back(jSample*tUnit);
+                outWFTree_.WF_time.push_back(sampleTimes->at(jSample));
                 outWFTree_.WF_val.push_back(analizedWF->at(jSample));
             }
         }
@@ -219,6 +248,6 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
     //---WFs
     if(fillWFtree)
         outWFTree_.Fill();
-
+    
     return true;
 }

@@ -2,7 +2,7 @@
 
 //**********Contructor********************************************************************
 DataLoader::DataLoader(CfgManager& opts):
-    currentFile_(NULL), inTree_(NULL), firstEventInSpill_(false)
+    iFile_(0), currentFile_(NULL), inTree_(NULL), firstEventInSpill_(false)
 {
     opts_ = opts.GetSubCfg("h4reco");
     ReadInputFiles();
@@ -13,7 +13,6 @@ DataLoader::DataLoader(CfgManager& opts):
 //---Get list of files from run folder and store the list
 bool DataLoader::ReadInputFiles()
 {
-    nFiles_=0;
     int firstSpill=opts_.GetOpt<int>("h4reco.firstSpill");
     string ls_command;
     string file;
@@ -36,7 +35,7 @@ bool DataLoader::ReadInputFiles()
     system(ls_command.c_str());
 
     ifstream waveList(string("/tmp/"+run+".list").c_str(), ios::in);
-    while(waveList >> file && (opts_.GetOpt<int>("h4reco.maxFiles")<0 || nFiles_<opts_.GetOpt<int>("h4reco.maxFiles")) )
+    while(waveList >> file && (opts_.GetOpt<int>("h4reco.maxFiles")<0 || fileList_.size()<opts_.GetOpt<int>("h4reco.maxFiles")) )
     {
         //---skip files before specified spill
         auto currentSpill = std::stoi(file.substr(0, file.size()-4));
@@ -57,13 +56,12 @@ bool DataLoader::ReadInputFiles()
                 std::cout << "+++ Adding file " << (path+run+"/"+file).c_str() << std::endl;
                 fileList_.push_back((path+run+"/"+file).c_str());
             }
-            ++nFiles_;
         }
     }
-    std::cout << "+++ Added " << nFiles_ << std::endl;
+    std::cout << "+++ Added " << fileList_.size() << std::endl;
     
     //---reverse list to use pop_back later on
-    reverse(fileList_.begin(), fileList_.end());
+    //reverse(fileList_.begin(), fileList_.end());
 
     return true;
 }
@@ -104,20 +102,24 @@ bool DataLoader::LoadNextFile()
         currentFile_->Close();
         
     //---get new file and data tree
-    if(fileList_.size() > 0)
+    if(iFile_ < fileList_.size())
     {
-        currentFile_ = TFile::Open(fileList_.back().c_str(), "READ");
+        currentFile_ = TFile::Open(fileList_[iFile_].c_str(), "READ");
         if(currentFile_)
         {
             inTree_ = new H4Tree((TTree*)currentFile_->Get("H4tree"));
-            inTree_->Init();
-            fileList_.pop_back();
+            ++iFile_;
+
             return true;
         }
         else
             return false;
     }
     else
+    {
+        currentFile_ = NULL;
+        inTree_ = NULL;
+        iFile_ = 0;
         return false;
-    
+    }
 }

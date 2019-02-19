@@ -18,9 +18,9 @@ public:
     ~AsyncDataProcessor(){};
 
     //---utils---
-    bool Begin(CfgManager& opts, uint64* index);
+    bool Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint64* index);
     bool ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, CfgManager& opts);
-    bool End(CfgManager& opts) { return true; };
+    bool End(map<string, PluginBase*>& plugins, CfgManager& opts) { return true; };
     
 private:    
     //---internal data

@@ -2,7 +2,7 @@
 
 //**********Utils*************************************************************************
 //----------Begin*************************************************************************
-bool HodoReco::Begin(CfgManager& opts, uint64* index)
+bool HodoReco::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint64* index)
 {
     hodoFiberOrderA_.clear();
     hodoFiberOrderB_.clear();
