@@ -190,7 +190,9 @@ bool TrackReco::ProcessEvent(H4Tree& h4Tree, map<string, PluginBase*>& plugins, 
         TrackPar par;
         par.value.assign(aTrack.trackPar_.Array(), aTrack.trackPar_.Array()+4);
         par.covariance.assign(aTrack.trackParCov_.Array(), aTrack.trackParCov_.Array()+10);
-        trackTree_->fitResult.push_back(par);
+        trackTree_->X.push_back(par.x());
+        trackTree_->Y.push_back(par.y());        
+        trackTree_->fitResult.push_back(par);        
         trackTree_->fitStatus.push_back(aTrack.covarianceMatrixStatus_);
         trackTree_->trackPattern.push_back(aTrack.trackPattern_);
         trackTree_->trackHits.push_back(aTrack.hits_.size());
