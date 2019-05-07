@@ -12,6 +12,8 @@ void TrackTree::Init()
     //---global branches
     tree_->Branch("index", index, "index/l");
     tree_->Branch("n_tracks", &n_tracks, "n_tracks/I");
+    tree_->Branch("X", &X);
+    tree_->Branch("Y", &Y);    
     tree_->Branch("fitResult", &fitResult);
     tree_->Branch("fitStatus", &fitStatus);
     tree_->Branch("trackHits", &trackHits);

@@ -150,7 +150,7 @@ bool AsyncDataProcessor::ProcessEvent(H4Tree& event, map<string, PluginBase*>& p
                 else
                 {
                     h4Tree_->NextEntry(h4Tree_->GetCurrentEntry()-retries-1);
-                    return false;
+                    return true;
                 }                    
             else
                 break;
@@ -162,6 +162,6 @@ bool AsyncDataProcessor::ProcessEvent(H4Tree& event, map<string, PluginBase*>& p
         return status;
     }
 
-    return false;
+    return true;
 }
 

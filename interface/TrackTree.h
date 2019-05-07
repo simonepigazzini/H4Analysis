@@ -55,6 +55,8 @@ public:
     void Init();
     void Clear() 
         {
+            X.clear();
+            Y.clear();            
             trackHits.clear();
             trackPattern.clear();
             trackChi2.clear();
@@ -68,6 +70,8 @@ public:
     uint64* index;
     
     int                       n_tracks;
+    std::vector<float>        X;
+    std::vector<float>        Y;    
     std::vector<int>          trackHits;
     std::vector<float>        trackChi2;
     std::vector<unsigned int> trackPattern;
