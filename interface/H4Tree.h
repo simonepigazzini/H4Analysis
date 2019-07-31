@@ -80,6 +80,10 @@ typedef std::unordered_map<const bgc_key_t, int, key_hash, key_equal> bgc_map_t;
 
 #include "DynamicTTree/interface/DynamicTTreeInterface.h"
 
+#undef DYNAMIC_TREE_NAME
+#undef DATA_TABLE
+#undef DATA_VECT_TABLE
+
 class H4Tree : public H4TreeBase
 {
 public:
