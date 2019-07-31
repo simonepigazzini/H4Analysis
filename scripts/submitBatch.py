@@ -11,7 +11,7 @@ from parser_utils import *
 
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
-def lxbatchSubmitJob (run, path, cfg, outdir, queue, job_dir, dryrun):
+def lxbatchSubmitJob(run, path, cfg, outdir, queue, job_dir, dryrun):
     jobname = job_dir+'/H4Reco_'+queue+'_'+run+'.sh'
     jobtar = job_dir+'/job.tar'
     f = open (jobname, 'w')
@@ -30,7 +30,7 @@ def lxbatchSubmitJob (run, path, cfg, outdir, queue, job_dir, dryrun):
 
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
-def htcondorSubmitJob (runs, path, cfg, outdir, queue, job_dir, dryrun):
+def htcondorSubmitJob(runs, path, cfg, outdir, queue, job_dir, dryrun):
     jobname = job_dir+'/H4Reco_condor'
     jobtar = job_dir+'/job.tar'
     #---H4Reco script
@@ -66,7 +66,7 @@ def htcondorSubmitJob (runs, path, cfg, outdir, queue, job_dir, dryrun):
         
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
-def herculesSubmitJob (run, path, cfg, outdir, queue, job_dir, dryrun):
+def herculesSubmitJob(run, path, cfg, outdir, queue, job_dir, dryrun):
     jobname = job_dir+'/H4Reco_'+queue+'_'+run+'.sh'
     f = open (jobname, 'w')
     f.write ('#!/bin/sh' + '\n\n')
@@ -90,6 +90,17 @@ def herculesSubmitJob (run, path, cfg, outdir, queue, job_dir, dryrun):
 
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
+def resubmitFailed(runs, outdir):
+    
+    successful_runs = getoutput("ls -lhrt "+outdir+"| sed 's:^.*_::g' | sed 's:.root::g'")
+    
+    successful_runs = set(successful_runs.split('\n'))
+    
+    return [run for run in runs if run not in successful_runs]    
+    
+
+# ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser (description = 'submit H4Reco step to lsf')
@@ -100,6 +111,7 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--cfg' , default = '../cfg/H4DAQ_base.cfg', help='production version')
     parser.add_argument('--dryrun' , action="store_true", default=False, help='do not submit the jobs, just create them')
     parser.add_argument('--batch' , default='condor', help='batch system to use')
+    parser.add_argument('--resub' , action="store_true", default=False, help='resubmit failed jobs')
     
     args = parser.parse_args ()
 
@@ -130,9 +142,12 @@ if __name__ == '__main__':
             for run in runs_file:
                 args.runs.append(run.rstrip())
 
-    getstatusoutput('tar --exclude-vcs --exclude="*ntuples*" -cjf '+job_dir+'/job.tar -C '+local_path+' .')
-    
+    ## resubmit failed
+    if args.resub:
+        args.runs = resubmitFailed(args.runs, stageOutDir)
+
     ## create jobs
+    getstatusoutput('tar --exclude-vcs --exclude="*ntuples*" -cjf '+job_dir+'/job.tar -C '+local_path+' .')
     print 'submitting', len(args.runs), 'jobs to queue', args.queue
     if args.batch == 'condor':
         htcondorSubmitJob(args.runs, local_path, args.cfg, stageOutDir, args.queue, job_dir, args.dryrun) 
