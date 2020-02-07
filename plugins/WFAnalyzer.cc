@@ -79,9 +79,21 @@ bool WFAnalyzer::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint
         opts.GetOpt<string>(instanceName_+".digiTreeName") : "digi";
     bool storeTree = opts.OptExist(instanceName_+".storeTree") ?
         opts.GetOpt<bool>(instanceName_+".storeTree") : true;
+
     RegisterSharedData(new TTree(digiTreeName.c_str(), "digi_tree"), "digi_tree", storeTree);
     digiTree_ = DigiTree(index, (TTree*)data_.back().obj);
     digiTree_.Init(channelsNames_, timeRecoTypes_);
+    //---store channel time and amplitude calibrations---
+    int outCh=0;
+    for(auto& channel : channelsNames_)
+    {
+        digiTree_.ampl_calib[outCh] = opts.OptExist(channel+".amplitudeCalib") ? 
+            opts.GetOpt<float>(channel+".amplitudeCalib") : 1.;
+        digiTree_.time_calib[outCh] = opts.OptExist(channel+".timeCalib") ? 
+            opts.GetOpt<float>(channel+".timeCalib") : 1.;
+        ++outCh;
+    }
+
     if(opts.GetOpt<int>(instanceName_+".fillWFtree"))
     {
         string wfTreeName = opts.OptExist(instanceName_+".wfTreeName") ?
@@ -184,23 +196,19 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
         digiTree_.period[outCh] = WFs_[channel]->GetPeriod();
 
         //---template fit (only specified channels)
-        WFFitResults fitResults{-1, -1000, -1, -1, -1};
         if(opts.OptExist(channel+".templateFit.file"))
         {
-            fitResults = WFs_[channel]->TemplateFit(opts.GetOpt<float>(channel+".templateFit.fitWin", 0),
-                                                    opts.GetOpt<int>(channel+".templateFit.fitWin", 1),
-                                                    opts.GetOpt<int>(channel+".templateFit.fitWin", 2));
+            auto fitResults = WFs_[channel]->TemplateFit(
+                opts.OptExist(channel+".templateFit.amplitudeThreshold") ? opts.GetOpt<float>(channel+".templateFit.amplitudeThreshold") : 0,
+                opts.GetOpt<float>(channel+".templateFit.fitWin", 0),
+                opts.GetOpt<int>(channel+".templateFit.fitWin", 1),
+                opts.GetOpt<int>(channel+".templateFit.fitWin", 2));
             digiTree_.fit_ampl[outCh] = fitResults.ampl;
             digiTree_.fit_time[outCh] = fitResults.time;
             digiTree_.fit_terr[outCh] = fitResults.error;            
             digiTree_.fit_chi2[outCh] = fitResults.chi2;
             digiTree_.fit_period[outCh] = WFs_[channel]->GetTemplateFitPeriod();
         }            
-        //---calibration constant for each channel if needed
-        if(opts.OptExist(channel+".calibration.calibrationConst"))
-            digiTree_.calibration[outCh]=opts.GetOpt<float>(channel+".calibration.calibrationConst");
-        else
-            digiTree_.calibration[outCh]=1;
 	
         //---WFs---
         if(fillWFtree)
@@ -222,7 +230,7 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
     //---reco var
     digiTree_.Fill();
     //---WFs
-    if(fillWFtree)
+    if(opts.GetOpt<int>(instanceName_+".fillWFtree"))
         outWFTree_.Fill();
     
     return true;

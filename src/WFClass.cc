@@ -522,12 +522,12 @@ WFBaseline WFClass::SubtractBaseline(int min, int max)
 }
 
 //----------template fit to the WF--------------------------------------------------------
-WFFitResults WFClass::TemplateFit(float offset, int lW, int hW)
+WFFitResults WFClass::TemplateFit(float amp_threshold, float offset, int lW, int hW)
 {
     double tmplFitChi2=0;
     if(tmplFitAmp_ == -1)
     {
-        if(samples_[maxSample_]>100.)
+        if(samples_[maxSample_]>amp_threshold)
         {
             //---set template fit window around maximum, [min, max)
             BaselineRMS();
@@ -558,7 +558,6 @@ WFFitResults WFClass::TemplateFit(float offset, int lW, int hW)
     }    
 
     return WFFitResults{tmplFitAmp_, tmplFitTime_, tmplFitTimeErr_, TemplateChi2()/(fWinMax_-fWinMin_+1-2), 0};
-    //return WFFitResults{tmplFitAmp_, tmplFitTime_, tmplFitTimeErr_, tmplFitChi2, 0};
 }
 
 //----------analytic fit to the WF--------------------------------------------------------

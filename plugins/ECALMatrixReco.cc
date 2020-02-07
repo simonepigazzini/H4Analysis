@@ -13,8 +13,6 @@ bool ECALMatrixReco::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, 
     //---output tree
     outTree_ = ECALMatrixTree("ecal_tree", "ECAL matrix tree", index);
     RegisterSharedData(outTree_.GetTTreePtr(), "ecal_tree", true);
-    // RegisterSharedData(new TTree("ecal_tree", "ECAL matrix tree"), "ecal_tree", true);
-    // outTree_ = ECALMatrixTree((TTree*)data_.back().obj, index);
 
     //---EventAnalyzer to retrieve channel reco info
     eventAnalyzer_ = RecoEventAnalyzer(plugins, index);
@@ -32,7 +30,7 @@ bool ECALMatrixReco::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugi
     string seed_ch;
     for(auto& ch : channels_)
     {
-        auto expr = "fit_ampl["+ch+"]";
+        auto expr = "fit_ampl["+ch+"]*ampl_calib["+ch+"]";
         energies[ch] = eventAnalyzer_.GetValues(expr).back()[0];
         if(seed_ch == "" || energies[ch]>energies[seed_ch])
             seed_ch = ch;
@@ -58,8 +56,8 @@ bool ECALMatrixReco::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugi
         if(std::abs(pos.first-seed_pos.first)<2 && std::abs(pos.second-seed_pos.second)<2)
         {
             float w = std::max(0., 4.2 + log(energies[ch]/e3x3));
-            ecal_x += (pos.first*22-11)*w;
-            ecal_y += (pos.second*22-11)*w;
+            ecal_x += (pos.first*22)*w;
+            ecal_y += (pos.second*22)*w;
             sum_w += w;
         }
     }

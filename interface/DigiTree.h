@@ -58,7 +58,8 @@ public:
     float*        fit_period;
     int*          channels;
     int*          time_types;
-    float*        calibration;
+    float*        ampl_calib;
+    float*        time_calib;
 };
 
 #endif

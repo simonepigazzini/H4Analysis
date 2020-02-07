@@ -36,7 +36,8 @@ void DigiTree::Init(vector<string>& names, vector<string>& timetypes)
     fit_terr = new float[n_channels];        
     fit_chi2 = new float[n_channels];
     fit_period = new float[n_channels];
-    calibration = new float[n_channels];
+    ampl_calib = new float[n_channels];
+    time_calib = new float[n_channels];
 
     //---channels branches
     for(unsigned int iCh=0; iCh<n_channels; iCh++)
@@ -77,7 +78,8 @@ void DigiTree::Init(vector<string>& names, vector<string>& timetypes)
     tree_->Branch((prefix_+"fit_terr").c_str(), fit_terr, (prefix_+"fit_terr["+size_var+"]/F").c_str());    
     tree_->Branch((prefix_+"fit_chi2").c_str(), fit_chi2, (prefix_+"fit_chi2["+size_var+"]/F").c_str());
     tree_->Branch((prefix_+"fit_period").c_str(), fit_period, (prefix_+"fit_period["+size_var+"]/F").c_str());    
-    tree_->Branch((prefix_+"calibration").c_str(), calibration, (prefix_+"calibration["+size_var+"]/F").c_str());
+    tree_->Branch((prefix_+"ampl_calib").c_str(), ampl_calib, (prefix_+"ampl_calib["+size_var+"]/F").c_str());
+    tree_->Branch((prefix_+"time_calib").c_str(), time_calib, (prefix_+"time_calib["+size_var+"]/F").c_str());
 }
 
 DigiTree::~DigiTree()
