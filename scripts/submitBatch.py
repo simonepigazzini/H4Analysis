@@ -9,6 +9,18 @@ import datetime
 
 from parser_utils import *
 
+def getProxy():
+    stat,out = commands.getstatusoutput("voms-proxy-info -e --valid 5:00")
+    if stat:
+        raise Exception,"voms proxy not found or validity  less than 5 hours:\n%s" % out
+    stat,out = commands.getstatusoutput("voms-proxy-info -p")
+    out = out.strip().split("\n")[-1] # remove spurious java info at ic.ac.uk
+    if stat:
+        raise Exception,"Unable to voms proxy:\n%s" % out
+    proxy = out.strip("\n")
+    return proxy
+
+
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
 def lxbatchSubmitJob(run, path, cfg, outdir, queue, job_dir, dryrun):
@@ -53,6 +65,7 @@ def htcondorSubmitJob(runs, path, cfg, outdir, queue, job_dir, dryrun):
     fsub.write('output      = '+job_dir+'/output/h4reco.$(ClusterId).$(ProcId).out\n')
     fsub.write('error       = '+job_dir+'/output/h4reco.$(ClusterId).$(ProcId).err\n')
     fsub.write('log         = '+job_dir+'/log/h4reco.$(ClusterId).log\n\n')
+    fsub.write('x509userproxy = '+getProxy()+' \n\n')
     fsub.write('max_retries = 3\n')
     fsub.write('queue '+str(len(runs))+'\n')
     fsub.close()
@@ -117,6 +130,7 @@ if __name__ == '__main__':
 
     ## check ntuple version
     stageOutDir = args.storage+'/ntuples_'+args.version+'/'
+    stageOutDir = stageOutDir.replace('//', '/')
     
     if args.batch == 'lxbatch':
         if getoutput('ls '+stageOutDir) == "":
