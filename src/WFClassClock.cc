@@ -134,7 +134,7 @@ WFFitResults WFClassClock::GetTimeCLK(float wleft, float wright, int min, int ma
 
 //----------template fit to the WF--------------------------------------------------------
 //---Template fit of each single clock cycle
-WFFitResults WFClassClock::TemplateFit(float offset, int lW, int hW)
+WFFitResults WFClassClock::TemplateFit(float ampl_threshold, float offset, int lW, int hW)
 {
     if(tmplFitAmp_ == -1)
     {

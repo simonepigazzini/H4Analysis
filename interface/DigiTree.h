@@ -64,7 +64,8 @@ public:
     bool*         fit_converged_scint_plus_spike;
     int*          channels;
     int*          time_types;
-    float*        calibration;
+    float*        ampl_calib;
+    float*        time_calib;
 };
 
 #endif

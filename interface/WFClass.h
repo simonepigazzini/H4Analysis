@@ -157,8 +157,10 @@ public:
     bool                           ApplyCalibration();
     void                           AddSample(float sample);
     WFBaseline                     SubtractBaseline(int min=-1, int max=-1);
-    virtual WFFitResults           TemplateFit(float offset=0., int lW=0, int hW=0);
+
+    virtual WFFitResults           TemplateFit(float amp_threshold=0., float offset=0., int lW=0, int hW=0);
     WFFitResultsScintPlusSpike     TemplateFitScintPlusSpike(float offset=0., int lW=0, int hW=0);
+
     double                         AnalyticFit(TF1* f, int lW, int hW);
     void                           EmulatedWF(WFClass& wf, float rms, float amplitude, float time);
     void                           FFT(WFClass& wf, float tau, int cut);

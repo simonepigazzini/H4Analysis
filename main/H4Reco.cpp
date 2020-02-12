@@ -341,7 +341,7 @@ int main(int argc, char* argv[])
                 {
 	    	    TTree* currentTree = (TTree*)shared.obj;
 	    	    outDIR->cd();
-	    	    currentTree->BuildIndex("index");
+	    	    //currentTree->BuildIndex("index");
 	    	    currentTree->Write(currentTree->GetName(), TObject::kOverwrite);
 	    	    mainTree.AddFriend(currentTree->GetName());
                 }

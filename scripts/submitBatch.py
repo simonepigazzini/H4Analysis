@@ -10,6 +10,18 @@ import math
 
 from parser_utils import *
 
+def getProxy():
+    stat,out = commands.getstatusoutput("voms-proxy-info -e --valid 5:00")
+    if stat:
+        raise Exception,"voms proxy not found or validity  less than 5 hours:\n%s" % out
+    stat,out = commands.getstatusoutput("voms-proxy-info -p")
+    out = out.strip().split("\n")[-1] # remove spurious java info at ic.ac.uk
+    if stat:
+        raise Exception,"Unable to voms proxy:\n%s" % out
+    proxy = out.strip("\n")
+    return proxy
+
+
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
 def lxbatchSubmitJob (run, firstspill, nfiles, path, cfg, outdir, queue, job_dir, dryrun):
@@ -32,7 +44,7 @@ def lxbatchSubmitJob (run, firstspill, nfiles, path, cfg, outdir, queue, job_dir
 
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
-def htcondorSubmitJob (runs, path, cfg, outdir, queue, job_dir, dryrun):
+def htcondorSubmitJob(runs, path, cfg, outdir, queue, job_dir, dryrun):
     jobname = job_dir+'/H4Reco_condor'
     jobtar = job_dir+'/job.tar'
     #---H4Reco script
@@ -55,6 +67,7 @@ def htcondorSubmitJob (runs, path, cfg, outdir, queue, job_dir, dryrun):
     fsub.write('output      = '+job_dir+'/output/h4reco.$(ClusterId).$(ProcId).out\n')
     fsub.write('error       = '+job_dir+'/output/h4reco.$(ClusterId).$(ProcId).err\n')
     fsub.write('log         = '+job_dir+'/log/h4reco.$(ClusterId).log\n\n')
+    fsub.write('x509userproxy = '+getProxy()+' \n\n')
     fsub.write('max_retries = 3\n')
     fsub.write('queue '+str(len(runs))+'\n')
     fsub.close()
@@ -161,6 +174,14 @@ def getNumberOfSpills (run, path, cfg):
     spills.sort()
     nspills = spills[-1]
     return nspills
+  
+def resubmitFailed(runs, outdir):
+    
+    successful_runs = getoutput("ls -lhrt "+outdir+"| sed 's:^.*_::g' | sed 's:.root::g'")
+    
+    successful_runs = set(successful_runs.split('\n'))
+    
+    return [run for run in runs if run not in successful_runs]    
 
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
@@ -175,11 +196,13 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--cfg' , default = '../cfg/H4DAQ_base.cfg', help='production version')
     parser.add_argument('--dryrun' , action="store_true", default=False, help='do not submit the jobs, just create them')
     parser.add_argument('--batch' , default='condor', help='batch system to use')
+    parser.add_argument('--resub' , action="store_true", default=False, help='resubmit failed jobs')
     
     args = parser.parse_args ()
 
     ## check ntuple version
     stageOutDir = args.storage+'/ntuples_'+args.version+'/'
+    stageOutDir = stageOutDir.replace('//', '/')
     
     if args.batch == 'lxbatch':
         if getoutput('ls '+stageOutDir) == "":
@@ -205,10 +228,14 @@ if __name__ == '__main__':
             for run in runs_file:
                 args.runs.append(run.rstrip())
 
-    getstatusoutput('tar --exclude-vcs --exclude="20*_ntuples*" -cjf '+job_dir+'/job.tar -C '+local_path+' .')
+    ## resubmit failed
+    if args.resub:
+        args.runs = resubmitFailed(args.runs, stageOutDir)
 
     ## create jobs
-    print 'submitting', len(args.runs), 'runs to queue', args.queue
+    getstatusoutput('tar --exclude-vcs --exclude="20*_ntuples*" -cjf '+job_dir+'/job.tar -C '+local_path+' .')
+    print 'submitting', len(args.runs), 'jobs to queue', args.queue
+
     if args.batch == 'condor':
         if args.spillsperjob > 0:
             for run in args.runs:
