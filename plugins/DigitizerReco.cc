@@ -89,11 +89,13 @@ bool DigitizerReco::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugin
     {
         //---reset and read new WFs_
         WFs_[channel]->Reset();
-        unsigned int digiBd = opts.GetOpt<unsigned int>(channel+".digiBoard");
-        unsigned int digiGr = opts.GetOpt<unsigned int>(channel+".digiGroup");
-        unsigned int digiCh = opts.GetOpt<unsigned int>(channel+".digiChannel");
-        int offset = event.digiMap.at(make_tuple(digiBd, digiGr, digiCh));
-        for(int iSample=offset; iSample<offset+nSamples_[channel]; ++iSample)
+        auto digiBd = opts.GetOpt<unsigned int>(channel+".digiBoard");
+        auto digiGr = opts.GetOpt<unsigned int>(channel+".digiGroup");
+        auto digiCh = opts.GetOpt<unsigned int>(channel+".digiChannel");
+        auto offset = event.digiMap.at(make_tuple(digiBd, digiGr, digiCh));
+        auto max_sample = offset+std::min(nSamples_[channel], event.digiNSamplesMap[make_tuple(digiBd, digiGr, digiCh)]); 
+        auto iSample = offset;
+        while(iSample < max_sample && event.digiBoard[iSample] != -1)
         {
             //Set the start index cell
             if (iSample==offset)
@@ -108,6 +110,8 @@ bool DigitizerReco::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugin
             }
             else
                 WFs_[channel]->AddSample(event.digiSampleValue[iSample]);
+
+            iSample++;
         }
         if(opts.OptExist(channel+".useTrigRef") && opts.GetOpt<bool>(channel+".useTrigRef"))
             WFs_[channel]->SetTrigRef(trigRef);

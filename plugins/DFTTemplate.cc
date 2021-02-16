@@ -94,8 +94,8 @@ bool DFTTemplate::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins,
             // else                
             //     Im.insert(Im.begin()+(Im.size()/2), 2, 0.);
             auto insert_point = Im.size()/2;
-            complex c1 = polar(mag, phase);
-            complex c2 = polar(mag, -phase);
+            complex<double> c1 = polar(mag, phase);
+            complex<double> c2 = polar(mag, -phase);
             Re.insert(Re.begin()+insert_point, c1.real());
             Re.insert(Re.begin()+insert_point, c2.real());
             Im.insert(Im.begin()+insert_point, c1.imag());

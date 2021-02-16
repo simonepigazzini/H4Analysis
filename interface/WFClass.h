@@ -166,7 +166,7 @@ protected:
 protected:
     vector<double>  uncalibSamples_;
     vector<double>  calibSamples_;
-    vector<double>& samples_;
+    vector<double>  samples_;
     vector<double>  times_;
 
     DigiChannelCalibration* calibration_;
