@@ -92,7 +92,7 @@ WFFitResults WFClass::GetInterpolatedAmpMax(int min, int max, int nmFitSamples, 
     
     int bin=0;
     double brms=BaselineRMS();
-    for(int iSample=maxSample_-nmFitSamples; iSample<=maxSample_+npFitSamples; ++iSample)
+    for(int iSample=std::max(0, maxSample_-nmFitSamples); iSample<=std::min(GetNSample()-1, maxSample_+npFitSamples); ++iSample)
     {
         times[bin] = times_.at(iSample);
         samples[bin] = samples_.at(iSample);
@@ -100,7 +100,7 @@ WFFitResults WFClass::GetInterpolatedAmpMax(int min, int max, int nmFitSamples, 
         yerr[bin] = brms;
         ++bin;
     }
-
+    
     TGraphErrors h_max(nmFitSamples+npFitSamples+1, times, samples, xerr, yerr);
     
     if(h_max.GetMaximum() != 0)
