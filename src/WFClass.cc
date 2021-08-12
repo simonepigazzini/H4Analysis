@@ -481,11 +481,17 @@ bool WFClass::ApplyCalibration()
     
     return true;
 }
-
 //---------Add waveform sample to the list of uncalibrated samples------------------------
 //---sample is inserted at the end of uncalibSamples_
-//---a gain for each sample can be added. This is stored in a separate vector as well multiplied to the sample value.
 //---the times vector is filled with the uncalibrated sample time computed from the time unit
+void WFClass::AddSample(float sample)
+{
+  uncalibSamples_.push_back(polarity_*sample); 
+  times_.push_back( (samples_.size()-1.)*tUnit_ );
+  samples_ = uncalibSamples_;
+};
+
+//---a gain for each sample can be added. This is stored in a separate vector as well multiplied to the sample value.
 void WFClass::AddSample(float sample, float gain)
 {
     uncalibSamples_.push_back(polarity_*sample*gain);
@@ -493,6 +499,8 @@ void WFClass::AddSample(float sample, float gain)
     times_.push_back( (samples_.size()-1.)*tUnit_ );
     samples_ = uncalibSamples_;
 };
+
+
 
 //---------estimate the baseline in a given range and then subtract it from the signal----
 WFBaseline WFClass::SubtractBaseline(int min, int max)
@@ -523,6 +531,19 @@ WFBaseline WFClass::SubtractBaseline(int min, int max)
     
     return WFBaseline{baseline_, bRMS_, A, B, chi2};
 }
+
+//---------subtract a custom baseline from the signal----
+WFBaseline WFClass::SubtractBaseline(float baseline)
+{
+    //---subtract baseline
+    for(unsigned int iSample=0; iSample<samples_.size(); ++iSample)
+        samples_.at(iSample) = (samples_.at(iSample) - baseline);    
+    //---interpolate baseline
+    float A=0, B=0;
+    float chi2 = LinearInterpolation(A, B, bWinMin_, bWinMax_);    
+    return WFBaseline{baseline, -1, A, B, chi2};
+}
+
 
 //----------template fit to the WF--------------------------------------------------------
 WFFitResults WFClass::TemplateFit(float amp_threshold, float offset, int lW, int hW)

@@ -7,6 +7,7 @@
 #include "interface/DigiTree.h"
 #include "interface/WFTree.h"
 #include "interface/WFClass.h"
+#include "interface/WFClassLiTEDTU.h"
 #include "interface/WFClassNINO.h"
 #include "interface/WFClassClock.h"
 #include "interface/WFViewer.h"
@@ -36,6 +37,7 @@ private:
     RecoEventAnalyzer           eventAnalyzer_;
     WFTree                      outWFTree_;
     map<string, WFClass*>       WFs_;
+    bool                        isLiTEDTU_;
     map<string, TH1*>           templates_;
 };
 

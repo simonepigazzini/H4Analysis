@@ -5,7 +5,7 @@ bool DigitizerReco::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, u
 {
     //---inputs---
     channelsNames_ = opts.GetOpt<vector<string> >(instanceName_+".channelsNames");
-
+    isLiTEDTU_ = opts.OptExist(instanceName_+".litedtu") ? opts.GetOpt<bool>(instanceName_+".litedtu") : false; 
     //---read dV and dT digitizer calibration from file and register it to the shared data
     if(opts.OptExist(instanceName_+".calibration"))
     {
@@ -49,9 +49,12 @@ bool DigitizerReco::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, u
                 WFs_[channel] = new WFClassNINO(opts.GetOpt<int>(channel+".polarity"), tUnit);
             else if(opts.GetOpt<string>(channel+".type") == "Clock")
                 WFs_[channel] = new WFClassClock(tUnit);
+            else if(isLiTEDTU_)
+	      WFs_[channel] = new WFClassLiTEDTU(opts.GetOpt<int>(channel+".polarity"), tUnit);
         }
         else
-            WFs_[channel] = new WFClass(opts.GetOpt<int>(channel+".polarity"), tUnit);
+	  WFs_[channel] = new WFClass(opts.GetOpt<int>(channel+".polarity"), tUnit);
+
         
         //---set channel calibration if available
         unsigned int digiBd = opts.GetOpt<unsigned int>(channel+".digiBoard");
@@ -85,6 +88,7 @@ bool DigitizerReco::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugin
     
     //---user channels
     bool evtStatus = true;
+
     for(auto& channel : channelsNames_)
     {
         //---reset and read new WFs_
@@ -104,12 +108,16 @@ bool DigitizerReco::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugin
             //---H4DAQ bug: sometimes ADC value is out of bound.
             //---skip everything if one channel is bad
             if(event.digiSampleValue[iSample] > 1e6)
-            {
-                evtStatus = false;
+	      {
+		evtStatus = false;
                 WFs_[channel]->AddSample(4095);
-            }
-            else
-   	        WFs_[channel]->AddSample(event.digiSampleValue[iSample], event.digiSampleGain[iSample]);
+	      }
+            else if(isLiTEDTU_)
+	      {	      
+		WFs_[channel]->AddSample(event.digiSampleValue[iSample], event.digiSampleGain[iSample]);
+	      }
+	    else
+	      WFs_[channel]->AddSample(event.digiSampleValue[iSample]); 
 
             iSample++;
         }

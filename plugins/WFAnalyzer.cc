@@ -1,4 +1,5 @@
 #include "WFAnalyzer.h"
+#include <typeinfo>
 
 //----------Utils-------------------------------------------------------------------------
 bool WFAnalyzer::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint64* index)
@@ -12,13 +13,16 @@ bool WFAnalyzer::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint
     srcInstance_ = opts.GetOpt<string>(instanceName_+".srcInstanceName");
     channelsNames_ = opts.GetOpt<vector<string> >(instanceName_+".channelsNames");
     timeRecoTypes_ = opts.GetOpt<vector<string> >(instanceName_+".timeRecoTypes");
+    isLiTEDTU_ = opts.OptExist(instanceName_+".litedtu") ? opts.GetOpt<bool>(instanceName_+".litedtu") : false;
 
     //---load WFs from source instance shared data
     for(auto& channel : channelsNames_)
     {
         auto shared_data = plugins[srcInstance_]->GetSharedData(srcInstance_+"_"+channel, "", false);
         if(shared_data.size() != 0)
-            WFs_[channel] = (WFClass*)shared_data.at(0).obj;
+	  {
+	    WFs_[channel] = (WFClass*)shared_data.at(0).obj;
+	  }
         else
             cout << "[WFAnalizer::" << instanceName_ << "]: channels samples not found check DigiReco step" << endl; 
     }
@@ -125,20 +129,33 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
             ++outCh;
             continue;
         }
-
         //---subtract a specified channel if requested
         if(opts.OptExist(channel+".subtractChannel") && WFs_.find(opts.GetOpt<string>(channel+".subtractChannel")) != WFs_.end())
-            *WFs_[channel] -= *WFs_[opts.GetOpt<string>(channel+".subtractChannel")];        
-        WFs_[channel]->SetBaselineWindow(opts.GetOpt<int>(channel+".baselineWin", 0), 
-                                         opts.GetOpt<int>(channel+".baselineWin", 1));
-        WFs_[channel]->SetBaselineIntegralWindow(opts.GetOpt<int>(channel+".baselineInt", 0),
-                                                 opts.GetOpt<int>(channel+".baselineInt", 1));
-        WFs_[channel]->SetSignalWindow(opts.GetOpt<int>(channel+".signalWin", 0), 
-                                       opts.GetOpt<int>(channel+".signalWin", 1));
+	  *WFs_[channel] -= *WFs_[opts.GetOpt<string>(channel+".subtractChannel")];        
+
+	if(opts.OptExist(channel+".baselineWin"))
+	  { 
+	    WFs_[channel]->SetBaselineWindow(opts.GetOpt<int>(channel+".baselineWin", 0), 
+					     opts.GetOpt<int>(channel+".baselineWin", 1));
+	  }
+	if(opts.OptExist(channel+".baselineInt"))
+	  {
+	    WFs_[channel]->SetBaselineIntegralWindow(opts.GetOpt<int>(channel+".baselineInt", 0),
+						     opts.GetOpt<int>(channel+".baselineInt", 1));
+	  }
+	
+	WFs_[channel]->SetSignalWindow(opts.GetOpt<int>(channel+".signalWin", 0), 
+				       opts.GetOpt<int>(channel+".signalWin", 1));
+
         WFs_[channel]->SetSignalIntegralWindow(opts.GetOpt<int>(channel+".signalInt", 0),
                                                opts.GetOpt<int>(channel+".signalInt", 1));
-        WFBaseline baselineInfo = WFs_[channel]->SubtractBaseline();
-        //FIXME MAREMMA MAIALA
+	WFBaseline baselineInfo; 
+	if (opts.OptExist(channel+".baseline"))
+	  baselineInfo = WFs_[channel]->SubtractBaseline(opts.GetOpt<float>(channel+".baseline"));
+	else
+	  baselineInfo = WFs_[channel]->SubtractBaseline();
+	    
+	//FIXME MAREMMA MAIALA
         WFFitResults interpolAmpMax;
         if(opts.OptExist(channel+".signalWin", 4))
         {
@@ -160,7 +177,7 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
                                                                   max_function);
         }
         digiTree_.pedestal[outCh] = baselineInfo.baseline;
-        digiTree_.gain[outCh] = WFs_[channel]->GetGain();
+        if (isLiTEDTU_) digiTree_.gain[outCh] = WFs_[channel]->GetGain();
         digiTree_.b_charge[outCh] = WFs_[channel]->GetIntegral(opts.GetOpt<int>(channel+".baselineInt", 0), 
                                                                opts.GetOpt<int>(channel+".baselineInt", 1));        
         digiTree_.b_slope[outCh] = baselineInfo.slope;

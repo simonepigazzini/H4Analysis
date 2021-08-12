@@ -144,8 +144,10 @@ public:
     //---utils---
     void                           Reset();
     bool                           ApplyCalibration();
-    void                           AddSample(float sample, float gain=1);
+    void                           AddSample(float sample);
+    void                           AddSample(float sample, float gain);
     WFBaseline                     SubtractBaseline(int min=-1, int max=-1);
+    WFBaseline                     SubtractBaseline(float baseline);
     virtual WFFitResults           TemplateFit(float amp_threshold=0., float offset=0., int lW=0, int hW=0);
     double                         AnalyticFit(TF1* f, int lW, int hW);
     void                           EmulatedWF(WFClass& wf, float rms, float amplitude, float time);

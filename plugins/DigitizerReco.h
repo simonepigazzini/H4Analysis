@@ -7,6 +7,7 @@
 #include "interface/DigiTree.h"
 #include "interface/WFTree.h"
 #include "interface/WFClass.h"
+#include "interface/WFClassLiTEDTU.h"
 #include "interface/WFClassNINO.h"
 #include "interface/WFClassClock.h"
 #include "interface/WFViewer.h"
@@ -30,6 +31,7 @@ private:
     map<string, int>            nSamples_;
     vector<string>              channelsNames_;
     map<string, WFClass*>       WFs_;
+    bool                        isLiTEDTU_;
     DigitizerCalibration        digitizerCalib_; 
 };
 
