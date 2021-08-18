@@ -13,7 +13,6 @@ bool WFAnalyzer::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint
     srcInstance_ = opts.GetOpt<string>(instanceName_+".srcInstanceName");
     channelsNames_ = opts.GetOpt<vector<string> >(instanceName_+".channelsNames");
     timeRecoTypes_ = opts.GetOpt<vector<string> >(instanceName_+".timeRecoTypes");
-    isLiTEDTU_ = opts.OptExist(instanceName_+".litedtu") ? opts.GetOpt<bool>(instanceName_+".litedtu") : false;
 
     //---load WFs from source instance shared data
     for(auto& channel : channelsNames_)
@@ -129,6 +128,7 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
             ++outCh;
             continue;
         }
+
         //---subtract a specified channel if requested
         if(opts.OptExist(channel+".subtractChannel") && WFs_.find(opts.GetOpt<string>(channel+".subtractChannel")) != WFs_.end())
 	  *WFs_[channel] -= *WFs_[opts.GetOpt<string>(channel+".subtractChannel")];        
@@ -177,7 +177,8 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
                                                                   max_function);
         }
         digiTree_.pedestal[outCh] = baselineInfo.baseline;
-        if (isLiTEDTU_) digiTree_.gain[outCh] = WFs_[channel]->GetGain();
+	WFClassLiTEDTU* islitedtu = dynamic_cast<WFClassLiTEDTU*>(WFs_[channel]);
+	if (islitedtu != NULL) digiTree_.gain[outCh] = WFs_[channel]->GetGain();
         digiTree_.b_charge[outCh] = WFs_[channel]->GetIntegral(opts.GetOpt<int>(channel+".baselineInt", 0), 
                                                                opts.GetOpt<int>(channel+".baselineInt", 1));        
         digiTree_.b_slope[outCh] = baselineInfo.slope;

@@ -2,6 +2,7 @@
 #define __DIGITIZER_RECO__
 
 #include <iostream>
+#include <algorithm>
 
 #include "interface/PluginBase.h"
 #include "interface/DigiTree.h"
@@ -31,7 +32,6 @@ private:
     map<string, int>            nSamples_;
     vector<string>              channelsNames_;
     map<string, WFClass*>       WFs_;
-    bool                        isLiTEDTU_;
     DigitizerCalibration        digitizerCalib_; 
 };
 

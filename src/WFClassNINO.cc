@@ -42,4 +42,12 @@ float WFClassNINO::GetSignalIntegral(int thr, int min=-1)
     return 1.*(end-begin);
 }
 
-
+//---------Add waveform sample to the list of uncalibrated samples------------------------
+//---sample is inserted at the end of uncalibSamples_
+//---the times vector is filled with the uncalibrated sample time computed from the time unit
+void WFClassNINO::AddSample(float sample)
+{
+  uncalibSamples_.push_back(polarity_*sample); 
+  times_.push_back( (samples_.size()-1.)*tUnit_ );
+  samples_ = uncalibSamples_;
+};

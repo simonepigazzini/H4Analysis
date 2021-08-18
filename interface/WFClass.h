@@ -144,8 +144,8 @@ public:
     //---utils---
     void                           Reset();
     bool                           ApplyCalibration();
-    void                           AddSample(float sample);
-    void                           AddSample(float sample, float gain);
+    virtual void                   AddSample(float sample);
+    virtual void                   AddSample(float sample, float gain) {AddSample(sample);};
     WFBaseline                     SubtractBaseline(int min=-1, int max=-1);
     WFBaseline                     SubtractBaseline(float baseline);
     virtual WFFitResults           TemplateFit(float amp_threshold=0., float offset=0., int lW=0, int hW=0);

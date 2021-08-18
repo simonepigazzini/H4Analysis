@@ -7,6 +7,19 @@ WFClassLiTEDTU::WFClassLiTEDTU(int polarity, float tUnit, DigiChannelCalibration
 {}
 
 //**********Getters***********************************************************************
+
+//---------Add waveform sample to the list of uncalibrated samples------------------------
+//---sample is inserted at the end of uncalibSamples_
+//---the times vector is filled with the uncalibrated sample time computed from the time unit
+//---a gain for each sample can be added. This is stored in a separate vector as well multiplied to the sample value.
+void WFClassLiTEDTU::AddSample(float sample, float gain) 
+{
+    uncalibSamples_.push_back(polarity_*sample*gain);
+    gain_.push_back(gain);
+    times_.push_back( (samples_.size()-1.)*tUnit_ );
+    samples_ = uncalibSamples_;
+};
+
 //----------template fit to the WF--------------------------------------------------------
 WFFitResults WFClassLiTEDTU::TemplateFit(float amp_threshold, float offset, int lW, int hW)
 {

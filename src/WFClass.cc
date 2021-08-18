@@ -491,15 +491,6 @@ void WFClass::AddSample(float sample)
   samples_ = uncalibSamples_;
 };
 
-//---a gain for each sample can be added. This is stored in a separate vector as well multiplied to the sample value.
-void WFClass::AddSample(float sample, float gain)
-{
-    uncalibSamples_.push_back(polarity_*sample*gain);
-    gain_.push_back(gain);
-    times_.push_back( (samples_.size()-1.)*tUnit_ );
-    samples_ = uncalibSamples_;
-};
-
 
 
 //---------estimate the baseline in a given range and then subtract it from the signal----
