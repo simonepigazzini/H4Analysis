@@ -1,5 +1,5 @@
-#ifndef __WFCLASS_UPGRADE_H__
-#define __WFCLASS_UPGRADE_H__
+#ifndef __WFCLASS_LITEDTU_H__
+#define __WFCLASS_LITEDTU_H__
 
 #include "WFClass.h"
 #include "TGraph.h"
