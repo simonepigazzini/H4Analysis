@@ -26,7 +26,7 @@ WFFitResults WFClassLiTEDTU::TemplateFit(float amp_threshold, float offset, int 
     double tmplFitChi2=0;
     if(tmplFitAmp_ == -1)
      {
-        amp_threshold *= gain_;
+        amp_threshold *= gain_[maxSample_];
         if(samples_[maxSample_]>amp_threshold)
         {
             //---set template fit window around maximum, [min, max)
