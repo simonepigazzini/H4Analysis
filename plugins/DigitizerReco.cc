@@ -109,7 +109,7 @@ bool DigitizerReco::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugin
                 WFs_[channel]->AddSample(4095);
             }
             else
-                WFs_[channel]->AddSample(event.digiSampleValue[iSample]);
+   	        WFs_[channel]->AddSample(event.digiSampleValue[iSample], event.digiSampleGain[iSample]);
 
             iSample++;
         }

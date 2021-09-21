@@ -447,6 +447,7 @@ void WFClass::Reset()
     tmplFitAmpShift_=0;
     uncalibSamples_.clear();
     calibSamples_.clear();
+    gain_.clear();
     times_.clear();
 
     samples_ = uncalibSamples_;
@@ -483,10 +484,12 @@ bool WFClass::ApplyCalibration()
 
 //---------Add waveform sample to the list of uncalibrated samples------------------------
 //---sample is inserted at the end of uncalibSamples_
+//---a gain for each sample can be added. This is stored in a separate vector as well multiplied to the sample value.
 //---the times vector is filled with the uncalibrated sample time computed from the time unit
-void WFClass::AddSample(float sample)
+void WFClass::AddSample(float sample, float gain)
 {
-    uncalibSamples_.push_back(polarity_*sample); 
+    uncalibSamples_.push_back(polarity_*sample*gain);
+    gain_.push_back(gain);
     times_.push_back( (samples_.size()-1.)*tUnit_ );
     samples_ = uncalibSamples_;
 };

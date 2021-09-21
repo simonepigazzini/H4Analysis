@@ -35,6 +35,7 @@ public:
     uint64*       index;
     unsigned int  n_channels;
     unsigned int  n_times;
+    float*        gain;
     float*        pedestal;
     float*        b_charge;
     float*        b_slope;

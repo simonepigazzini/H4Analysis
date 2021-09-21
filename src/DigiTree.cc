@@ -16,6 +16,7 @@ void DigiTree::Init(vector<string>& names, vector<string>& timetypes)
     channels = new int[n_channels];
     time_types = new int[n_times];    
     pedestal = new float[n_channels];
+    gain = new float[n_channels];
     b_charge = new float[n_channels];
     b_slope = new float[n_channels];
     b_rms = new float[n_channels];
@@ -57,6 +58,7 @@ void DigiTree::Init(vector<string>& names, vector<string>& timetypes)
     tree_->Branch("index", index, "index/l");
     tree_->Branch(size_var.c_str(), &n_channels, (size_var+"/i").c_str());
     tree_->Branch(size_time_var.c_str(), &n_times, (size_time_var+"/i").c_str());
+    tree_->Branch((prefix_+"gain").c_str(), gain, (prefix_+"gain["+size_var+"]/F").c_str());    
     tree_->Branch((prefix_+"pedestal").c_str(), pedestal, (prefix_+"pedestal["+size_var+"]/F").c_str());    
     tree_->Branch((prefix_+"b_charge").c_str(), b_charge, (prefix_+"b_charge["+size_var+"]/F").c_str());
     tree_->Branch((prefix_+"b_slope").c_str(), b_slope, (prefix_+"b_slope["+size_var+"]/F").c_str());
