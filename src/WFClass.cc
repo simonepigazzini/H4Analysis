@@ -34,7 +34,10 @@ float WFClass::GetAmpMax(int min, int max)
     //---return the max if already computed
     else if(maxSample_ != -1)
         return samples_.at(maxSample_);
-
+    // FIXME
+    else if(samples_.size() == 0)
+        return -1;
+    
     //---find the max
     maxSample_=sWinMin_;
     for(int iSample=sWinMin_; iSample<sWinMax_; ++iSample)
