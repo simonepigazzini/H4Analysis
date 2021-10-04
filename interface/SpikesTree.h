@@ -56,6 +56,7 @@ public:
     float*        sample_max_plus3_over_sample_max;
     float*        t_undershoot_minus_t_sample_max;
     float*        t_3sigma_noise_minus_t_sample_max;
+    float*        ld;
 };
 
 #endif
