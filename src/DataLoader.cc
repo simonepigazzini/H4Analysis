@@ -39,7 +39,7 @@ bool DataLoader::ReadInputFiles()
     {
         //---skip files before specified spill
         auto currentSpill = std::stoi(file.substr(0, file.size()-4));
-        if(firstSpill == -1 || currentSpill == firstSpill)
+        if(firstSpill == -1 || (currentSpill >= firstSpill && currentSpill < firstSpill + opts_.GetOpt<int>("h4reco.maxFiles")))
         {
             if(path.find("/eos/cms") != string::npos)
             {

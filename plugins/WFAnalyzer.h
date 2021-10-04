@@ -37,6 +37,7 @@ private:
     WFTree                      outWFTree_;
     map<string, WFClass*>       WFs_;
     map<string, TH1*>           templates_;
+    map<string, TH1*>           spikeTemplates_;
 };
 
 DEFINE_PLUGIN(WFAnalyzer);

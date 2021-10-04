@@ -54,3 +54,31 @@
       of the channels. Each branch hold the index corresponding to the channel inside the tree, so for 
       example in order to plot the amplitude of the reference MCP one should do:
       =reco_tree->Draw("amp_max[MCP1]")=
+
+* SpikeTagger plugin:
+** Configuration
+   - =srcInstanceName= source plugin.
+   - =channelsNames= defines which channel are analyzed by the plugin.
+   - =undershootFinderWindow= defines the number of samples after the maximum in which the minimum is searched for.
+   - The waveform tree (spikes_wf tree) in a configurable window (=storeNSampleBeforeMax=, =storeNSampleAfterMax=) around the maximum sample is stored optionally and with a configurable prescale.
+** spikes tree variables
+    + *undershoot*: Minimum sample in an =undershootFinderWindow= sized sample window after the maximum sample.
+    + *amp_sum_matrix*: Sum over all active channels.
+    + *n_swiss_cross_neighbours*: Number of neighbouring channels contributing to the swiss cross variable.
+    + *swiss_cross*: 1 - sum of available swiss cross channels (channels up, down, left, and right of the current channel) / maximum.
+    + *n_channels_3by3*: Number of neighbouring channels contributing to the 3 by 3 channel sum.
+    + *amp_sum_3by3*: 3 by 3 channel sum (active channels only).
+    + *n_samples_above_75perc_max*: Number of samples with the sample value above 75% of the maximum.
+    + *n_samples_above_50perc_max*: Number of samples with the sample value above 50% of the maximum.
+    + *n_samples_above_25perc_max*: Number of samples with the sample value above 25% of the maximum.
+    + *tot_75perc_max*: Time over a threshold of 75% of the maximum.
+    + *tot_50perc_max*: Time over a threshold of 50% of the maximum.
+    + *tot_25perc_max*: Time over a threshold of 25% of the maximum.
+    + *sample_max_minus3_over_sample_max*: Sample at t_maximum-3 / sample at t_maximum.
+    + *sample_max_minus2_over_sample_max*: Sample at t_maximum-2 / sample at t_maximum.
+    + *sample_max_minus1_over_sample_max*: Sample at t_maximum-1 / sample at t_maximum.
+    + *sample_max_plus1_over_sample_max*: Sample at t_maximum+1 / sample at t_maximum.
+    + *sample_max_plus2_over_sample_max*: Sample at t_maximum+2 / sample at t_maximum.
+    + *sample_max_plus3_over_sample_max*: Sample at t_maximum+3 / sample at t_maximum.
+    + *t_undershoot_minus_t_sample_max*: Time between the maximum and the undershoot sample.
+    + *t_3sigma_noise_minus_t_sample_max*: Time between the maximum and the last sample above three times the noise level defined by the baseline RMS. 

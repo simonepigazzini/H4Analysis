@@ -34,6 +34,7 @@ void SpikesTree::Init(vector<string>& names)
     sample_max_plus3_over_sample_max = new float[n_channels];
     t_undershoot_minus_t_sample_max = new float[n_channels];
     t_3sigma_noise_minus_t_sample_max = new float[n_channels];
+    ld = new float[n_channels];
     
     //---channels branches
     for(unsigned int iCh=0; iCh<n_channels; iCh++)
@@ -68,6 +69,7 @@ void SpikesTree::Init(vector<string>& names)
     tree_->Branch((prefix_+"sample_max_plus3_over_sample_max").c_str(), sample_max_plus3_over_sample_max, (prefix_+"sample_max_plus3_over_sample_max["+size_var+"]/F").c_str());
     tree_->Branch((prefix_+"t_undershoot_minus_t_sample_max").c_str(), t_undershoot_minus_t_sample_max, (prefix_+"t_undershoot_minus_t_sample_max["+size_var+"]/F").c_str());
     tree_->Branch((prefix_+"t_3sigma_noise_minus_t_sample_max").c_str(), t_3sigma_noise_minus_t_sample_max, (prefix_+"t_3sigma_noise_minus_t_sample_max["+size_var+"]/F").c_str());
+    tree_->Branch((prefix_+"ld").c_str(), ld, (prefix_+"ld["+size_var+"]/F").c_str());
 }
 
 SpikesTree::~SpikesTree()
