@@ -149,15 +149,12 @@ bool SpikeTagger::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins,
         const auto analyzedWF = WFs_[channel]->GetSamples();
         const auto t_unit = WFs_[channel]->GetTUnit();
         const int max_sample = static_cast<int>(std::round(WFs_[channel]->GetTimeCF(1).time / t_unit));
-        if(max_sample+undershoot_window < analyzedWF->size())
-        {
+        if (max_sample + undershoot_window < analyzedWF->size()) {
             auto undershoot_sample = std::min_element(analyzedWF->begin() + max_sample,
                                                       analyzedWF->begin() + max_sample + undershoot_window);
             spikesTree_.undershoot[outCh] = *undershoot_sample;
             spikesTree_.t_undershoot_minus_t_sample_max[outCh] = (std::distance(analyzedWF->begin(), undershoot_sample) - max_sample) * t_unit;
-        }
-        else
-        {
+        } else {
             spikesTree_.undershoot[outCh] = 1e5;
             spikesTree_.t_undershoot_minus_t_sample_max[outCh] = 1e5;
         }
@@ -166,8 +163,11 @@ bool SpikeTagger::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins,
         if(spikesTree_.max_hit == -1 || WFs_[channelsNames_[spikesTree_.max_hit]]->GetAmpMax() < WFs_[channel]->GetAmpMax())
             spikesTree_.max_hit = outCh;
         float matrix_A_sum = 0.;
-        for(const auto& other_ch : channelsNames_)
-            matrix_A_sum += WFs_[other_ch]->GetSamples()->at(max_sample);
+        for(const auto& other_ch : channelsNames_) {
+            if (max_sample < WFs_[other_ch]->GetSamples()->size()) { // in case the other channel has less samples than the channel with the overall maximum
+                matrix_A_sum += WFs_[other_ch]->GetSamples()->at(max_sample);
+            }
+        }
 
         spikesTree_.amp_sum_matrix[outCh] = matrix_A_sum;
 
@@ -176,7 +176,9 @@ bool SpikeTagger::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins,
         float swiss_cross_A4_sum = 0.;
         const auto& channelNamesSwissCross = channelsNamesSwissCross_[channel];
         for(const auto& swiss_cross_ch : channelNamesSwissCross) {
-            swiss_cross_A4_sum += WFs_[swiss_cross_ch]->GetSamples()->at(max_sample);
+            if (max_sample < WFs_[swiss_cross_ch]->GetSamples()->size()) { // in case the swiss cross channel has less samples than the channel with the overall maximum
+                swiss_cross_A4_sum += WFs_[swiss_cross_ch]->GetSamples()->at(max_sample);
+            }
         }
 
         float swiss_cross = -1e5;
@@ -191,7 +193,9 @@ bool SpikeTagger::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins,
         float amp_sum_3by3 = 0.;
         const auto& channel_names_3by3 = channelsNames3By3_[channel];
         for(const auto& ch_3by3 : channel_names_3by3) {
-            amp_sum_3by3 += WFs_[ch_3by3]->GetSamples()->at(max_sample);
+            if (max_sample < WFs_[ch_3by3]->GetSamples()->size()) { // in case the 3by3 channel has less samples than the channel with the overall maximum
+                amp_sum_3by3 += WFs_[ch_3by3]->GetSamples()->at(max_sample);
+            }
         }
 
         spikesTree_.n_channels_3by3[outCh] = channel_names_3by3.size();
