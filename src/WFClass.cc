@@ -374,8 +374,8 @@ void WFClass::SetBaselineWindow(int min, int max)
 
 void WFClass::SetBaselineIntegralWindow(int min, int max)
 {
-    bIntWinMin_ = min;
-    bIntWinMax_ = max;
+    bIntWinMin_ = std::max(min, 0);
+    bIntWinMax_ = std::min(max, int(samples_.size()));
 }
 
 //----------Set the fit template----------------------------------------------------------
