@@ -2,22 +2,22 @@
 
 import sys
 import os
-import commands
-from commands import getstatusoutput
-from commands import getoutput
+import subprocess
+from subprocess import getstatusoutput
+from subprocess import getoutput
 import datetime
 import math
 
 from parser_utils import *
 
 def getProxy():
-    stat,out = commands.getstatusoutput("voms-proxy-info -e --valid 5:00")
+    stat,out = subprocess.getstatusoutput("voms-proxy-info -e --valid 5:00")
     if stat:
-        raise Exception,"voms proxy not found or validity  less than 5 hours:\n%s" % out
-    stat,out = commands.getstatusoutput("voms-proxy-info -p")
+        raise Exception("voms proxy not found or validity  less than 5 hours:\n%s" % out)
+    stat,out = subprocess.getstatusoutput("voms-proxy-info -p")
     out = out.strip().split("\n")[-1] # remove spurious java info at ic.ac.uk
     if stat:
-        raise Exception,"Unable to voms proxy:\n%s" % out
+        raise Exception("Unable to voms proxy:\n%s" % out)
     proxy = out.strip("\n")
     return proxy
 
@@ -84,13 +84,13 @@ def htcondorSubmitJob(runs, path, cfg, outdir, queue, job_dir, dryrun):
 def htcondorSubmitJobs (run, nfiles, path, cfg, outdir, queue, job_dir, dryrun):
     # prepare submission
     nspills = getNumberOfSpills(run, path, cfg)
-    print 'run {r} with {s} spills'.format(r=run, s=nspills)
+    print('run {r} with {s} spills'.format(r=run, s=nspills))
     if nfiles <= nspills:
         njobs = int(math.ceil(nspills / float(nfiles)))
     else:
         njobs = 1
         nfiles = nspills
-    print 'submitting {j} jobs for run {r}'.format(j=njobs, r=run)
+    print('submitting {j} jobs for run {r}'.format(j=njobs, r=run))
 
     jobname = job_dir+'/H4Reco_condor_run{r}'.format(r=run)
     jobtar = job_dir+'/job.tar'
@@ -206,7 +206,7 @@ if __name__ == '__main__':
     
     if args.batch == 'lxbatch':
         if getoutput('ls '+stageOutDir) == "":
-            print "ntuples version "+args.version+" directory on eos already exist! no jobs created."
+            print("ntuples version "+args.version+" directory on eos already exist! no jobs created.")
             exit(0)
     getstatusoutput('mkdir -p '+stageOutDir)    
     
@@ -234,7 +234,7 @@ if __name__ == '__main__':
 
     ## create jobs
     getstatusoutput('tar --exclude-vcs --exclude="20*_ntuples*" -cjf '+job_dir+'/job.tar -C '+local_path+' .')
-    print 'submitting', len(args.runs), 'jobs to queue', args.queue
+    print('submitting', len(args.runs), 'jobs to queue', args.queue)
 
     if args.batch == 'condor':
         if args.spillsperjob > 0:
@@ -246,7 +246,7 @@ if __name__ == '__main__':
         for run in args.runs:
             firstspill = 1
             nspills = getNumberOfSpills(run, local_path, args.cfg)
-            print 'requested to submit run {r} containing {s} spills'.format(r=run, s=nspills)
+            print('requested to submit run {r} containing {s} spills'.format(r=run, s=nspills))
             nfiles = args.spillsperjob
             if nfiles < 1 or  nfiles > nspills:
                 nfiles = nspills
@@ -260,5 +260,5 @@ if __name__ == '__main__':
                 firstspill += nfiles
                 jobctr += 1
             if not args.dryrun:
-                print 'submitted {j} jobs to {b}'.format(j=jobctr, b=args.batch)
+                print('submitted {j} jobs to {b}'.format(j=jobctr, b=args.batch))
 
