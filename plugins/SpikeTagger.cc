@@ -143,12 +143,18 @@ bool SpikeTagger::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins,
             ++outCh;
             continue;
         }
+        // Require at least 10 samples in the signal window just like in WFAnalyzer (it must not be less than in WFAnalyzer since otherwise the WFAnalyzer has dropped the channel and the variables are not available))
+        if (WFs_[channel]->GetNSample() < opts.GetOpt<int>(channel+".signalWin", 0) + 10) {
+            ++outCh;
+            continue;
+        }
 
-        //---Look for undershoot after maximum
-        const auto undershoot_window = opts.GetOpt<int>(instanceName_+".undershootFinderWindow");
         const auto analyzedWF = WFs_[channel]->GetSamples();
         const auto t_unit = WFs_[channel]->GetTUnit();
         const int max_sample = static_cast<int>(std::round(WFs_[channel]->GetTimeCF(1).time / t_unit));
+
+        //---Look for undershoot after maximum
+        const auto undershoot_window = opts.GetOpt<int>(instanceName_+".undershootFinderWindow");
         if (max_sample + undershoot_window < analyzedWF->size()) {
             auto undershoot_sample = std::min_element(analyzedWF->begin() + max_sample,
                                                       analyzedWF->begin() + max_sample + undershoot_window);
@@ -202,8 +208,8 @@ bool SpikeTagger::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins,
         spikesTree_.amp_sum_3by3[outCh] = amp_sum_3by3;
 
         //---Compute number of samples over thresholds of 25, 50, and 75%
-        unsigned int n_minus = 0;
-        unsigned int n_plus = 0;
+        int n_minus = 0;
+        int n_plus = 0;
         for (unsigned int i = 0; i < 3; ++i) {
             const float thr_frac = 0.75 - i * 0.25;
             const float thr = thr_frac * sample_max;
@@ -302,7 +308,9 @@ bool SpikeTagger::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins,
             unsigned int lastSample = analyzedWF->size();
             if(opts.OptExist(instanceName_+".storeNSampleAfterMax") && opts.OptExist(instanceName_+".storeNSampleBeforeMax"))
             {
-                firstSample = max_sample - opts.GetOpt<int>(instanceName_+".storeNSampleBeforeMax");
+                if (max_sample - opts.GetOpt<int>(instanceName_+".storeNSampleBeforeMax") >= 0) {
+                    firstSample = max_sample - opts.GetOpt<int>(instanceName_+".storeNSampleBeforeMax");
+                }
                 lastSample = max_sample + opts.GetOpt<int>(instanceName_+".storeNSampleAfterMax");
             }
             for(unsigned int jSample=firstSample; jSample<=lastSample; ++jSample)

@@ -357,6 +357,9 @@ void WFClass::SetSignalWindow(int min, int max)
 {
     sWinMin_ = std::max(int(min + trigRef_), 0);
     sWinMax_ = std::min(int(max + trigRef_), int(samples_.size()));
+    if (sWinMax_ < sWinMin_) {
+        sWinMin_ = std::max(sWinMax_ - 1, 0);
+    }
 }
 
 void WFClass::SetSignalIntegralWindow(int min, int max)
@@ -370,12 +373,18 @@ void WFClass::SetBaselineWindow(int min, int max)
 {
     bWinMin_ = std::max(min, 0);
     bWinMax_ = std::min(max, int(samples_.size()));
+    if (bWinMax_ < bWinMin_) {
+        bWinMin_ = std::max(bWinMax_ - 1, 0);
+    }
 }
 
 void WFClass::SetBaselineIntegralWindow(int min, int max)
 {
     bIntWinMin_ = std::max(min, 0);
     bIntWinMax_ = std::min(max, int(samples_.size()));
+    if (bIntWinMax_ < bIntWinMin_) {
+        bIntWinMin_ = std::max(bIntWinMax_ - 1, 0);
+    }
 }
 
 //----------Set the fit template----------------------------------------------------------
