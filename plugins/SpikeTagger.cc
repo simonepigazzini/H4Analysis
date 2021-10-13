@@ -150,8 +150,9 @@ bool SpikeTagger::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins,
         }
 
         const auto analyzedWF = WFs_[channel]->GetSamples();
+        const auto first_sample_time = WFs_[channel]->GetTimes()->at(0); // this might not be 0
         const auto t_unit = WFs_[channel]->GetTUnit();
-        const int max_sample = static_cast<int>(std::round(WFs_[channel]->GetTimeCF(1).time / t_unit));
+        const int max_sample = static_cast<int>(std::round((WFs_[channel]->GetTimeCF(1).time - first_sample_time) / t_unit));
 
         //---Look for undershoot after maximum
         const auto undershoot_window = opts.GetOpt<int>(instanceName_+".undershootFinderWindow");
@@ -304,6 +305,7 @@ bool SpikeTagger::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins,
                 continue;
             }
             const auto analyzedWF = WFs_[channel]->GetSamples();
+            const auto times = WFs_[channel]->GetTimes();
             unsigned int firstSample = 0;
             unsigned int lastSample = analyzedWF->size();
             if(opts.OptExist(instanceName_+".storeNSampleAfterMax") && opts.OptExist(instanceName_+".storeNSampleBeforeMax"))
@@ -316,11 +318,14 @@ bool SpikeTagger::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins,
             for(unsigned int jSample=firstSample; jSample<=lastSample; ++jSample)
             {
                 outWFTree_.WF_ch.push_back(outCh);
-                outWFTree_.WF_time.push_back(jSample*tUnit);
-                if(jSample>=0 && jSample<analyzedWF->size())
+                if (jSample >= 0 && jSample < analyzedWF->size())
                     outWFTree_.WF_val.push_back(analyzedWF->at(jSample));
                 else
                     outWFTree_.WF_val.push_back(0.);
+                if (jSample >= 0 && jSample < times->size())
+                    outWFTree_.WF_time.push_back(times->at(jSample));
+                else
+                    outWFTree_.WF_time.push_back(0.);
             }
             //---increase output tree channel counter
             ++outCh;        
