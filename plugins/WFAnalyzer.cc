@@ -228,9 +228,11 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
             {
                 WFs_[channel]->SetTemplateScint(templates_[channel]);
                 WFs_[channel]->SetTemplateSpike(spikeTemplates_[channel]);
-                fitResultsScintPlusSpike = WFs_[channel]->TemplateFitScintPlusSpike(opts.GetOpt<float>(channel+".templateFit.fitWin", 0),
-                                                                                    opts.GetOpt<int>(channel+".templateFit.fitWin", 1),
-                                                                                    opts.GetOpt<int>(channel+".templateFit.fitWin", 2));
+                fitResultsScintPlusSpike = WFs_[channel]->TemplateFitScintPlusSpike(
+                    opts.OptExist(channel+".templateFit.amplitudeThreshold") ? opts.GetOpt<float>(channel+".templateFit.amplitudeThreshold") : 0,
+                    opts.GetOpt<float>(channel+".templateFit.fitWin", 0),
+                    opts.GetOpt<int>(channel+".templateFit.fitWin", 1),
+                    opts.GetOpt<int>(channel+".templateFit.fitWin", 2));
                 digiTree_.fit_ampl_scint[outCh] = fitResultsScintPlusSpike.ampl_scint;
                 digiTree_.fit_time_scint[outCh] = fitResultsScintPlusSpike.time_scint;
                 digiTree_.fit_ampl_spike[outCh] = fitResultsScintPlusSpike.ampl_spike;
