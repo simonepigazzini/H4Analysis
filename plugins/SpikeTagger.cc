@@ -12,6 +12,13 @@ bool SpikeTagger::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uin
     srcInstance_ = opts.GetOpt<string>(instanceName_+".srcInstanceName");
     channelsNames_ = opts.GetOpt<vector<string> >(instanceName_+".channelsNames");
 
+    if (opts.OptExist(instanceName_+".weightsLd")) {
+        weightsLd_ = opts.GetOpt<vector<float>>(instanceName_+".weightsLd");
+    } else {
+        // Use weights from TDR
+        weightsLd_.assign({1.48322, -2.20018, 1.89766, -0.683441});
+    }
+
     //---calculate channels for swiss cross and A_9 variable
     for (const auto& channel : channelsNames_) {
         channelsNames3By3_[channel].emplace_back(channel);
@@ -136,20 +143,25 @@ bool SpikeTagger::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins,
             ++outCh;
             continue;
         }
+        // Require at least 10 samples in the signal window just like in WFAnalyzer (it must not be less than in WFAnalyzer since otherwise the WFAnalyzer has dropped the channel and the variables are not available))
+        if (WFs_[channel]->GetNSample() < opts.GetOpt<int>(channel+".signalWin", 0) + 10) {
+            ++outCh;
+            continue;
+        }
+
+        const auto analyzedWF = WFs_[channel]->GetSamples();
+        const auto first_sample_time = WFs_[channel]->GetTimes()->at(0); // this might not be 0
+        const auto t_unit = WFs_[channel]->GetTUnit();
+        const int max_sample = static_cast<int>(std::round((WFs_[channel]->GetTimeCF(1).time - first_sample_time) / t_unit));
 
         //---Look for undershoot after maximum
         const auto undershoot_window = opts.GetOpt<int>(instanceName_+".undershootFinderWindow");
-        const auto analizedWF = WFs_[channel]->GetSamples();
-        const int max_sample = WFs_[channel]->GetTimeCF(1).time/WFs_[channel]->GetTUnit();
-        if(max_sample+undershoot_window < analizedWF->size())
-        {
-            auto undershoot_sample = std::min_element(analizedWF->begin() + max_sample,
-                                                      analizedWF->begin() + max_sample + undershoot_window);        
+        if (max_sample + undershoot_window < analyzedWF->size()) {
+            auto undershoot_sample = std::min_element(analyzedWF->begin() + max_sample,
+                                                      analyzedWF->begin() + max_sample + undershoot_window);
             spikesTree_.undershoot[outCh] = *undershoot_sample;
-            spikesTree_.t_undershoot_minus_t_sample_max[outCh] = (std::distance(analizedWF->begin(), undershoot_sample) - max_sample) * WFs_[channel]->GetTUnit();
-        }
-        else
-        {
+            spikesTree_.t_undershoot_minus_t_sample_max[outCh] = (std::distance(analyzedWF->begin(), undershoot_sample) - max_sample) * t_unit;
+        } else {
             spikesTree_.undershoot[outCh] = 1e5;
             spikesTree_.t_undershoot_minus_t_sample_max[outCh] = 1e5;
         }
@@ -158,17 +170,22 @@ bool SpikeTagger::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins,
         if(spikesTree_.max_hit == -1 || WFs_[channelsNames_[spikesTree_.max_hit]]->GetAmpMax() < WFs_[channel]->GetAmpMax())
             spikesTree_.max_hit = outCh;
         float matrix_A_sum = 0.;
-        for(const auto& other_ch : channelsNames_)
-            matrix_A_sum += WFs_[other_ch]->GetSamples()->at(max_sample);
+        for(const auto& other_ch : channelsNames_) {
+            if (max_sample < WFs_[other_ch]->GetSamples()->size()) { // in case the other channel has less samples than the channel with the overall maximum
+                matrix_A_sum += WFs_[other_ch]->GetSamples()->at(max_sample);
+            }
+        }
 
         spikesTree_.amp_sum_matrix[outCh] = matrix_A_sum;
 
         //---Compute swiss cross variable 1 - A_4/A_1
-        const float sample_max = WFs_[channel]->GetSamples()->at(max_sample);
+        const float sample_max = analyzedWF->at(max_sample);
         float swiss_cross_A4_sum = 0.;
         const auto& channelNamesSwissCross = channelsNamesSwissCross_[channel];
         for(const auto& swiss_cross_ch : channelNamesSwissCross) {
-            swiss_cross_A4_sum += WFs_[swiss_cross_ch]->GetSamples()->at(max_sample);
+            if (max_sample < WFs_[swiss_cross_ch]->GetSamples()->size()) { // in case the swiss cross channel has less samples than the channel with the overall maximum
+                swiss_cross_A4_sum += WFs_[swiss_cross_ch]->GetSamples()->at(max_sample);
+            }
         }
 
         float swiss_cross = -1e5;
@@ -183,36 +200,38 @@ bool SpikeTagger::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins,
         float amp_sum_3by3 = 0.;
         const auto& channel_names_3by3 = channelsNames3By3_[channel];
         for(const auto& ch_3by3 : channel_names_3by3) {
-            amp_sum_3by3 += WFs_[ch_3by3]->GetSamples()->at(max_sample);
+            if (max_sample < WFs_[ch_3by3]->GetSamples()->size()) { // in case the 3by3 channel has less samples than the channel with the overall maximum
+                amp_sum_3by3 += WFs_[ch_3by3]->GetSamples()->at(max_sample);
+            }
         }
 
         spikesTree_.n_channels_3by3[outCh] = channel_names_3by3.size();
         spikesTree_.amp_sum_3by3[outCh] = amp_sum_3by3;
 
         //---Compute number of samples over thresholds of 25, 50, and 75%
-        unsigned int n_minus = 0;
-        unsigned int n_plus = 0;
+        int n_minus = 0;
+        int n_plus = 0;
         for (unsigned int i = 0; i < 3; ++i) {
             const float thr_frac = 0.75 - i * 0.25;
             const float thr = thr_frac * sample_max;
-            while (max_sample - n_minus >= 0 and WFs_[channel]->GetSamples()->at(max_sample - n_minus) > thr) {
+            while (max_sample - n_minus >= 0 and analyzedWF->at(max_sample - n_minus) > thr) {
                 ++n_minus;
             }
-            while (max_sample + n_plus + 1 < analizedWF->size() and WFs_[channel]->GetSamples()->at(max_sample + n_plus + 1) > thr) {
+            while (max_sample + n_plus + 1 < analyzedWF->size() and analyzedWF->at(max_sample + n_plus + 1) > thr) {
                 ++n_plus;
             }
             switch (i) {
             case 0:
                 spikesTree_.n_samples_above_75perc_max[outCh] = n_minus + n_plus;
-                spikesTree_.tot_75perc_max[outCh] = (n_minus + n_plus) * WFs_[channel]->GetTUnit();
+                spikesTree_.tot_75perc_max[outCh] = (n_minus + n_plus) * t_unit;
                 break;
             case 1:
                 spikesTree_.n_samples_above_50perc_max[outCh] = n_minus + n_plus;
-                spikesTree_.tot_50perc_max[outCh] = (n_minus + n_plus) * WFs_[channel]->GetTUnit();
+                spikesTree_.tot_50perc_max[outCh] = (n_minus + n_plus) * t_unit;
                 break;
             case 2:
                 spikesTree_.n_samples_above_25perc_max[outCh] = n_minus + n_plus;
-                spikesTree_.tot_25perc_max[outCh] = (n_minus + n_plus) * WFs_[channel]->GetTUnit();
+                spikesTree_.tot_25perc_max[outCh] = (n_minus + n_plus) * t_unit;
             }
         }
 
@@ -221,8 +240,8 @@ bool SpikeTagger::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins,
             if (i == 0)
                 continue;
 
-            if (max_sample + i > 0 and max_sample + i < analizedWF->size() and sample_max > 0) {
-                const float ratio = WFs_[channel]->GetSamples()->at(max_sample + i) / sample_max;
+            if (max_sample + i > 0 and max_sample + i < analyzedWF->size() and sample_max > 0) {
+                const float ratio = analyzedWF->at(max_sample + i) / sample_max;
 
                 switch (i) {
                 case -3:
@@ -246,13 +265,23 @@ bool SpikeTagger::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins,
             }
         }
 
+        //---Calculate the linear discriminant LD value from the TDR (Eq. 9.2)
+        const auto rminus1 = spikesTree_.sample_max_minus1_over_sample_max[outCh];
+        auto ld = spikesTree_.sample_max_plus1_over_sample_max[outCh];
+        float rminus1pow = 1.;
+        for (const auto weightLd : weightsLd_) {
+            ld -= weightLd * rminus1pow;
+            rminus1pow *= rminus1;
+        }
+        spikesTree_.ld[outCh] = ld;
+
         //---Calculate delta t between maximum and 3 sigma of baseline rms
         const auto rms = WFs_[channel]->SubtractBaseline().rms;
         unsigned int s = 0;
-        while (max_sample + s < analizedWF->size() and WFs_[channel]->GetSamples()->at(max_sample + s) > 3 * rms) {
+        while (max_sample + s < analyzedWF->size() and analyzedWF->at(max_sample + s) > 3 * rms) {
             ++s;
         }
-        spikesTree_.t_3sigma_noise_minus_t_sample_max[outCh] = s * WFs_[channel]->GetTUnit();
+        spikesTree_.t_3sigma_noise_minus_t_sample_max[outCh] = s * t_unit;
 
         //---increase output tree channel counter
         ++outCh;        
@@ -266,7 +295,7 @@ bool SpikeTagger::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins,
         //---fix WF window around maximum sample of largest hit in the event.
         //   also assuming all channels have the same sampling frequency (i.e. don't mix VFEs with V1742 channels)
         const float tUnit = WFs_[channelsNames_[spikesTree_.max_hit]]->GetTUnit();
-        const int max_sample = WFs_[channelsNames_[spikesTree_.max_hit]]->GetTimeCF(1).time/tUnit;
+        const int max_sample = static_cast<int>(std::round(WFs_[channelsNames_[spikesTree_.max_hit]]->GetTimeCF(1).time / tUnit));
         for(const auto& channel : channelsNames_)
         {
             //---skip dead channels
@@ -275,22 +304,28 @@ bool SpikeTagger::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins,
                 ++outCh;
                 continue;
             }
-            const auto analizedWF = WFs_[channel]->GetSamples();
+            const auto analyzedWF = WFs_[channel]->GetSamples();
+            const auto times = WFs_[channel]->GetTimes();
             unsigned int firstSample = 0;
-            unsigned int lastSample = analizedWF->size();
+            unsigned int lastSample = analyzedWF->size();
             if(opts.OptExist(instanceName_+".storeNSampleAfterMax") && opts.OptExist(instanceName_+".storeNSampleBeforeMax"))
             {
-                firstSample = max_sample - opts.GetOpt<int>(instanceName_+".storeNSampleBeforeMax");
+                if (max_sample - opts.GetOpt<int>(instanceName_+".storeNSampleBeforeMax") >= 0) {
+                    firstSample = max_sample - opts.GetOpt<int>(instanceName_+".storeNSampleBeforeMax");
+                }
                 lastSample = max_sample + opts.GetOpt<int>(instanceName_+".storeNSampleAfterMax");
             }
             for(unsigned int jSample=firstSample; jSample<=lastSample; ++jSample)
             {
                 outWFTree_.WF_ch.push_back(outCh);
-                outWFTree_.WF_time.push_back(jSample*tUnit);
-                if(jSample>=0 && jSample<analizedWF->size())
-                    outWFTree_.WF_val.push_back(analizedWF->at(jSample));
+                if (jSample >= 0 && jSample < analyzedWF->size())
+                    outWFTree_.WF_val.push_back(analyzedWF->at(jSample));
                 else
                     outWFTree_.WF_val.push_back(0.);
+                if (jSample >= 0 && jSample < times->size())
+                    outWFTree_.WF_time.push_back(times->at(jSample));
+                else
+                    outWFTree_.WF_time.push_back(0.);
             }
             //---increase output tree channel counter
             ++outCh;        

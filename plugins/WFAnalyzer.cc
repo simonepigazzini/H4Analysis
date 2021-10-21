@@ -36,7 +36,7 @@ bool WFAnalyzer::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint
 
     int nSamples = 0;
     for(auto& channel : channelsNames_)
-    {        
+    {
         nSamples += opts.GetOpt<int>(channel+".nSamples");
         if(opts.OptExist(channel+".templateFit.file"))
         {            
@@ -67,6 +67,14 @@ bool WFAnalyzer::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint
                      << " not found" << endl;
                 return false;
             }
+            templateFile->Close();
+        }
+        if(opts.OptExist(channel+".templateFit.spikeFile"))
+        {
+            TFile* templateFile = TFile::Open(opts.GetOpt<string>(channel+".templateFit.spikeFile", 0).c_str(), ".READ");
+            TH1* wfTemplate=(TH1*)templateFile->Get((opts.GetOpt<string>(channel+".templateFit.spikeFile", 1)+templateTag).c_str());
+            spikeTemplates_[channel] = (TH1F*) wfTemplate->Clone();
+            spikeTemplates_[channel] -> SetDirectory(0);
             templateFile->Close();
         }
         //---keep track of all the possible time reco method requested
@@ -128,11 +136,16 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
             ++outCh;
             continue;
         }
+        // Require at least 10 samples in the signal window
+        if (WFs_[channel]->GetNSample() < opts.GetOpt<int>(channel+".signalWin", 0) + 10) {
+            ++outCh;
+            continue;
+        }
 
         //---subtract a specified channel if requested
         if(opts.OptExist(channel+".subtractChannel") && WFs_.find(opts.GetOpt<string>(channel+".subtractChannel")) != WFs_.end())
 	  *WFs_[channel] -= *WFs_[opts.GetOpt<string>(channel+".subtractChannel")];        
-
+	
 	if(opts.OptExist(channel+".baselineWin"))
 	  { 
 	    WFs_[channel]->SetBaselineWindow(opts.GetOpt<int>(channel+".baselineWin", 0), 
@@ -146,7 +159,7 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
 	
 	WFs_[channel]->SetSignalWindow(opts.GetOpt<int>(channel+".signalWin", 0), 
 				       opts.GetOpt<int>(channel+".signalWin", 1));
-
+	
         WFs_[channel]->SetSignalIntegralWindow(opts.GetOpt<int>(channel+".signalInt", 0),
                                                opts.GetOpt<int>(channel+".signalInt", 1));
 	WFBaseline baselineInfo; 
@@ -196,7 +209,7 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
         for(unsigned int iT=0; iT<timeRecoTypes_.size(); ++iT)
         {
             //---compute time with selected method or store default value (-99)
-            if(timeOpts_.find(channel+"."+timeRecoTypes_[iT]) != timeOpts_.end())
+            if(timeOpts_.find(channel+"."+timeRecoTypes_[iT]) != timeOpts_.end() && WFs_[channel]->GetAmpMax() > 100.)
             {
                 WFFitResults timeInfo = WFs_[channel]->GetTime(timeRecoTypes_[iT], timeOpts_[channel+"."+timeRecoTypes_[iT]]);
                 digiTree_.time[outCh+iT*channelsNames_.size()] = timeInfo.time;
@@ -227,6 +240,24 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
             digiTree_.fit_terr[outCh] = fitResults.error;            
             digiTree_.fit_chi2[outCh] = fitResults.chi2;
             digiTree_.fit_period[outCh] = WFs_[channel]->GetTemplateFitPeriod();
+
+            WFFitResultsScintPlusSpike fitResultsScintPlusSpike{-1, -1000, -1, -1000, -1};
+            if(opts.OptExist(channel+".templateFit.spikeFile"))
+            {
+                WFs_[channel]->SetTemplateScint(templates_[channel]);
+                WFs_[channel]->SetTemplateSpike(spikeTemplates_[channel]);
+                fitResultsScintPlusSpike = WFs_[channel]->TemplateFitScintPlusSpike(
+                    opts.OptExist(channel+".templateFit.amplitudeThreshold") ? opts.GetOpt<float>(channel+".templateFit.amplitudeThreshold") : 0,
+                    opts.GetOpt<float>(channel+".templateFit.fitWin", 0),
+                    opts.GetOpt<int>(channel+".templateFit.fitWin", 1),
+                    opts.GetOpt<int>(channel+".templateFit.fitWin", 2));
+                digiTree_.fit_ampl_scint[outCh] = fitResultsScintPlusSpike.ampl_scint;
+                digiTree_.fit_time_scint[outCh] = fitResultsScintPlusSpike.time_scint;
+                digiTree_.fit_ampl_spike[outCh] = fitResultsScintPlusSpike.ampl_spike;
+                digiTree_.fit_time_spike[outCh] = fitResultsScintPlusSpike.time_spike;
+                digiTree_.fit_chi2_scint_plus_spike[outCh] = fitResultsScintPlusSpike.chi2;
+                digiTree_.fit_converged_scint_plus_spike[outCh] = fitResultsScintPlusSpike.converged;
+            }
         }            
 	
         //---WFs---

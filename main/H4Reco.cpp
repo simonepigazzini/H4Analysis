@@ -105,7 +105,7 @@ int main(int argc, char* argv[])
 {
     if(argc < 2)
     {
-        cout << argv[0] << " cfg file " << "[run] " << "[spill] " <<endl; 
+        cout << argv[0] << " cfg file " << "[run] " << "[first spill] " << "[number of spills] " << endl;
         return -1;
     }
 
@@ -126,8 +126,16 @@ int main(int argc, char* argv[])
         vector<string> run(1, argv[2]);
         opts.SetOpt("h4reco.run", run);
     }
-    if(argc > 3)
+    if(argc > 3) {
         spill = atoi(argv[3]);
+        vector<string> files(1, "1");
+        opts.SetOpt("h4reco.maxFiles", files);
+    }
+    if(argc > 4)
+    {
+        vector<string> files(1, argv[4]);
+        opts.SetOpt("h4reco.maxFiles", files);
+    }
     auto out_file_name = opts.GetOpt<string>("h4reco.outNameSuffix");
     bool storeTree = opts.OptExist("h4reco.storeTree") ?
         opts.GetOpt<bool>("h4reco.storeTree") : true;
@@ -148,6 +156,7 @@ int main(int argc, char* argv[])
         out_file_name += run+"_"+spillOpt.back()+".root";
     else
         out_file_name += "/"+run+"/"+to_string(spill)+".root";
+
     fs::create_directories(fs::absolute(fs::path(out_file_name.substr(0, out_file_name.find_last_of("/")+1))));
     auto* outROOT = new TFile(out_file_name.c_str(), "RECREATE");
     outROOT->cd();
