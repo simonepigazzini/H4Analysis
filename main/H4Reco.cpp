@@ -121,7 +121,6 @@ int main(int argc, char* argv[])
 
     //-----input setup-----    
     int spill=-1;
-    int nspills=-1;
     if(argc > 2)
     {
         vector<string> run(1, argv[2]);
@@ -134,7 +133,6 @@ int main(int argc, char* argv[])
     }
     if(argc > 4)
     {
-        nspills = atoi(argv[4]);
         vector<string> files(1, argv[4]);
         opts.SetOpt("h4reco.maxFiles", files);
     }
@@ -153,13 +151,12 @@ int main(int argc, char* argv[])
     //-----output setup-----
     uint64 index=0;
     if(spill == -1)
-        out_file_name += "run"+run+".root";
-    else if(nspills == -1)
-        out_file_name += "run"+run+"_spill"+spillOpt.back()+".root";
-    else {
-        // TODO: generate correct file name if less than the requested number of spills are available
-        out_file_name += "run"+run+"_spills"+spillOpt.back()+"-"+to_string(spill+nspills-1)+".root";
-    }
+        out_file_name += run+".root";
+    else if(opts.GetOpt<int>("h4reco.maxFiles") > 1)
+        out_file_name += run+"_"+spillOpt.back()+".root";
+    else
+        out_file_name += "/"+run+"/"+to_string(spill)+".root";
+
     fs::create_directories(fs::absolute(fs::path(out_file_name.substr(0, out_file_name.find_last_of("/")+1))));
     auto* outROOT = new TFile(out_file_name.c_str(), "RECREATE");
     outROOT->cd();
