@@ -133,10 +133,15 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
             ++outCh;
             continue;
         }
+        // Require at least 10 samples in the signal window
+        if (WFs_[channel]->GetNSample() < opts.GetOpt<int>(channel+".signalWin", 0) + 10) {
+            ++outCh;
+            continue;
+        }
 
         //---subtract a specified channel if requested
         if(opts.OptExist(channel+".subtractChannel") && WFs_.find(opts.GetOpt<string>(channel+".subtractChannel")) != WFs_.end())
-            *WFs_[channel] -= *WFs_[opts.GetOpt<string>(channel+".subtractChannel")];        
+            *WFs_[channel] -= *WFs_[opts.GetOpt<string>(channel+".subtractChannel")];
         WFs_[channel]->SetBaselineWindow(opts.GetOpt<int>(channel+".baselineWin", 0), 
                                          opts.GetOpt<int>(channel+".baselineWin", 1));
         WFs_[channel]->SetBaselineIntegralWindow(opts.GetOpt<int>(channel+".baselineInt", 0),
@@ -223,9 +228,11 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
             {
                 WFs_[channel]->SetTemplateScint(templates_[channel]);
                 WFs_[channel]->SetTemplateSpike(spikeTemplates_[channel]);
-                fitResultsScintPlusSpike = WFs_[channel]->TemplateFitScintPlusSpike(opts.GetOpt<float>(channel+".templateFit.fitWin", 0),
-                                                                                    opts.GetOpt<int>(channel+".templateFit.fitWin", 1),
-                                                                                    opts.GetOpt<int>(channel+".templateFit.fitWin", 2));
+                fitResultsScintPlusSpike = WFs_[channel]->TemplateFitScintPlusSpike(
+                    opts.OptExist(channel+".templateFit.amplitudeThreshold") ? opts.GetOpt<float>(channel+".templateFit.amplitudeThreshold") : 0,
+                    opts.GetOpt<float>(channel+".templateFit.fitWin", 0),
+                    opts.GetOpt<int>(channel+".templateFit.fitWin", 1),
+                    opts.GetOpt<int>(channel+".templateFit.fitWin", 2));
                 digiTree_.fit_ampl_scint[outCh] = fitResultsScintPlusSpike.ampl_scint;
                 digiTree_.fit_time_scint[outCh] = fitResultsScintPlusSpike.time_scint;
                 digiTree_.fit_ampl_spike[outCh] = fitResultsScintPlusSpike.ampl_spike;
