@@ -18,10 +18,9 @@ void WFTree::Init()
     //---global branches
     string size_var = "WF_samples"+suffix_;
     tree_->Branch("index", index,"index/l");
-    tree_->Branch(size_var.c_str(), &WF_samples, (size_var+"/I").c_str());
-    tree_->Branch(("WF_ch"+suffix_).c_str(), WF_ch.data(), ("WF_ch"+suffix_+"["+size_var+"]/I").c_str());
-    tree_->Branch(("WF_time"+suffix_).c_str(), WF_time.data(), ("WF_time"+suffix_+"["+size_var+"]/F").c_str());
-    tree_->Branch(("WF_val"+suffix_).c_str(), WF_val.data(), ("WF_val"+suffix_+"["+size_var+"]/F").c_str());
+    tree_->Branch(("WF_ch"+suffix_).c_str(), &WF_ch);
+    tree_->Branch(("WF_time"+suffix_).c_str(), &WF_time);
+    tree_->Branch(("WF_val"+suffix_).c_str(), &WF_val);
 }
 
 void WFTree::Fill()

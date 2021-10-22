@@ -118,7 +118,8 @@ bool WFAnalyzer::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint
 
 bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, CfgManager& opts)
 {
-    //---setup output event 
+    //---reset output event 
+    outWFTree_.Reset();
     int outCh=0;
     bool fillWFtree=false;
     if(opts.GetOpt<int>(instanceName_+".fillWFtree"))
@@ -127,14 +128,10 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
     //---compute reco variables
     for(auto& channel : channelsNames_)
     {
-        //---skip dead channels
-        if(WFs_.find(channel) == WFs_.end())
+        //---skip dead channels or channels with too few samples
+        if(WFs_.find(channel) == WFs_.end() || WFs_[channel]->GetNSample() < opts.GetOpt<int>(channel+".signalWin", 0) + 10)
         {
-            ++outCh;
-            continue;
-        }
-        // Require at least 10 samples in the signal window
-        if (WFs_[channel]->GetNSample() < opts.GetOpt<int>(channel+".signalWin", 0) + 10) {
+            digiTree_.FillVoidChannel(outCh);
             ++outCh;
             continue;
         }

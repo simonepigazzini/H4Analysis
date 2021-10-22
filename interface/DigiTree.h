@@ -28,6 +28,7 @@ public:
     //---utils---
     void Init(vector<string>& names, vector<string>& timetypes);
     void Fill() {tree_->Fill();};
+    void FillVoidChannel(int ch=0);
     
     TTree*        tree_; 
     string        prefix_;

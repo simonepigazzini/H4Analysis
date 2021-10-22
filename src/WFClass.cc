@@ -580,7 +580,7 @@ void WFClass::AddSample(float sample, float gain)
 {
     uncalibSamples_.push_back(polarity_*sample*gain);
     gain_.push_back(gain);
-    times_.push_back( (samples_.size()-1.)*tUnit_ );
+    times_.push_back( (uncalibSamples_.size()-1.)*tUnit_ );
     samples_ = uncalibSamples_;
 };
 
