@@ -14,7 +14,7 @@ bool DFTTemplate::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uin
     {
         if(!opts.OptExist(channel+".fOversampling"))
         {
-            cout << ">>> DFTTemplate ERROR: configuration for channel < " << channel << " > not found." << endl;
+            Log("configuration for channel < "+channel+" > not found.", ERR);
             return false;
         }
         //---oversampling frequency in GHz
@@ -59,7 +59,7 @@ bool DFTTemplate::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins,
         Im.reserve(n_samples); 
         Re.assign(fft->GetRe()->data(), fft->GetRe()->data()+fft->GetRe()->size());
         Im.assign(fft->GetIm()->data(), fft->GetIm()->data()+fft->GetIm()->size());
-        auto orig_n_sample = Im.size();
+        //auto orig_n_sample = Im.size();
         //---not so general FIXME
         TH1D ampl_spectrum("ampl_spectrum", "",
                            Re.size()/4.,
@@ -94,8 +94,8 @@ bool DFTTemplate::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins,
             // else                
             //     Im.insert(Im.begin()+(Im.size()/2), 2, 0.);
             auto insert_point = Im.size()/2;
-            complex c1 = polar(mag, phase);
-            complex c2 = polar(mag, -phase);
+            complex<double> c1 = polar(mag, phase);
+            complex<double> c2 = polar(mag, -phase);
             Re.insert(Re.begin()+insert_point, c1.real());
             Re.insert(Re.begin()+insert_point, c2.real());
             Im.insert(Im.begin()+insert_point, c1.imag());

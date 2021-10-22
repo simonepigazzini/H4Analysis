@@ -43,7 +43,7 @@ bool AlignTelescope::ProcessEvent(H4Tree& h4Tree, map<string, PluginBase*>& plug
     if(shared_data.size() != 0)
         tracks = (Tracking::TrackContainer*)shared_data.at(0).obj;
     else
-        cout << "[AlignTelescope::" << instanceName_ << "]: " << srcInstance_+"_tracks not found" << endl; 
+        Log(srcInstance_+"_tracks not found", WARN); 
 
     //---select good tracks
     for (auto& track : tracks->tracks_)
@@ -105,7 +105,7 @@ double AlignTelescope::globalChi2(const double* par)
     	}
     }
 
-    std::cout << "<RESIDUAL/TRACK>: " << chi2/tracks_.tracks_.size() << std::endl;
+    Log("<RESIDUAL/TRACK>: "+to_string(chi2/tracks_.tracks_.size()));
     return chi2/100.; // avoid fit instability
 }
 
@@ -135,12 +135,12 @@ void AlignTelescope::minimize()
     //---fit
     ROOT::Math::Functor chi2(this, &AlignTelescope::globalChi2, nFitParameters);
     minimizer->SetFunction(chi2);
-    std::cout << "START ALIGNMENT MINIMIZATION WITH #" << tracks_.tracks_.size() << " TRACKS " << std::endl;
+    Log("START ALIGNMENT MINIMIZATION WITH #"+to_string(tracks_.tracks_.size())+" TRACKS ");
     clock_t begin = clock();
     minimizer->Minimize();
     clock_t end = clock();
 
-    std::cout << "ELAPSED TIME: " << (double)(end - begin) / CLOCKS_PER_SEC << "s" << std::endl;
+    Log("ELAPSED TIME: "+to_string((double)(end - begin) / CLOCKS_PER_SEC)+"s");
 
     //---save aligned telescope
     for (int i=0;i<(tLayout_->layers_.size()-2);++i) //keep the first 2 layers as reference

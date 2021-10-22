@@ -28,6 +28,7 @@ public:
     //---utils---
     void Init(vector<string>& names, vector<string>& timetypes);
     void Fill() {tree_->Fill();};
+    void FillVoidChannel(int ch=0);
     
     TTree*        tree_; 
     string        prefix_;
@@ -35,6 +36,7 @@ public:
     uint64*       index;
     unsigned int  n_channels;
     unsigned int  n_times;
+    float*        gain;
     float*        pedestal;
     float*        b_charge;
     float*        b_slope;

@@ -16,6 +16,7 @@ void DigiTree::Init(vector<string>& names, vector<string>& timetypes)
     channels = new int[n_channels];
     time_types = new int[n_times];    
     pedestal = new float[n_channels];
+    gain = new float[n_channels];
     b_charge = new float[n_channels];
     b_slope = new float[n_channels];
     b_rms = new float[n_channels];
@@ -63,6 +64,7 @@ void DigiTree::Init(vector<string>& names, vector<string>& timetypes)
     tree_->Branch("index", index, "index/l");
     tree_->Branch(size_var.c_str(), &n_channels, (size_var+"/i").c_str());
     tree_->Branch(size_time_var.c_str(), &n_times, (size_time_var+"/i").c_str());
+    tree_->Branch((prefix_+"gain").c_str(), gain, (prefix_+"gain["+size_var+"]/F").c_str());    
     tree_->Branch((prefix_+"pedestal").c_str(), pedestal, (prefix_+"pedestal["+size_var+"]/F").c_str());    
     tree_->Branch((prefix_+"b_charge").c_str(), b_charge, (prefix_+"b_charge["+size_var+"]/F").c_str());
     tree_->Branch((prefix_+"b_slope").c_str(), b_slope, (prefix_+"b_slope["+size_var+"]/F").c_str());
@@ -92,6 +94,40 @@ void DigiTree::Init(vector<string>& names, vector<string>& timetypes)
     tree_->Branch((prefix_+"fit_converged_scint_plus_spike").c_str(), fit_converged_scint_plus_spike, (prefix_+"fit_converged_scint_plus_spike["+size_var+"]/O").c_str());
     tree_->Branch((prefix_+"ampl_calib").c_str(), ampl_calib, (prefix_+"ampl_calib["+size_var+"]/F").c_str());
     tree_->Branch((prefix_+"time_calib").c_str(), time_calib, (prefix_+"time_calib["+size_var+"]/F").c_str());
+}
+
+void DigiTree::FillVoidChannel(int ch)
+{
+    pedestal[ch] = -999;
+    gain[ch] = -999;
+    b_charge[ch] = -999;
+    b_slope[ch] = -999;
+    b_rms[ch] = -999;
+    time[ch] = -999;
+    time_chi2[ch] = -999;
+    time_error[ch] = -999;
+    time_slope[ch] = -999;
+    period[ch] = -999;
+    maximum[ch] = -999;
+    time_maximum[ch] = -999;
+    amp_max[ch] = -999;
+    time_max[ch] = -999;
+    chi2_max[ch] = -999;
+    charge_tot[ch] = -999;
+    charge_sig[ch] = -999;
+    fit_ampl[ch] = -999;
+    fit_time[ch] = -999;
+    fit_terr[ch] = -999;
+    fit_chi2[ch] = -999;
+    fit_period[ch] = -999;
+    fit_ampl_scint[ch] = -999;
+    fit_time_scint[ch] = -999;
+    fit_ampl_spike[ch] = -999;
+    fit_time_spike[ch] = -999;
+    fit_chi2_scint_plus_spike[ch] = -999;
+    fit_converged_scint_plus_spike[ch] = -999;
+
+    return;
 }
 
 DigiTree::~DigiTree()

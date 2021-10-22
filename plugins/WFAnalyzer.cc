@@ -6,7 +6,7 @@ bool WFAnalyzer::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint
     //---inputs---
     if(!opts.OptExist(instanceName_+".srcInstanceName"))
     {
-        cout << ">>> WFAnalyzer ERROR: no source plugin specified" << endl;
+        Log("no source plugin specified", ERR);
         return false;
     }
     srcInstance_ = opts.GetOpt<string>(instanceName_+".srcInstanceName");
@@ -20,7 +20,7 @@ bool WFAnalyzer::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint
         if(shared_data.size() != 0)
             WFs_[channel] = (WFClass*)shared_data.at(0).obj;
         else
-            cout << "[WFAnalizer::" << instanceName_ << "]: channels samples not found check DigiReco step" << endl; 
+            Log("channels samples not found check DigiReco step", WARN); 
     }
     
     //---channels setup
@@ -49,19 +49,14 @@ bool WFAnalyzer::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint
                 }
                 else
                 {
-                    cout << ">>> WFAnalyzer ERROR: template " 
-                         << opts.GetOpt<string>(channel+".templateFit.file", 1)
-                         << " not found in "
-                         << opts.GetOpt<string>(channel+".templateFit.file", 0)
-                         << endl;
+                    Log("template "+opts.GetOpt<string>(channel+".templateFit.file", 1)
+                        +" not found in "+opts.GetOpt<string>(channel+".templateFit.file", 0), ERR);
                     return false;
                 }                
             }
             else
             {
-                cout << ">>> WFAnalyzer ERROR: template file " 
-                     << opts.GetOpt<string>(channel+".templateFit.file", 0)
-                     << " not found" << endl;
+                Log("template file "+opts.GetOpt<string>(channel+".templateFit.file", 0)+" not found", ERR);
                 return false;
             }
             templateFile->Close();
@@ -118,7 +113,7 @@ bool WFAnalyzer::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint
 
 bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, CfgManager& opts)
 {
-    //---setup output event 
+    //---reset output event 
     int outCh=0;
     bool fillWFtree=false;
     if(opts.GetOpt<int>(instanceName_+".fillWFtree"))
@@ -127,16 +122,17 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
     //---compute reco variables
     for(auto& channel : channelsNames_)
     {
-        //---skip dead channels
-        if(WFs_.find(channel) == WFs_.end())
+        //---skip dead channels or channels with too few samples
+        if(WFs_.find(channel) == WFs_.end() || WFs_[channel]->GetNSample() < opts.GetOpt<int>(channel+".signalWin", 0) + 10)
         {
+            digiTree_.FillVoidChannel(outCh);
             ++outCh;
             continue;
         }
 
         //---subtract a specified channel if requested
         if(opts.OptExist(channel+".subtractChannel") && WFs_.find(opts.GetOpt<string>(channel+".subtractChannel")) != WFs_.end())
-            *WFs_[channel] -= *WFs_[opts.GetOpt<string>(channel+".subtractChannel")];        
+            *WFs_[channel] -= *WFs_[opts.GetOpt<string>(channel+".subtractChannel")];
         WFs_[channel]->SetBaselineWindow(opts.GetOpt<int>(channel+".baselineWin", 0), 
                                          opts.GetOpt<int>(channel+".baselineWin", 1));
         WFs_[channel]->SetBaselineIntegralWindow(opts.GetOpt<int>(channel+".baselineInt", 0),
@@ -168,6 +164,7 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
                                                                   max_function);
         }
         digiTree_.pedestal[outCh] = baselineInfo.baseline;
+        digiTree_.gain[outCh] = WFs_[channel]->GetGain();
         digiTree_.b_charge[outCh] = WFs_[channel]->GetIntegral(opts.GetOpt<int>(channel+".baselineInt", 0), 
                                                                opts.GetOpt<int>(channel+".baselineInt", 1));        
         digiTree_.b_slope[outCh] = baselineInfo.slope;
@@ -222,9 +219,11 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
             {
                 WFs_[channel]->SetTemplateScint(templates_[channel]);
                 WFs_[channel]->SetTemplateSpike(spikeTemplates_[channel]);
-                fitResultsScintPlusSpike = WFs_[channel]->TemplateFitScintPlusSpike(opts.GetOpt<float>(channel+".templateFit.fitWin", 0),
-                                                                                    opts.GetOpt<int>(channel+".templateFit.fitWin", 1),
-                                                                                    opts.GetOpt<int>(channel+".templateFit.fitWin", 2));
+                fitResultsScintPlusSpike = WFs_[channel]->TemplateFitScintPlusSpike(
+                    opts.OptExist(channel+".templateFit.amplitudeThreshold") ? opts.GetOpt<float>(channel+".templateFit.amplitudeThreshold") : 0,
+                    opts.GetOpt<float>(channel+".templateFit.fitWin", 0),
+                    opts.GetOpt<int>(channel+".templateFit.fitWin", 1),
+                    opts.GetOpt<int>(channel+".templateFit.fitWin", 2));
                 digiTree_.fit_ampl_scint[outCh] = fitResultsScintPlusSpike.ampl_scint;
                 digiTree_.fit_time_scint[outCh] = fitResultsScintPlusSpike.time_scint;
                 digiTree_.fit_ampl_spike[outCh] = fitResultsScintPlusSpike.ampl_spike;

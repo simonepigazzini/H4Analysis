@@ -15,26 +15,24 @@ bool DigitizerReco::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, u
             auto calibPtr = calibFile->Get(opts.GetOpt<string>(instanceName_+".calibration", 1).c_str());
             if(calibPtr)
             {
-                cout << ">>>DigiReco INFO: using calibration "
-                     << opts.GetOpt<string>(instanceName_+".calibration", 1)
-                     << " from " << opts.GetOpt<string>(instanceName_+".calibration", 0) << endl;
+                Log("using calibration "+opts.GetOpt<string>(instanceName_+".calibration", 1)
+                    +" from "+opts.GetOpt<string>(instanceName_+".calibration", 0));
                 
                 digitizerCalib_ = *((DigitizerCalibration*)calibPtr->Clone("dVdTCalibration"));
                 RegisterSharedData(&digitizerCalib_, "dVdTCalibration", false);
             }
             else
             {
-                cout << ">>>DigiReco WARNING: calibration "
-                     << opts.GetOpt<string>(instanceName_+".calibration", 1)
-                     << " not found in " << opts.GetOpt<string>(instanceName_+".calibration", 0)
-                     << ". No calibration will be applied" << endl;
+                Log("calibration "+opts.GetOpt<string>(instanceName_+".calibration", 1)
+                    +" not found in "+opts.GetOpt<string>(instanceName_+".calibration", 0)
+                    +". No calibration will be applied", WARN);
             }
         }
         else
         {
-            cout << ">>>DigiReco WARNING: impossible to open calibration file "
-                 << opts.GetOpt<string>(instanceName_+".calibration", 0)
-                 << ". No calibration will be applied" << endl;
+            Log("impossible to open calibration file "
+                +opts.GetOpt<string>(instanceName_+".calibration", 0)
+                +". No calibration will be applied", WARN);
         }
     }
     
@@ -89,11 +87,13 @@ bool DigitizerReco::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugin
     {
         //---reset and read new WFs_
         WFs_[channel]->Reset();
-        unsigned int digiBd = opts.GetOpt<unsigned int>(channel+".digiBoard");
-        unsigned int digiGr = opts.GetOpt<unsigned int>(channel+".digiGroup");
-        unsigned int digiCh = opts.GetOpt<unsigned int>(channel+".digiChannel");
-        int offset = event.digiMap.at(make_tuple(digiBd, digiGr, digiCh));
-        for(int iSample=offset; iSample<offset+nSamples_[channel]; ++iSample)
+        auto digiBd = opts.GetOpt<unsigned int>(channel+".digiBoard");
+        auto digiGr = opts.GetOpt<unsigned int>(channel+".digiGroup");
+        auto digiCh = opts.GetOpt<unsigned int>(channel+".digiChannel");
+        auto offset = event.digiMap.at(make_tuple(digiBd, digiGr, digiCh));
+        auto max_sample = offset+std::min(nSamples_[channel], event.digiNSamplesMap[make_tuple(digiBd, digiGr, digiCh)]); 
+        auto iSample = offset;
+        while(iSample < max_sample && event.digiBoard[iSample] != -1)
         {
             //Set the start index cell
             if (iSample==offset)
@@ -107,7 +107,9 @@ bool DigitizerReco::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugin
                 WFs_[channel]->AddSample(4095);
             }
             else
-                WFs_[channel]->AddSample(event.digiSampleValue[iSample]);
+   	        WFs_[channel]->AddSample(event.digiSampleValue[iSample], event.digiSampleGain[iSample]);
+
+            iSample++;
         }
         if(opts.OptExist(channel+".useTrigRef") && opts.GetOpt<bool>(channel+".useTrigRef"))
             WFs_[channel]->SetTrigRef(trigRef);
@@ -116,7 +118,7 @@ bool DigitizerReco::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugin
     }
 
     if(!evtStatus)
-        cout << ">>>DigiReco WARNING: bad amplitude detected" << endl;
+        Log("bad amplitude detected", WARN);
 
     return evtStatus;
 }

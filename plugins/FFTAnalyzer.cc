@@ -24,7 +24,7 @@ bool FFTAnalyzer::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uin
     {
         if(!opts.OptExist(channel+".tUnit"))
         {
-            cout << ">>> FFTAnalyzer ERROR: configuration for channel < " << channel << " > not found." << endl;
+            Log("Configuration for channel < "+channel+" > not found.", ERR);
             return false;
         }
         if(fftType_ == "T2F")
@@ -43,7 +43,7 @@ bool FFTAnalyzer::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uin
                 noiseTemplateHistoIm_ = (TH1F*) noiseTemplateFile_->Get(noiseTemplateHistoName+"_Im_tmpl");
                 if (!noiseTemplateFile_)
                 {
-                    cout << ">>> FFTAnalyzer ERROR: noiseTemplateFile not open " << endl;
+                    Log("noiseTemplateFile not open", ERR);
                     return false;
                 }
             }

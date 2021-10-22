@@ -127,6 +127,7 @@ public:
     inline TF1*                    GetAmpFunc() { return f_max_; };
     inline TF1*                    GetFitFunc() { return f_fit_; };
     inline DigiChannelCalibration* GetCalibration() { return calibration_; };
+    inline int                     GetGain() { return *std::max_element(gain_.begin(), gain_.end()); };
     float                          GetAmpMax(int min=-1, int max=-1);
     WFFitResults                   GetInterpolatedSample(int sample, int samplesLeft=-1, int samplesRight=-1);
     WFFitResults                   GetInterpolatedAmpMax(int min=-1, int max=-1, int nmFitSamples=7, int npFitSamples=7, string function="pol2", vector<float> params=vector<float>{});
@@ -155,11 +156,11 @@ public:
     //---utils---
     void                           Reset();
     bool                           ApplyCalibration();
-    void                           AddSample(float sample);
+    void                           AddSample(float sample, float gain=1);
     WFBaseline                     SubtractBaseline(int min=-1, int max=-1);
 
     virtual WFFitResults           TemplateFit(float amp_threshold=0., float offset=0., int lW=0, int hW=0);
-    WFFitResultsScintPlusSpike     TemplateFitScintPlusSpike(float offset=0., int lW=0, int hW=0);
+    WFFitResultsScintPlusSpike     TemplateFitScintPlusSpike(float amp_threshold=0., float offset=0., int lW=0, int hW=0);
 
     double                         AnalyticFit(TF1* f, int lW, int hW);
     void                           EmulatedWF(WFClass& wf, float rms, float amplitude, float time);
@@ -182,7 +183,8 @@ protected:
 protected:
     vector<double>  uncalibSamples_;
     vector<double>  calibSamples_;
-    vector<double>& samples_;
+    vector<double>  samples_;
+    vector<double>  gain_;
     vector<double>  times_;
 
     DigiChannelCalibration* calibration_;

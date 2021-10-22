@@ -8,15 +8,19 @@ void H4Tree::Init()
     unsigned int currentDigiBoard=-1, currentDigiGroup=-1, currentDigiChannel=-1;
     for(unsigned int iSample=0; iSample<nDigiSamples; ++iSample)
     {
-        if(digiChannel[iSample] != currentDigiChannel ||
-           digiGroup[iSample] != currentDigiGroup ||
-           digiBoard[iSample] != currentDigiBoard)
+        if(digiBoard[iSample] != -1 && 
+           (digiChannel[iSample] != currentDigiChannel ||
+            digiGroup[iSample] != currentDigiGroup ||
+            digiBoard[iSample] != currentDigiBoard))
         {
             currentDigiChannel = digiChannel[iSample];
             currentDigiGroup = digiGroup[iSample];
             currentDigiBoard = digiBoard[iSample];            
             digiMap[make_tuple(currentDigiBoard, currentDigiGroup, currentDigiChannel)] = iSample;
+            digiNSamplesMap[make_tuple(currentDigiBoard, currentDigiGroup, currentDigiChannel)] = 1;
         }
+        else
+            digiNSamplesMap[make_tuple(currentDigiBoard, currentDigiGroup, currentDigiChannel)]++;
     }
 
     NextEntry(GetTTreePtr()->GetEntriesFast()+1);
@@ -34,8 +38,11 @@ H4Tree::~H4Tree()
     delete[] pattern;
     delete[] patternBoard;
     delete[] patternChannel;
+    delete[] triggerWords;
+    delete[] triggerWordsBoard;
     delete[] digiBoard;
     delete[] digiGroup;
     delete[] digiChannel;
     delete[] digiSampleValue;
+    delete[] digiSampleGain;
 }

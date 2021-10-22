@@ -18,11 +18,20 @@ public:
     ~PluginLoader();
 
     //---utils---
-    void Create()         {instance = pluginCreator();};
-    P*   CreateInstance() {return instance;};
-    void Destroy()        {pluginDestroyer(instance);};
+    void Create() {
+        instance = pluginCreator(); 
+        instance->SetPluginType(pluginName_); 
+    };
+    P*   CreateInstance(string name) {
+        instance->SetInstanceName(name); 
+        return instance;
+    };
+    void Destroy() {
+        pluginDestroyer(instance);
+    };
     
 private:
+    string pluginName_;
     void* pluginHandle;
     P*    (*pluginCreator)(void);
     void  (*pluginDestroyer)(P*);
@@ -32,6 +41,7 @@ private:
 //----------Constructor-------------------------------------------------------------------
 template<class P> inline PluginLoader<P>::PluginLoader(string plugin_name)
 {
+    pluginName_ = plugin_name;
     char* error;
     pluginHandle = dlopen(("lib"+plugin_name+".so").c_str(), RTLD_LAZY);
     if(!pluginHandle)
