@@ -6,7 +6,7 @@ bool SpikeTagger::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uin
     //---inputs---
     if(!opts.OptExist(instanceName_+".srcInstanceName"))
     {
-        cout << ">>> SpikeTagger ERROR: no source plugin specified" << endl;
+        Log("no source plugin specified", ERR);
         return false;
     }
     srcInstance_ = opts.GetOpt<string>(instanceName_+".srcInstanceName");
@@ -131,7 +131,7 @@ bool SpikeTagger::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins,
         if(shared_data.size() != 0)
             WFs_[channel] = (WFClass*)shared_data.at(0).obj;
         else
-            cout << "[SpikeTagger::" << instanceName_ << "]: channels samples not found check DigiReco step" << endl; 
+            Log("channels samples not found check DigiReco step", WARN); 
     }
 
     //---compute reco variables

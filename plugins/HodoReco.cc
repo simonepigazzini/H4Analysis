@@ -98,7 +98,7 @@ bool HodoReco::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint64
     //---cluster size options
     if(!opts.OptExist(instanceName_+".minClusterSize") || !opts.OptExist(instanceName_+".maxClusterSize"))
     {
-        cout << ">>> HodoReco ERROR: please specify minClusterSize and maxClusterSize" << endl;
+        Log("Please specify minClusterSize and maxClusterSize", ERR);
         return false;
     }
     else

@@ -15,26 +15,24 @@ bool DigitizerReco::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, u
             auto calibPtr = calibFile->Get(opts.GetOpt<string>(instanceName_+".calibration", 1).c_str());
             if(calibPtr)
             {
-                cout << ">>>DigiReco INFO: using calibration "
-                     << opts.GetOpt<string>(instanceName_+".calibration", 1)
-                     << " from " << opts.GetOpt<string>(instanceName_+".calibration", 0) << endl;
+                Log("using calibration "+opts.GetOpt<string>(instanceName_+".calibration", 1)
+                    +" from "+opts.GetOpt<string>(instanceName_+".calibration", 0));
                 
                 digitizerCalib_ = *((DigitizerCalibration*)calibPtr->Clone("dVdTCalibration"));
                 RegisterSharedData(&digitizerCalib_, "dVdTCalibration", false);
             }
             else
             {
-                cout << ">>>DigiReco WARNING: calibration "
-                     << opts.GetOpt<string>(instanceName_+".calibration", 1)
-                     << " not found in " << opts.GetOpt<string>(instanceName_+".calibration", 0)
-                     << ". No calibration will be applied" << endl;
+                Log("calibration "+opts.GetOpt<string>(instanceName_+".calibration", 1)
+                    +" not found in "+opts.GetOpt<string>(instanceName_+".calibration", 0)
+                    +". No calibration will be applied", WARN);
             }
         }
         else
         {
-            cout << ">>>DigiReco WARNING: impossible to open calibration file "
-                 << opts.GetOpt<string>(instanceName_+".calibration", 0)
-                 << ". No calibration will be applied" << endl;
+            Log("impossible to open calibration file "
+                +opts.GetOpt<string>(instanceName_+".calibration", 0)
+                +". No calibration will be applied", WARN);
         }
     }
     
@@ -120,7 +118,7 @@ bool DigitizerReco::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugin
     }
 
     if(!evtStatus)
-        cout << ">>>DigiReco WARNING: bad amplitude detected" << endl;
+        Log("bad amplitude detected", WARN);
 
     return evtStatus;
 }

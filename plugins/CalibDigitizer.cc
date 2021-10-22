@@ -13,7 +13,7 @@ bool CalibDigitizer::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, 
     //---inputs---
     if(!opts.OptExist(instanceName_+".srcInstanceName"))
     {
-        cout << ">>> CalibDigitizer ERROR: no source plugin specified" << endl;
+        Log("no source plugin specified", ERR);
         return false;
     }
 
@@ -100,7 +100,7 @@ bool CalibDigitizer::ProcessEvent(H4Tree& h4Tree, map<string, PluginBase*>& plug
         if(shared_data.size() != 0)
             WFs_[channel] = (WFClass*)shared_data.at(0).obj;
         else
-            cout << "[CalibDigitizer::" << instanceName_ << "]: channels samples not found check DigiReco step" << endl; 
+            Log("channels samples not found check DigiReco step", WARN); 
     }
 
     //---compute reco variables
@@ -145,7 +145,7 @@ bool CalibDigitizer::ProcessEvent(H4Tree& h4Tree, map<string, PluginBase*>& plug
 
         if (!wFit)
         {
-            std::cout << "[CalibDigitizer]::ERROR Unknown function" << std::endl;
+            Log("Unknown function", ERR);
             return false;
         }
 	  
@@ -184,7 +184,7 @@ bool CalibDigitizer::ProcessEvent(H4Tree& h4Tree, map<string, PluginBase*>& plug
 
 void CalibDigitizer::minimize()
 {
-    std::cout << "[CalibDigitizer]::Starting Mininimization for #" << nTotSamples_ << " cells" << std::endl;
+    Log("Starting Mininimization for #"+to_string(nTotSamples_)+" cells");
     //  clock_t begin = clock();
     for (int i = 0;i<nTotSamples_;++i)
     {
@@ -240,7 +240,7 @@ bool CalibDigitizer::EndLoop(int iLoop, map<string, PluginBase*>& plugins, CfgMa
 
         offset += nSamples;
 
-        std::cout << "[CalibDigitizer]::Relative Improvement " << fabs(thisFit_-prevFit_)/thisFit_ << std::endl;
+        Log("Relative Improvement "+to_string(fabs(thisFit_-prevFit_)/thisFit_));
         
         calibTree_->board = (int)get<0>(channelID);
         calibTree_->group = (int)get<1>(channelID);

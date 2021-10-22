@@ -6,7 +6,7 @@ bool WFAnalyzer::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint
     //---inputs---
     if(!opts.OptExist(instanceName_+".srcInstanceName"))
     {
-        cout << ">>> WFAnalyzer ERROR: no source plugin specified" << endl;
+        Log("no source plugin specified", ERR);
         return false;
     }
     srcInstance_ = opts.GetOpt<string>(instanceName_+".srcInstanceName");
@@ -20,7 +20,7 @@ bool WFAnalyzer::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint
         if(shared_data.size() != 0)
             WFs_[channel] = (WFClass*)shared_data.at(0).obj;
         else
-            cout << "[WFAnalizer::" << instanceName_ << "]: channels samples not found check DigiReco step" << endl; 
+            Log("channels samples not found check DigiReco step", WARN); 
     }
     
     //---channels setup
@@ -49,19 +49,14 @@ bool WFAnalyzer::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint
                 }
                 else
                 {
-                    cout << ">>> WFAnalyzer ERROR: template " 
-                         << opts.GetOpt<string>(channel+".templateFit.file", 1)
-                         << " not found in "
-                         << opts.GetOpt<string>(channel+".templateFit.file", 0)
-                         << endl;
+                    Log("template "+opts.GetOpt<string>(channel+".templateFit.file", 1)
+                        +" not found in "+opts.GetOpt<string>(channel+".templateFit.file", 0), ERR);
                     return false;
                 }                
             }
             else
             {
-                cout << ">>> WFAnalyzer ERROR: template file " 
-                     << opts.GetOpt<string>(channel+".templateFit.file", 0)
-                     << " not found" << endl;
+                Log("template file "+opts.GetOpt<string>(channel+".templateFit.file", 0)+" not found", ERR);
                 return false;
             }
             templateFile->Close();
@@ -119,7 +114,6 @@ bool WFAnalyzer::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint
 bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, CfgManager& opts)
 {
     //---reset output event 
-    outWFTree_.Reset();
     int outCh=0;
     bool fillWFtree=false;
     if(opts.GetOpt<int>(instanceName_+".fillWFtree"))

@@ -15,7 +15,7 @@ bool AsyncDataProcessor::Begin(map<string, PluginBase*>& plugins, CfgManager& op
 {
     if(!opts.OptExist(instanceName_+".srcPath"))
     {
-        cout << ">>> AsyncDataProcessor ERROR: no data source path specified" << endl;
+        Log("no data source path specified", ERR);
         return false;
     }
    
@@ -34,22 +34,21 @@ bool AsyncDataProcessor::Begin(map<string, PluginBase*>& plugins, CfgManager& op
     pluginLoaders_.reserve(asyncPluginList_.size());
     for(auto& plugin : asyncPluginList_)
     {
-        cout << ">>> Loading asynchronous plugin <" << plugin << ">" << endl;
+        Log("Loading asynchronous plugin <"+plugin+">");
         //---create loader 
         loader_ = new PluginLoader<PluginBase>(opts.GetOpt<string>(plugin+".pluginType"));
         pluginLoaders_.push_back(loader_);
         pluginLoaders_.back()->Create();
         //---get instance and put it in the plugin sequence   
-        PluginBase* newPlugin = pluginLoaders_.back()->CreateInstance();
+        PluginBase* newPlugin = pluginLoaders_.back()->CreateInstance(plugin);
         if(newPlugin)
         {
             pluginSequence_.push_back(newPlugin);
-            pluginSequence_.back()->SetInstanceName(plugin);
             pluginMap_[plugin] = pluginSequence_.back();
         }
         else
         {
-            cout << ">>> ERROR: plugin type " << opts.GetOpt<string>(plugin+".pluginType") << " is not defined." << endl;
+            Log("plugin type "+opts.GetOpt<string>(plugin+".pluginType")+" is not defined.", ERR);
             return 0;
         }
     }
@@ -61,7 +60,7 @@ bool AsyncDataProcessor::Begin(map<string, PluginBase*>& plugins, CfgManager& op
         bool r_status = plugin->Begin(plugins, opts, index);
         if(!r_status)
         {
-            cout << ">>> ERROR: plugin returned bad flag from Begin() call: " << plugin->GetInstanceName() << endl;
+            Log("plugin returned bad flag from Begin() call: "+plugin->GetInstanceName(), ERR);
             return r_status;
         }
         //---Get plugin permanent shared data
@@ -83,7 +82,7 @@ bool AsyncDataProcessor::ProcessEvent(H4Tree& event, map<string, PluginBase*>& p
     //---check if spill number has changed, if so open new async data file
     if(currentSpill_ != event.spillNumber)
     {
-        cout << ">>> INFO: AsyncDataProcessor: opening new file" << endl;
+        Log("opening new file");
         
         //---clean data from previous spill
         if(h4Tree_)
