@@ -122,7 +122,6 @@ int main(int argc, char* argv[])
 
     //-----input setup-----    
     int spill=-1;
-    int nspills=-1;
     if(argc > 2)
     {
         vector<string> run(1, argv[2]);
