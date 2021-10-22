@@ -156,12 +156,15 @@ bool SpikeTagger::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins,
 
         //---Look for undershoot after maximum
         const auto undershoot_window = opts.GetOpt<int>(instanceName_+".undershootFinderWindow");
-        if (max_sample + undershoot_window < analyzedWF->size()) {
+        if (max_sample + undershoot_window < analyzedWF->size()) 
+        {
             auto undershoot_sample = std::min_element(analyzedWF->begin() + max_sample,
                                                       analyzedWF->begin() + max_sample + undershoot_window);
             spikesTree_.undershoot[outCh] = *undershoot_sample;
             spikesTree_.t_undershoot_minus_t_sample_max[outCh] = (std::distance(analyzedWF->begin(), undershoot_sample) - max_sample) * t_unit;
-        } else {
+        }
+        else 
+        {
             spikesTree_.undershoot[outCh] = 1e5;
             spikesTree_.t_undershoot_minus_t_sample_max[outCh] = 1e5;
         }

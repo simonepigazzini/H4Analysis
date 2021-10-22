@@ -122,6 +122,7 @@ int main(int argc, char* argv[])
 
     //-----input setup-----    
     int spill=-1;
+    int nspills=-1;
     if(argc > 2)
     {
         vector<string> run(1, argv[2]);
@@ -157,7 +158,6 @@ int main(int argc, char* argv[])
         out_file_name += run+"_"+spillOpt.back()+".root";
     else
         out_file_name += "/"+run+"/"+to_string(spill)+".root";
-
     fs::create_directories(fs::absolute(fs::path(out_file_name.substr(0, out_file_name.find_last_of("/")+1))));
     auto* outROOT = new TFile(out_file_name.c_str(), "RECREATE");
     outROOT->cd();

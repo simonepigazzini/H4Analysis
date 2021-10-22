@@ -261,4 +261,3 @@ if __name__ == '__main__':
                 jobctr += 1
             if not args.dryrun:
                 print('submitted {j} jobs to {b}'.format(j=jobctr, b=args.batch))
-
