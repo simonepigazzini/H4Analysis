@@ -1,5 +1,5 @@
 variables:
-    EOS_PATH: "/eos/home-s/spigazzi/www/docs/h4analysis/"
+    EOS_PATH: "/eos/home-s/spigazzi/www/docs/h4analysis"
     EOS_MGM_URL : "root://eoshome-s.cern.ch"
     CI_OUTPUT_DIR: "public"
 
