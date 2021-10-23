@@ -1,6 +1,6 @@
 H4Analysis
 ==========
-![<img src="https://gitlab.cern.ch/spigazzi/H4Analysis/badges/master/pipeline.svg">](https://gitlab.cern.ch/spigazzi/H4Analysis/-/pipelines/latest)
+[<img src="https://gitlab.cern.ch/spigazzi/H4Analysis/badges/master/pipeline.svg">](https://gitlab.cern.ch/spigazzi/H4Analysis/-/pipelines/latest)
 
 # [Documentation](https://h4analysis.web.cern.ch/)
   - This repository aims to provide a fast reconstruction of data
