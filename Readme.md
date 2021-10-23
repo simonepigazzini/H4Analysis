@@ -1,6 +1,6 @@
 H4Analysis
 ==========
-![docs](https://gitlab.cern.ch/spigazzi/H4Analysis/badges/master/pipeline.svg)
+![<img src="https://gitlab.cern.ch/spigazzi/H4Analysis/badges/master/pipeline.svg">](https://gitlab.cern.ch/spigazzi/H4Analysis/-/pipelines/latest)
 
 # [Documentation](https://h4analysis.web.cern.ch/)
   - This repository aims to provide a fast reconstruction of data
@@ -13,14 +13,13 @@ H4Analysis
   - ROOT
 
 # Install and run
-  ```
-  git clone --recursive https://github.com/simonepigazzini/H4Analysis.git
+   git clone --recursive https://github.com/simonepigazzini/H4Analysis.git
 
-  cd H4Analysis
+   cd H4Analysis
 
-  source script/setup.sh(csh) (only on lxplus, or any machine with afs and EOS access).
+   source script/setup.sh(csh) (only on lxplus, or any machine with afs and EOS access).
 
-  make
+   make
 
-  bin/H4Reco cfg/Oct2015_timing.cfg 4443
-  ```   
+   bin/H4Reco cfg/Oct2015_timing.cfg 4443
+     
