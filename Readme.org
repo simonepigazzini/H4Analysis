@@ -1,46 +1,24 @@
 * H4Analysis
+https://gitlab.cern.ch/spigazzi/H4Analysis/badges/master/pipeline.svg  
+
+** [[https://h4analysis.web.cern.ch/][Documentation]]
   - This repository aims to provide a fast reconstruction of data
-    acquired with the H4DAQ mainly with the CAEN V1742 Digitizer
-  - The main program is the H4Reco ntuples producer which can be easily
-    configured through the input cfg file (examples in cfg/).
+    acquired with the H4DAQ.
+  - The main executable is =bin/H4Reco=. The data processing is 
+    steered through the input cfg file (examples in cfg/).
+
+** Requirements
+   - c++17
+   - ROOT
+
 ** Install and run
    =git clone --recursive https://github.com/simonepigazzini/H4Analysis.git=
 
    =cd H4Analysis=
 
-   =source script/setup.sh(csh)= (only on lxplus, or machine with afs access).
+   =source script/setup.sh(csh)= (only on lxplus, or any machine with afs and EOS access).
 
    =make=
 
    =bin/H4Reco cfg/Oct2015_timing.cfg 4443=
-** The cfg file
-   - Comment lines start with a '#' followed by a space
-   - blocks are defined within =<block>...</block>=
-   - each key (line inside a block) can take an unlimited number of options
-   - The =importCfg= key allows one to express an unlimited number of other cfg files
-     that are read sequentially before the current one so that blocks/keys that
-     are present in more that one file are overwritten.
-** The H4Reco dumper
-   - The main executable.
-   - The idea is to run multiple plugins, each dedicated to a specific task, i.e. reconstructing hodoscope hits, digitizer waveform.
-   - H4Reco takes two arguments: a cfg file and the run number that overrides the one specified in the cfg file
-   - Each Plugin has three methods that are called by the main program:
-     + =Begin()=: is called once after the plugin instance is created and before the first
-       event is processed. Takes two arguments: a =CfgManeger= with all the option loaded in H4Reco
-       and a =index= dedicated to synchronize the plunging trees with the main one.
-     + =ProcessEvent(..)=: called once for each entry of the H4Tree under analysis. It takes three arguments:
-       the CfgManager with all the options, a reference to the analyzed H4Tree and the list of plugins loaded
-       in the H4Reco plugin sequence. The last arguments allow to share data between plugins through the plugin 
-       methods =RegisterSharedData= and =GetSharedData=.
-     + =End()=: called at the end of the H4Reco processing, after all the events have been processed.
-   - A single output file is produced, it contains the main tree "h4" to which all the trees registered by the 
-     plugins as "permanent" are linked (using =TTree::AddFriend()=).
-   - More information can be found in =plugin/Readme.org=
-** Some examples:
-   + plot WF for APD2 only: 
-     =h4->Draw("WF_val:WF_time","WF_ch==APD2")=
-   + plot amplitude map:
-     =h4->Draw("fit_ampl[APD2]:hodoY1:hodoX1>>map(100,-10,10,100,-10,10)","","PROFCOLZ")
-   + time resolution:
-     =h4->Draw("fit_time[APD2]-time[MCP1]","amp_max[MCP1]>100 && fit_ampl[APD2]>700")
      
