@@ -1,5 +1,5 @@
 * H4Analysis
-https://gitlab.cern.ch/spigazzi/H4Analysis/badges/master/pipeline.svg  
+[[https://gitlab.cern.ch/spigazzi/H4Analysis/badges/master/pipeline.svg]]
 
 ** [[https://h4analysis.web.cern.ch/][Documentation]]
   - This repository aims to provide a fast reconstruction of data
