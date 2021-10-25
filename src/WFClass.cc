@@ -15,9 +15,7 @@ WFClass::WFClass(int polarity, float tUnit, DigiChannelCalibration* calibration)
     fitChi2Max_(-1), baseline_(-1), bRMS_(-1), cfSample_(-1), cfFrac_(-1), cfTime_(-1),
     leSample_(-1), leTime_(-1), chi2cf_(-1), chi2le_(-1),
     fWinMin_(-1), fWinMax_(-1), tmplFitTime_(-1), tmplFitTimeErr_(-1), tmplFitAmp_(-1), tmplFitAmpShift_(0),
-    tmplFitTimeScint_(-1), tmplFitAmpScint_(-1), tmplFitTimeSpike_(-1), tmplFitAmpSpike_(-1),
-    tmplFitConverged_(false), tmplTimeMaxScint_(0), tmplTimeMaxSpike_(0), f_max_(NULL),
-    f_fit_(NULL), interpolator_(NULL), interpolatorScint_(NULL), interpolatorSpike_(NULL)
+    f_max_(NULL), f_fit_(NULL), interpolator_(NULL)
 {
     calibration_ = calibration;
     gROOT->ProcessLine("gErrorIgnoreLevel = kWarning;");
@@ -419,72 +417,6 @@ void WFClass::SetTemplate(TH1* templateWF)
     return;
 }
 
-//----------Set the scintillation plus spike fit templates--------------------------------
-void WFClass::SetTemplateScint(TH1* templateWF)
-{
-    //---check input
-    if(!templateWF)
-    {
-        cout << ">>>ERROR: scintillation template passed as input does not exist" << endl;
-        return;
-    }
-
-    //---reset template fit variables
-    if(interpolatorScint_)
-        return;
-
-    interpolatorScint_ = new ROOT::Math::Interpolator(0, ROOT::Math::Interpolation::kCSPLINE);
-    tmplFitTimeScint_ = templateWF->GetBinCenter(templateWF->GetMaximumBin());
-    tmplTimeMaxScint_ = tmplFitTimeScint_;
-    tmplFitAmpScint_ = -1;
-
-    //---fill interpolator data
-    vector<double> x, y;
-    for(int iBin=1; iBin<=templateWF->GetNbinsX(); ++iBin)
-    {
-        x.push_back(templateWF->GetBinCenter(iBin)-tmplFitTimeScint_);
-        y.push_back(templateWF->GetBinContent(iBin));
-    }
-    interpolatorScint_->SetData(x, y);
-
-    return;
-}
-
-void WFClass::SetTemplateSpike(TH1* templateWF)
-{
-    //---check input
-    if(!templateWF)
-    {
-        cout << ">>>ERROR: spike template passed as input does not exist" << endl;
-        return;
-    }
-
-    //---reset template fit variables
-    if(interpolatorSpike_)
-        return;
-
-    interpolatorSpike_ = new ROOT::Math::Interpolator(0, ROOT::Math::Interpolation::kCSPLINE);
-    tmplFitTimeSpike_ = templateWF->GetBinCenter(templateWF->GetMaximumBin());
-    tmplTimeMaxSpike_ = tmplFitTimeSpike_;
-    //tmplFitTimeSpike_ = tmplFitTimeScint_;
-    tmplFitAmpSpike_ = -1;
-
-    ////Pulse shape for testing
-    //TF1* spikeShape = new TF1("spikeShape", "1/0.999983*(exp(-0.5*((x)/5.1)^2) - 0.072*exp(-0.5*((x-20)/4.9)^2))", 0, 1000);
-    //TF1* spikeShape = new TF1("spikeShape", "0", 0, 1000);
-
-    //---fill interpolator data
-    vector<double> x, y;
-    for(int iBin=1; iBin<=templateWF->GetNbinsX(); ++iBin)
-    {
-        x.push_back(templateWF->GetBinCenter(iBin)-tmplFitTimeSpike_);
-        y.push_back(templateWF->GetBinContent(iBin));
-        //y.push_back(spikeShape->Eval(templateWF->GetBinCenter(iBin)-tmplFitTimeSpike_));
-    }
-    interpolatorSpike_->SetData(x, y);
-
-    return;
-}
 
 //**********Utils*************************************************************************
 
@@ -528,11 +460,6 @@ void WFClass::Reset()
     tmplFitTimeErr_=-1;
     tmplFitAmp_=-1;
     tmplFitAmpShift_=0;
-    tmplFitTimeScint_ = -1;
-    tmplFitAmpScint_ = -1;
-    tmplFitTimeSpike_ = -1;
-    tmplFitAmpSpike_ = -1;
-    tmplFitConverged_ = false;
     interpolatorMin_=-1;
     interpolatorMax_=-1;
     uncalibSamples_.clear();
@@ -630,7 +557,6 @@ WFBaseline WFClass::SubtractBaseline(float baseline)
 WFFitResults WFClass::TemplateFit(float amp_threshold, float offset, int lW, int hW)
 {
     double tmplFitChi2=0;
- 
     if(tmplFitAmp_ == -1)
     {
         if(samples_[maxSample_]>amp_threshold)
@@ -696,61 +622,6 @@ double WFClass::AnalyticFit(TF1* f, int lW, int hW)
     }
 
     return minimizer->MinValue();
-}
-
-WFFitResultsScintPlusSpike WFClass::TemplateFitScintPlusSpike(float amp_threshold, float offset, int lW, int hW)
-{
-    if(tmplFitAmpScint_ == -1 && tmplFitAmpSpike_ == -1)
-    {
-        if (samples_[maxSample_] > amp_threshold) {
-            //---set template fit window around maximum, [min, max)
-            BaselineRMS();
-            GetAmpMax();
-            fWinMin_ = maxSample_ + int(offset/tUnit_) - lW;
-            fWinMax_ = maxSample_ + int(offset/tUnit_) + hW;
-            float deltaTPeakShift = -0.5 * (tmplTimeMaxScint_ + tmplTimeMaxSpike_);
-            //---setup minimization
-            ROOT::Math::Functor chi2(this, &WFClass::TemplatesChi2, 4);
-            ROOT::Math::Minimizer* minimizer = ROOT::Math::Factory::CreateMinimizer("Minuit2", "Migrad");
-            minimizer->SetMaxFunctionCalls(100000);
-            minimizer->SetMaxIterations(1000);
-            minimizer->SetTolerance(1e-3);
-            minimizer->SetPrintLevel(0);
-            minimizer->SetFunction(chi2);
-            minimizer->SetLimitedVariable(0, "amplitude_scint", GetAmpMax(), 1e-2, 0., GetAmpMax()*2.);
-            minimizer->SetLimitedVariable(1, "deltaT_scint", maxSample_*tUnit_+deltaTPeakShift, 1e-2, fWinMin_*tUnit_+deltaTPeakShift, fWinMax_*tUnit_+deltaTPeakShift);
-            minimizer->SetLimitedVariable(2, "amplitude_spike", GetAmpMax(), 1e-2, 0., GetAmpMax()*2.);
-            minimizer->SetLimitedVariable(3, "deltaT_scint_minus_deltaT_spike", tmplTimeMaxScint_ - tmplTimeMaxSpike_, 1e-2, 0., fWinMax_*tUnit_);
-            //---fit
-            tmplFitConverged_ = minimizer->Minimize();
-
-            //---try a second fit from a different starting point if the previous attempt failed
-            if (not tmplFitConverged_) {
-                minimizer->SetVariableValue(0, GetAmpMax()/2.);
-                minimizer->SetVariableValue(1, maxSample_*tUnit_+deltaTPeakShift);
-                minimizer->SetVariableValue(2, GetAmpMax()/2.);
-                minimizer->SetVariableValue(3, tmplTimeMaxScint_ - tmplTimeMaxSpike_);
-                tmplFitConverged_ = minimizer->Minimize();
-            }
-
-            const auto minparams = minimizer->X();
-            tmplFitAmpScint_ = minparams[0];
-            tmplFitTimeScint_ = minparams[1];
-            tmplFitAmpSpike_ = minparams[2];
-            tmplFitTimeSpike_ = minparams[1] - minparams[3];
-
-            delete minimizer;
-        } else { // fall back to interpolated values without spike amplitude
-            const auto interpolFitResult = GetInterpolatedAmpMax();
-            tmplFitAmpScint_ = interpolFitResult.ampl;
-            tmplFitTimeScint_ = interpolFitResult.time;
-            tmplFitAmpSpike_ = 0.;
-            tmplFitTimeSpike_ = tmplFitTimeScint_;
-            tmplFitConverged_ = false;
-        }
-    }
-
-    return WFFitResultsScintPlusSpike{tmplFitAmpScint_, tmplFitTimeScint_, tmplFitAmpSpike_, tmplFitTimeSpike_, TemplatesChi2()/(fWinMax_-fWinMin_-4), tmplFitConverged_};
 }
 
 void WFClass::EmulatedWF(WFClass& wf,float rms, float amplitude, float time)
@@ -948,36 +819,7 @@ double WFClass::AnalyticChi2(const double* par)
     return chi2;
 }
 
-//----------chi2 for scintillation plus spike template fit---------------------------------------------------------
-double WFClass::TemplatesChi2(const double* par)
-{
-    double chi2 = 0;
-    double delta = 0;
-    for(int iSample=fWinMin_; iSample<=fWinMax_; ++iSample)
-    {
-        if(iSample < 0 || iSample >= int(samples_.size()))
-        {
-            //cout << ">>>WARNING: template fit out of samples rage (chi2 set to -1)" << endl;
-            chi2 += 9999;
-        }
-        else
-        {
-            //---fit: par[0]*ref_shape_scint(t-par[1]) + par[2]*ref_shape_spike(t-par[3])
-            //---with par[0]=amplitude scintillation, par[1]=DeltaT scintillation
-            //---and  par[2]=amplitude spike, par[3]=DeltaT spike
-            //---if not fitting return chi2 value of best fit
-            const auto iSampleTime = iSample*tUnit_;
-            if(par)
-                //delta = (samples_[iSample] - par[0]*interpolatorScint_->Eval(iSampleTime-par[1]) - par[2]*interpolatorSpike_->Eval(iSampleTime-par[3]))/bRMS_;
-                delta = (samples_[iSample] - par[0]*interpolatorScint_->Eval(iSampleTime-par[1]) - par[2]*interpolatorSpike_->Eval(iSampleTime-(par[1]-par[3])))/bRMS_;
-            else
-                delta = (samples_[iSample] - tmplFitAmpScint_*interpolatorScint_->Eval(iSampleTime-tmplFitTimeScint_) - tmplFitAmpSpike_*interpolatorSpike_->Eval(iSampleTime-tmplFitTimeSpike_))/bRMS_;
-            chi2 += delta*delta;
-        }
-    }
 
-    return chi2;
-}
 
 void WFClass::Print()
 {
@@ -1020,17 +862,7 @@ WFClass& WFClass::operator=(const WFClass& origin)
     tmplFitTimeErr_ = origin.tmplFitTimeErr_;
     tmplFitAmp_ = origin.tmplFitAmp_;
     tmplFitAmpShift_ = origin.tmplFitAmpShift_;    
-    tmplFitTimeScint_ = origin.tmplFitTimeScint_;
-    tmplFitAmpScint_ = origin.tmplFitAmpScint_;
-    tmplFitTimeSpike_ = origin.tmplFitTimeSpike_;
-    tmplFitAmpSpike_ = origin.tmplFitAmpSpike_;
-    tmplFitConverged_ = origin.tmplFitConverged_;
-    tmplTimeMaxScint_ = origin.tmplTimeMaxScint_;
-    tmplTimeMaxSpike_ = origin.tmplTimeMaxSpike_;
     interpolator_ = NULL;
-    interpolatorScint_ = NULL;
-    interpolatorSpike_ = NULL;
-
     return *this;
 }
 

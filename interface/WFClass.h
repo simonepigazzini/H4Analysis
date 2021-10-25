@@ -145,29 +145,29 @@ public:
     inline void                    SetTrigRef(float trigRef){trigRef_ = trigRef;};
     inline void                    SetCalibration(DigiChannelCalibration* calib){calibration_=calib;};
     inline void                    SetStartIndexCell(int cell){startIndexCell_=cell;};
+    virtual void                   SetTemplateScint(TH1* templateWF=NULL) { return; };
+    virtual void                   SetTemplateSpike(TH1* templateWF=NULL) { return; };
     void                           SetSignalWindow(int min, int max);
     void                           SetSignalIntegralWindow(int min, int max);
     void                           SetBaselineWindow(int min, int max);
     void                           SetBaselineIntegralWindow(int min, int max);
     void                           SetTemplate(TH1* templateWF=NULL);
-    void                           SetTemplateScint(TH1* templateWF=NULL);
-    void                           SetTemplateSpike(TH1* templateWF=NULL);
 
     //---utils---
-    void                           Reset();
-    bool                           ApplyCalibration();
-    virtual void                   AddSample(float sample);
-    virtual void                   AddSample(float sample, float gain) {AddSample(sample);};
-    WFBaseline                     SubtractBaseline(int min=-1, int max=-1);
-    WFBaseline                     SubtractBaseline(float baseline);
-
-    virtual WFFitResults           TemplateFit(float amp_threshold=0., float offset=0., int lW=0, int hW=0);
-    WFFitResultsScintPlusSpike     TemplateFitScintPlusSpike(float amp_threshold=0., float offset=0., int lW=0, int hW=0);
-
-    double                         AnalyticFit(TF1* f, int lW, int hW);
-    void                           EmulatedWF(WFClass& wf, float rms, float amplitude, float time);
-    void                           FFT(WFClass& wf, float tau, int cut);
-    void                           Print();
+    virtual void                           Reset();
+    bool                                   ApplyCalibration();
+    virtual void                           AddSample(float sample);
+    virtual void                           AddSample(float sample, float gain) {AddSample(sample);};
+    WFBaseline                             SubtractBaseline(int min=-1, int max=-1);
+    WFBaseline                             SubtractBaseline(float baseline);
+				           
+    virtual WFFitResults                   TemplateFit(float amp_threshold=0., float offset=0., int lW=0, int hW=0);
+				           
+    double                                 AnalyticFit(TF1* f, int lW, int hW);
+    void                                   EmulatedWF(WFClass& wf, float rms, float amplitude, float time);
+    void                                   FFT(WFClass& wf, float tau, int cut);
+    void                                   Print();
+    virtual WFFitResultsScintPlusSpike     TemplateFitScintPlusSpike(float amp_threshold=0., float offset=0., int lW=0, int hW=0) { return {0}; };
     //---operators---
     WFClass&                       operator=(const WFClass& origin);
     WFClass                        operator-(const WFClass& sub);
@@ -179,7 +179,6 @@ protected:
     float                          BaselineRMS();
     float                          LinearInterpolation(float& A, float& B, const int& min, const int& max, const int& skipSample=-1);
     double                         TemplateChi2(const double* par=NULL);
-    double                         TemplatesChi2(const double* par=NULL);
     double                         AnalyticChi2(const double* par=NULL);
     
 protected:
@@ -230,20 +229,11 @@ protected:
     float          tmplFitTimeErr_;
     float          tmplFitAmp_;
     float          tmplFitAmpShift_;
-    float          tmplFitTimeScint_;
-    float          tmplFitAmpScint_;
-    float          tmplFitTimeSpike_;
-    float          tmplFitAmpSpike_;
-    bool           tmplFitConverged_;
-    float          tmplTimeMaxScint_;
-    float          tmplTimeMaxSpike_;
     TF1*           f_max_;
     TF1*           f_fit_;
     float          interpolatorMin_;
     float          interpolatorMax_;         
     ROOT::Math::Interpolator* interpolator_;
-    ROOT::Math::Interpolator* interpolatorScint_;
-    ROOT::Math::Interpolator* interpolatorSpike_;
 };
 
 #endif
