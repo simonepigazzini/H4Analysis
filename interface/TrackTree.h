@@ -18,7 +18,7 @@ class TrackPar
 public:
     TrackPar() {}
     ~TrackPar() {}
-
+    
     double x() { return  value[0]; }
     double y() { return  value[1]; }
     double alpha() { return  value[2]; }
@@ -40,6 +40,11 @@ public:
 //    ClassDef(TrackPar, 1)
 };
 
+/**
+   The TrackTree stores the information of all reconstructed tracks. It is closely
+   related to the various PositionTree since the latters store the inputs of the 
+   track fitting.
+ */
 class TrackTree
 {
 public:
@@ -69,13 +74,37 @@ public:
     TTree*  tree_; 
     uint64* index;
     
+    /**
+       Number of tracks reconstructed in the event.
+     */
     int                       n_tracks;
+    /**
+       X coordinates of each track.
+     */
     std::vector<float>        X;
+    /**
+       Y coordinates of each track.
+     */
     std::vector<float>        Y;    
+    /**
+       Number of hits of each track.
+     */
     std::vector<int>          trackHits;
+    /**
+       Track fitting Chi2
+     */
     std::vector<float>        trackChi2;
+    /**
+       Tracker layers that provided hits for this track.
+     */
     std::vector<unsigned int> trackPattern;
+    /**
+       Minuit CovMatrixStatus.
+     */
     std::vector<int>          fitStatus;
+    /**
+       Full TrackPar for each track.
+     */
     std::vector<TrackPar>     fitResult;
 };
 

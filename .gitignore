@@ -24,3 +24,7 @@ AutoDict_*
 
 # Python cache
 *__pycache__/*
+
+# Docs output
+docs/build/*
+docs/xml/*

@@ -52,7 +52,7 @@ bool TriggerTypeFilter::ProcessEvent(H4Tree& event, map<string, PluginBase*>& pl
             if((event.triggerWords[std::distance(event.triggerWordsBoard, pos)] & mask) != mask)
             {
                 trg_type = name;
-                trgTree_.trg_type_ = mask;
+                trgTree_.trg = mask;
             }
         }
     }        

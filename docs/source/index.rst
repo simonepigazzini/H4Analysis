@@ -21,5 +21,20 @@ Indices and tables
 Docs
 ====
 
+.. doxygenclass:: TrgTree
+   :members:
+
+.. doxygenclass:: PositionMeasurement
+   :members:
+
+.. doxygenclass:: PositionTree
+   :members:
+
+.. doxygenclass:: TrackTree
+   :members:
+
 .. doxygenclass:: DigiTree
+   :members:
+
+.. doxygenclass:: WFTree
    :members:
