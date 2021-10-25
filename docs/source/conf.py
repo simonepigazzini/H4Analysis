@@ -31,7 +31,8 @@ release = '1.0'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "breathe"
+    "breathe",
+    'sphinxcontrib.srclinks'
 ]
 
 breathe_projects = {
@@ -60,3 +61,22 @@ html_theme = 'sphinx_rtd_theme'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+# Sidebar repo links
+srclink_project = 'https://github.com/simonepigazzini/H4Analysis.git'
+srclink_branch = 'master'
+srclink_src_path = ''
+
+sidebars_globaltoc = [
+    'globaltoc.html',
+    'relations.html',
+    'searchbox.html',
+    'srclinks.html',
+    'links.html', ]
+
+sidebars_localtoc = [
+    'localtoc.html',
+    'relations.html',
+    'searchbox.html',
+    'srclinks.html',
+    'links.html', ]
