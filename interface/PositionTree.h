@@ -31,12 +31,6 @@ public:
         magnitude_(mag)
         {};
     
-    inline int   nHits() {return nHits_;};
-    inline float X() {return X_;};
-    inline float Y() {return Y_;};
-    inline float magnidute() {return magnitude_;};
-
-private:
     /**
        Number of hits in the cluster.
      */
