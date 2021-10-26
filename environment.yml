@@ -1,0 +1,8 @@
+name: h4analysis
+dependencies:
+  - root
+  - python=3.9
+  - sphinx
+  - breathe
+  - sphinx_rtd_theme
+  - sphinxcontrib-srclinks

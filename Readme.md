@@ -9,15 +9,28 @@ H4Analysis
     steered through the input cfg file (examples in cfg/).
 
 # Requirements
+## Code:
   - c++17
   - ROOT
+## Docs:
+  - python=3.9
+  - sphinx
+  - breathe
+  - sphinx\_rtd\_theme
+  - sphinxcontrib-srclinks
+## Conda environment:
+  The above requirements can be easily satisfied by creating a dedicated conda environment:
+  
+  conda env create -f environment.yml
 
-# Install and run
+## LXPLUS
+
+  source script/setup.sh(csh) (only on lxplus, or any machine with afs and EOS access). 
+
+# Install and run          
    git clone --recursive https://github.com/simonepigazzini/H4Analysis.git
 
    cd H4Analysis
-
-   source script/setup.sh(csh) (only on lxplus, or any machine with afs and EOS access).
 
    make
 
