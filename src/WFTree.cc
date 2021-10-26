@@ -16,7 +16,6 @@ void WFTree::Init()
     WF_time.reserve(WF_samples);
     WF_val.reserve(WF_samples);
     //---global branches
-    string size_var = "WF_samples"+suffix_;
     tree_->Branch("index", index,"index/l");
     tree_->Branch(("WF_ch"+suffix_).c_str(), &WF_ch);
     tree_->Branch(("WF_time"+suffix_).c_str(), &WF_time);

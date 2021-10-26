@@ -123,16 +123,6 @@ dynTTree:
 cfgMan:
 	cd CfgManager && $(MAKE)
 
-.PHONY: docs
-docs:
-	@echo " Generate documentation"
-	@$ cd docs && doxygen && make html
-
-.PHONY: docsclean
-docsclean: 
-	rm -rf docs/build
-	rm -rf docs/xml
-
 clean:
 	@echo "cleaning..."
 	rm -f lib/* $(OBJ)*$(OBJSuf) $(LIB)*$(LIBSuf) $(LIB)libH4Analysis* $(BIN)*$(BINSuf)
