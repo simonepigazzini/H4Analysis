@@ -11,6 +11,30 @@
 #include "interface/WFClassClock.h"
 #include "interface/WFViewer.h"
 
+/**
+   The DigitizerReco plugin loads the samples from the digiSample branches
+   and creates the WFClass accordingly to the options specified in the config file.
+
+   - Global config file options:
+     + `pluginType`: set to `DigitizerReco`
+     + `channelsNames`: the list of channel to be read.
+     + `calibration`: calibration file (the ROOT file should contain a DigitizerCalibration
+       object named "dVdTCalibration").
+
+   - Per-channel options:
+     + `type`: WFClass type. Available classes:
+       1. WFClass
+       2. WFClassClock
+       3. WFClassNINO
+     + `nSamples` [optional]: maximum number of sample to be loaded. If `nSamples` is larger than the
+       maximum number of samples available in raw data (nMax) then `nSamples = nMax`.
+     + `tUnit`: time unit (i.e. sampling period).
+     + `polarity` [optional, default=1]: pulse polarity. Possible values: `+1`, `-1`. Each sample amplitude is
+       multiplied by the polarity after baseline subtraction.
+     + `digiBoard`
+     + `digiGroup`
+     + `digiChannel`
+ */
 class DigitizerReco: public PluginBase
 {
 public:

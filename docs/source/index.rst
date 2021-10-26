@@ -9,33 +9,14 @@ Welcome to H4Analysis's documentation!
 | Src: https://github.com/simonepigazzini/H4Analysis
 
 .. toctree::
-   :maxdepth: 3
-   :caption: Contents:
-
+   :maxdepth: 5
+   :glob:
+   
+   reco
+   plugins
 
 Indices and tables
 ==================
 
 * :ref:`genindex`
 * :ref:`search`
-
-Docs
-====
-
-.. doxygenclass:: TrgTree
-   :members:
-
-.. doxygenclass:: PositionMeasurement
-   :members:
-
-.. doxygenclass:: PositionTree
-   :members:
-
-.. doxygenclass:: TrackTree
-   :members:
-
-.. doxygenclass:: DigiTree
-   :members:
-
-.. doxygenclass:: WFTree
-   :members:
