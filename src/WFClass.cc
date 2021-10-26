@@ -503,9 +503,9 @@ bool WFClass::ApplyCalibration()
 //---the times vector is filled with the uncalibrated sample time computed from the time unit
 void WFClass::AddSample(float sample)
 {
-  uncalibSamples_.push_back(polarity_*sample); 
-  times_.push_back( (samples_.size()-1.)*tUnit_ );
-  samples_ = uncalibSamples_;
+    uncalibSamples_.push_back(polarity_*sample); 
+    times_.push_back( (samples_.size()-1.)*tUnit_ );
+    samples_ = uncalibSamples_;
 };
 
 
@@ -779,7 +779,7 @@ double WFClass::TemplateChi2(const double* par)
                 delta2 = pow((samples_.at(iSample) - tmplFitAmp_*interpolator_->Eval(times_[iSample]-tmplFitTime_)), 2)/err2;
             }
             chi2 += delta2;
-       }
+        }
     }
 
     return chi2;

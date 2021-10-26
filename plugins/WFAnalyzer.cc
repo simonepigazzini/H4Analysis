@@ -19,9 +19,9 @@ bool WFAnalyzer::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint
     {
         auto shared_data = plugins[srcInstance_]->GetSharedData(srcInstance_+"_"+channel, "", false);
         if(shared_data.size() != 0)
-	  {
+        {
 	    WFs_[channel] = (WFClass*)shared_data.at(0).obj;
-	  }
+        }
         else
             Log("channels samples not found check DigiReco step", WARN); 
     }
@@ -135,18 +135,18 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
 
         //---subtract a specified channel if requested
         if(opts.OptExist(channel+".subtractChannel") && WFs_.find(opts.GetOpt<string>(channel+".subtractChannel")) != WFs_.end())
-	  *WFs_[channel] -= *WFs_[opts.GetOpt<string>(channel+".subtractChannel")];        
+            *WFs_[channel] -= *WFs_[opts.GetOpt<string>(channel+".subtractChannel")];        
 	
 	if(opts.OptExist(channel+".baselineWin"))
-	  { 
+        { 
 	    WFs_[channel]->SetBaselineWindow(opts.GetOpt<int>(channel+".baselineWin", 0), 
 					     opts.GetOpt<int>(channel+".baselineWin", 1));
-	  }
+        }
 	if(opts.OptExist(channel+".baselineInt"))
-	  {
+        {
 	    WFs_[channel]->SetBaselineIntegralWindow(opts.GetOpt<int>(channel+".baselineInt", 0),
 						     opts.GetOpt<int>(channel+".baselineInt", 1));
-	  }
+        }
 	
 	WFs_[channel]->SetSignalWindow(opts.GetOpt<int>(channel+".signalWin", 0), 
 				       opts.GetOpt<int>(channel+".signalWin", 1));
@@ -155,9 +155,9 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
                                                opts.GetOpt<int>(channel+".signalInt", 1));
 	WFBaseline baselineInfo; 
 	if (opts.OptExist(channel+".baseline"))
-	  baselineInfo = WFs_[channel]->SubtractBaseline(opts.GetOpt<float>(channel+".baseline"));
+            baselineInfo = WFs_[channel]->SubtractBaseline(opts.GetOpt<float>(channel+".baseline"));
 	else
-	  baselineInfo = WFs_[channel]->SubtractBaseline();
+            baselineInfo = WFs_[channel]->SubtractBaseline();
 	    
 	//FIXME MAREMMA MAIALA
         WFFitResults interpolAmpMax;

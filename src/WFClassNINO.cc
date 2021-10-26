@@ -1,3 +1,4 @@
+bla
 #include "interface/WFClassNINO.h"
 
 //**********Constructors******************************************************************
@@ -47,7 +48,7 @@ float WFClassNINO::GetSignalIntegral(int thr, int min=-1)
 //---the times vector is filled with the uncalibrated sample time computed from the time unit
 void WFClassNINO::AddSample(float sample)
 {
-  uncalibSamples_.push_back(polarity_*sample); 
-  times_.push_back( (samples_.size()-1.)*tUnit_ );
-  samples_ = uncalibSamples_;
+    uncalibSamples_.push_back(polarity_*sample); 
+    times_.push_back( (samples_.size()-1.)*tUnit_ );
+    samples_ = uncalibSamples_;
 };

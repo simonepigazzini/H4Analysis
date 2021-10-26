@@ -3,8 +3,8 @@
 //**********Constructors******************************************************************
 
 WFClassLiTEDTU::WFClassLiTEDTU(int polarity, float tUnit, DigiChannelCalibration* calibration):
-  WFClass(polarity, tUnit), tmplFitTimeScint_(-1), tmplFitAmpScint_(-1), tmplFitTimeSpike_(-1), tmplFitAmpSpike_(-1),
-  tmplFitConverged_(false), tmplTimeMaxScint_(0), tmplTimeMaxSpike_(0), interpolatorScint_(NULL), interpolatorSpike_(NULL)
+    WFClass(polarity, tUnit), tmplFitTimeScint_(-1), tmplFitAmpScint_(-1), tmplFitTimeSpike_(-1), tmplFitAmpSpike_(-1),
+    tmplFitConverged_(false), tmplTimeMaxScint_(0), tmplTimeMaxSpike_(0), interpolatorScint_(NULL), interpolatorSpike_(NULL)
 {}
 
 //**********Getters***********************************************************************
@@ -26,7 +26,7 @@ WFFitResults WFClassLiTEDTU::TemplateFit(float amp_threshold, float offset, int 
 {
     double tmplFitChi2=0;
     if(tmplFitAmp_ == -1)
-     {
+    {
         amp_threshold *= gain_[maxSample_];
         if(samples_[maxSample_]>amp_threshold)
         {
