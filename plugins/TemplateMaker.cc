@@ -8,7 +8,7 @@ bool TemplateMaker::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, u
     //---inputs---
     if(!opts.OptExist(instanceName_+".srcInstanceName"))
     {
-        cout << ">>> TemplateMaker ERROR: no source plugin specified" << endl;
+        Log("no source plugin specified", ERR);
         return false;
     }
     srcInstance_ = opts.GetOpt<string>(instanceName_+".srcInstanceName");
@@ -27,7 +27,7 @@ bool TemplateMaker::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, u
         if(shared_data.size() != 0)
             WFs_[channel] = (WFClass*)shared_data.at(0).obj;
         else
-            cout << "[TemplateMaker::" << instanceName_ << "]: channels samples not found check DigiReco step" << endl;
+            Log("channels samples not found check DigiReco step", WARN);
         
         //---shape templates
         auto bins = opts.GetOpt<vector<double> >(channel+".templateMaker.timeBins");
@@ -43,7 +43,7 @@ bool TemplateMaker::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, u
         // wrong binning
         else
         {
-            cout << ">>> TemplateMaker ERROR: incorrect number of binning parameters, 3 or more needed only " << bins.size() << " specified." << endl;
+            Log("incorrect number of binning parameters, 3 or more needed only "+to_string(bins.size())+" specified.", ERR);
             return false;
         }
 

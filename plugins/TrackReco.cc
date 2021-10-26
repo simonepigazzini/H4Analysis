@@ -38,13 +38,13 @@ bool TrackReco::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint6
         TFile* geoFile = TFile::Open(geoTag[0].c_str(), "READ");
         if(!geoFile)
         {
-            cout << "[TrackReco::" << instanceName_ << "]: Cannot open file " << geoTag[0] << endl;
+            Log("Cannot open file "+geoTag[0], ERR);
             return false;
         }            
         Tracking::TelescopeLayout* layout = (Tracking::TelescopeLayout*)geoFile->Get(geoTag[1].c_str());
         if(!layout)
         {
-            cout << "[TrackReco::" << instanceName_ << "]: Cannot find object " << geoTag[1] << endl;
+            Log("Cannot find object "+geoTag[1], ERR);
             return false;
         }
 
@@ -153,7 +153,7 @@ bool TrackReco::ProcessEvent(H4Tree& h4Tree, map<string, PluginBase*>& plugins, 
         tokens.assign(tkIter, tkIterEnd);
         if(tokens.size() != 2)
         {
-            cout << "[TrackReco::" << instanceName_ << "]: Wrong input name " << hitLayer << endl;
+            Log("Wrong input name "+hitLayer, ERR);
             return false;
         }
 
@@ -162,7 +162,7 @@ bool TrackReco::ProcessEvent(H4Tree& h4Tree, map<string, PluginBase*>& plugins, 
         if(shared_data.size() != 0)
             hits_[hitLayer] =(Tracking::LayerHits*)shared_data.at(0).obj;
         else
-            cout << "[TrackReco::" << instanceName_ << "]: " << tokens[0]+"_"+tokens[1] << " not found" << endl; 
+            Log(tokens[0]+"_"+tokens[1]+" not found", WARN); 
     }
 
     tracks_.tracks_.clear();

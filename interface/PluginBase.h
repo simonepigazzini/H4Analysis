@@ -24,6 +24,13 @@ struct SharedData
     TObject*    obj;
 };
 
+//**********LOGGER LEVELS*****************************************************************
+enum LoggerLevel {
+    INFO = 0,
+    WARN = 1,
+    ERR  = 2
+};
+
 //**********PLUGIN BASE CLASS*************************************************************
 class PluginBase
 {
@@ -35,10 +42,12 @@ public:
     virtual ~PluginBase(){};    
 
     //---setters---
-    void SetInstanceName(const std::string& instance) { instanceName_=instance; };
+    void SetPluginType(const std::string& plugin) { pluginType_ = plugin; };
+    void SetInstanceName(const std::string& instance) { instanceName_ = instance; };
     void SetCurrentMethod(std::string method) { currentMethod_ = method; };
 
     //---getters---
+    std::string        GetPluginType() { return pluginType_; };
     std::string        GetInstanceName() { return instanceName_; };
     std::string        GetCurrentMethod() { return currentMethod_; };
     vector<SharedData> GetSharedData(std::string tag="", std::string type="", bool permanent=true);
@@ -49,12 +58,15 @@ public:
     virtual bool End(map<std::string, PluginBase*>& plugins, CfgManager& opts)                         { CHECKPOINT(); return true; };
     virtual bool BeginLoop(int iLoop, map<std::string, PluginBase*>& plugins, CfgManager& opts)        { CHECKPOINT(); return true; };
     virtual bool EndLoop(int iLoop, map<std::string, PluginBase*>& plugins, CfgManager& opts)          { CHECKPOINT(); return true; };
+    void Log(std::string message, LoggerLevel lv=INFO);
 
 protected:
     //---utils---
     void RegisterSharedData(TObject* obj, std::string tag, bool isPermanent);
 
 protected:
+    //---keep track of the plugin type as defined in the cfg
+    std::string pluginType_;
     //---keep track of the plugin name as defined in the cfg
     std::string instanceName_;
     //---keep track of the current running plugin method. Must be called manually in each function;

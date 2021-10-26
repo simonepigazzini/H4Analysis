@@ -94,6 +94,7 @@ void HandleException(std::exception_ptr eptr, PluginBase* plugin)
         auto plugin_type = std::regex_replace(typeid(plugin).name(), std::regex(".*[0-9]+"), "");
         std::cout << "\033[1;31m" << ">>>>> H4Reco ERROR! <<<<<" << "\033[0m" << std::endl
                   << "Error in: " << "\033[1;33m" << plugin_type << "::" << plugin->GetCurrentMethod() << "\033[0m" << std::endl
+                  << "Plugin type: " << "\033[1;33m" << plugin->GetPluginType() << "\033[0m" << std::endl
                   << "Instance name: " << "\033[1;33m" << plugin->GetInstanceName() << "\033[0m" << std::endl
                   << "Caught exception: " << e.what() << std::endl;
         exit(-1);
@@ -121,6 +122,7 @@ int main(int argc, char* argv[])
 
     //-----input setup-----    
     int spill=-1;
+    int nspills=-1;
     if(argc > 2)
     {
         vector<string> run(1, argv[2]);
@@ -156,7 +158,6 @@ int main(int argc, char* argv[])
         out_file_name += run+"_"+spillOpt.back()+".root";
     else
         out_file_name += "/"+run+"/"+to_string(spill)+".root";
-
     fs::create_directories(fs::absolute(fs::path(out_file_name.substr(0, out_file_name.find_last_of("/")+1))));
     auto* outROOT = new TFile(out_file_name.c_str(), "RECREATE");
     outROOT->cd();
@@ -180,11 +181,10 @@ int main(int argc, char* argv[])
         pluginLoaders.push_back(loader);
         pluginLoaders.back()->Create();
         //---get instance and put it in the plugin sequence   
-        PluginBase* newPlugin = pluginLoaders.back()->CreateInstance();
+        PluginBase* newPlugin = pluginLoaders.back()->CreateInstance(plugin);
         if(newPlugin)
         {
             pluginSequence.push_back(newPlugin);
-            pluginSequence.back()->SetInstanceName(plugin);
             pluginMap[plugin] = pluginSequence.back();
         }
         else
@@ -292,8 +292,9 @@ int main(int argc, char* argv[])
                 {
                     //---fake call to base class for debug porpouses
                     plugin->PluginBase::ProcessEvent(dataLoader.GetTree(), pluginMap, opts);
-                    //---real call
-                    status &= plugin->ProcessEvent(dataLoader.GetTree(), pluginMap, opts);
+                    //---real call + check for filters
+                    if(status)
+                        status &= plugin->ProcessEvent(dataLoader.GetTree(), pluginMap, opts);
                 }
                 catch(...)
                 {
@@ -338,7 +339,7 @@ int main(int argc, char* argv[])
                 {
 	    	    TTree* currentTree = (TTree*)shared.obj;
 	    	    outDIR->cd();
-	    	    //currentTree->BuildIndex("index");
+                    currentTree->BuildIndex("index");
 	    	    currentTree->Write(currentTree->GetName(), TObject::kOverwrite);
 	    	    mainTree.AddFriend(currentTree->GetName());
                 }

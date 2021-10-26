@@ -25,4 +25,14 @@ void PluginBase::RegisterSharedData(TObject* obj, string tag, bool isPermanent)
     return;
 }
 
+void PluginBase::Log(std::string message, LoggerLevel lv)
+{
+    //---Format message with plugin type and instance name
+    std::map<LoggerLevel, std::string> colors = { {INFO, "\033[1;36m"}, 
+                                                  {WARN, "\033[1;33m"},
+                                                  {ERR,  "\033[1;31m"} };
+    std::cout << colors[lv] << "["+pluginType_+"::"+instanceName_+"]: "
+              << "\033[0m" << message << std::endl;
 
+    return;
+}

@@ -38,6 +38,8 @@ H4Tree::~H4Tree()
     delete[] pattern;
     delete[] patternBoard;
     delete[] patternChannel;
+    delete[] triggerWords;
+    delete[] triggerWordsBoard;
     delete[] digiBoard;
     delete[] digiGroup;
     delete[] digiChannel;

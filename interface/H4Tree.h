@@ -59,7 +59,8 @@ typedef std::unordered_map<const bgc_key_t, int, key_hash, key_equal> bgc_map_t;
     DATA(unsigned int,  nAdcChannels)           \
     DATA(unsigned int,  nTdcChannels)           \
     DATA(unsigned int,  nPatterns)              \
-    DATA(unsigned int,  nDigiSamples)
+    DATA(unsigned int,  nDigiSamples)           \
+    DATA(unsigned int,  nTriggerWords)       
 
 #define DATA_VECT_TABLE                                     \
     DATA(unsigned int, evtTimeBoard, nEvtTimes)             \
@@ -72,6 +73,8 @@ typedef std::unordered_map<const bgc_key_t, int, key_hash, key_equal> bgc_map_t;
     DATA(unsigned int, pattern, nPatterns)                  \
     DATA(unsigned int, patternBoard, nPatterns)             \
     DATA(unsigned int, patternChannel, nPatterns)           \
+    DATA(unsigned int, triggerWords, nTriggerWords)         \
+    DATA(unsigned int, triggerWordsBoard, nTriggerWords)    \
     DATA(int,          digiBoard, nDigiSamples)             \
     DATA(unsigned int, digiGroup, nDigiSamples)             \
     DATA(unsigned int, digiChannel, nDigiSamples)           \

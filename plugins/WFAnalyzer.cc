@@ -7,7 +7,7 @@ bool WFAnalyzer::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint
     //---inputs---
     if(!opts.OptExist(instanceName_+".srcInstanceName"))
     {
-        cout << ">>> WFAnalyzer ERROR: no source plugin specified" << endl;
+        Log("no source plugin specified", ERR);
         return false;
     }
     srcInstance_ = opts.GetOpt<string>(instanceName_+".srcInstanceName");
@@ -23,7 +23,7 @@ bool WFAnalyzer::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint
 	    WFs_[channel] = (WFClass*)shared_data.at(0).obj;
 	  }
         else
-            cout << "[WFAnalizer::" << instanceName_ << "]: channels samples not found check DigiReco step" << endl; 
+            Log("channels samples not found check DigiReco step", WARN); 
     }
     
     //---channels setup
@@ -52,19 +52,14 @@ bool WFAnalyzer::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint
                 }
                 else
                 {
-                    cout << ">>> WFAnalyzer ERROR: template " 
-                         << opts.GetOpt<string>(channel+".templateFit.file", 1)
-                         << " not found in "
-                         << opts.GetOpt<string>(channel+".templateFit.file", 0)
-                         << endl;
+                    Log("template "+opts.GetOpt<string>(channel+".templateFit.file", 1)
+                        +" not found in "+opts.GetOpt<string>(channel+".templateFit.file", 0), ERR);
                     return false;
                 }                
             }
             else
             {
-                cout << ">>> WFAnalyzer ERROR: template file " 
-                     << opts.GetOpt<string>(channel+".templateFit.file", 0)
-                     << " not found" << endl;
+                Log("template file "+opts.GetOpt<string>(channel+".templateFit.file", 0)+" not found", ERR);
                 return false;
             }
             templateFile->Close();
@@ -121,7 +116,7 @@ bool WFAnalyzer::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint
 
 bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, CfgManager& opts)
 {
-    //---setup output event 
+    //---reset output event 
     int outCh=0;
     bool fillWFtree=false;
     if(opts.GetOpt<int>(instanceName_+".fillWFtree"))
@@ -130,14 +125,10 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
     //---compute reco variables
     for(auto& channel : channelsNames_)
     {
-        //---skip dead channels
-        if(WFs_.find(channel) == WFs_.end())
+        //---skip dead channels or channels with too few samples
+        if(WFs_.find(channel) == WFs_.end() || WFs_[channel]->GetNSample() < opts.GetOpt<int>(channel+".signalWin", 0) + 10)
         {
-            ++outCh;
-            continue;
-        }
-        // Require at least 10 samples in the signal window
-        if (WFs_[channel]->GetNSample() < opts.GetOpt<int>(channel+".signalWin", 0) + 10) {
+            digiTree_.FillVoidChannel(outCh);
             ++outCh;
             continue;
         }
