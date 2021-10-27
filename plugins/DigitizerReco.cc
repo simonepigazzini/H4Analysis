@@ -5,7 +5,6 @@ bool DigitizerReco::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, u
 {
     //---inputs---
     channelsNames_ = opts.GetOpt<vector<string> >(instanceName_+".channelsNames");
-
     //---read dV and dT digitizer calibration from file and register it to the shared data
     if(opts.OptExist(instanceName_+".calibration"))
     {
@@ -47,9 +46,12 @@ bool DigitizerReco::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, u
                 WFs_[channel] = new WFClassNINO(opts.GetOpt<int>(channel+".polarity"), tUnit);
             else if(opts.GetOpt<string>(channel+".type") == "Clock")
                 WFs_[channel] = new WFClassClock(tUnit);
+            else if(opts.GetOpt<string>(channel+".type") == "LiTEDTU")
+                WFs_[channel] = new WFClassLiTEDTU(opts.GetOpt<int>(channel+".polarity"), tUnit);
         }
         else
             WFs_[channel] = new WFClass(opts.GetOpt<int>(channel+".polarity"), tUnit);
+        
         
         //---set channel calibration if available
         unsigned int digiBd = opts.GetOpt<unsigned int>(channel+".digiBoard");
@@ -83,6 +85,7 @@ bool DigitizerReco::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugin
     
     //---user channels
     bool evtStatus = true;
+    
     for(auto& channel : channelsNames_)
     {
         //---reset and read new WFs_
@@ -93,6 +96,7 @@ bool DigitizerReco::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugin
         auto offset = event.digiMap.at(make_tuple(digiBd, digiGr, digiCh));
         auto max_sample = offset+std::min(nSamples_[channel], event.digiNSamplesMap[make_tuple(digiBd, digiGr, digiCh)]); 
         auto iSample = offset;
+	
         while(iSample < max_sample && event.digiBoard[iSample] != -1)
         {
             //Set the start index cell
@@ -103,13 +107,18 @@ bool DigitizerReco::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugin
             //---skip everything if one channel is bad
             if(event.digiSampleValue[iSample] > 1e6)
             {
-                evtStatus = false;
+		evtStatus = false;
                 WFs_[channel]->AddSample(4095);
             }
-            else
-   	        WFs_[channel]->AddSample(event.digiSampleValue[iSample], event.digiSampleGain[iSample]);
-
-            iSample++;
+            else if (channel == "CLK")
+            {
+		WFs_[channel]->AddSample(event.digiSampleValue[iSample]);
+            }
+	    else
+            {
+		WFs_[channel]->AddSample(event.digiSampleValue[iSample], event.digiSampleGain[iSample]);
+            }
+	    iSample++;
         }
         if(opts.OptExist(channel+".useTrigRef") && opts.GetOpt<bool>(channel+".useTrigRef"))
             WFs_[channel]->SetTrigRef(trigRef);

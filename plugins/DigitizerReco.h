@@ -2,11 +2,13 @@
 #define __DIGITIZER_RECO__
 
 #include <iostream>
+#include <algorithm>
 
 #include "interface/PluginBase.h"
 #include "interface/DigiTree.h"
 #include "interface/WFTree.h"
 #include "interface/WFClass.h"
+#include "interface/WFClassLiTEDTU.h"
 #include "interface/WFClassNINO.h"
 #include "interface/WFClassClock.h"
 #include "interface/WFViewer.h"

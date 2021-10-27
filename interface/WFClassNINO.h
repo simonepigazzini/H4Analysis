@@ -13,6 +13,7 @@ public:
     WFClassNINO(int polarity, float tUnit);
 
     //---getters---
+    void                  AddSample(float sample) override;
     float                 GetSignalIntegral(int thr, int min) override;
 };
 
