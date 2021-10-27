@@ -1,4 +1,3 @@
-bla
 #include "interface/WFClassNINO.h"
 
 //**********Constructors******************************************************************
