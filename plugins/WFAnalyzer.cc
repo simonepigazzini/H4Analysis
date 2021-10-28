@@ -1,16 +1,21 @@
 #include "WFAnalyzer.h"
-#include <typeinfo>
 
 //----------Utils-------------------------------------------------------------------------
 bool WFAnalyzer::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint64* index)
 {
+    trg_ = "";
+
     //---inputs---
-    if(!opts.OptExist(instanceName_+".srcInstanceName"))
+    for(auto& src : {"srcInstanceName", "trgInstanceName"})
     {
-        Log("no source plugin specified", ERR);
-        return false;
+        if(!opts.OptExist(instanceName_+"."+src))
+        {
+            Log("no "+string(src)+" plugin specified", ERR);
+            return false;
+        }
     }
     srcInstance_ = opts.GetOpt<string>(instanceName_+".srcInstanceName");
+    trgInstance_ = opts.GetOpt<string>(instanceName_+".trgInstanceName");
     channelsNames_ = opts.GetOpt<vector<string> >(instanceName_+".channelsNames");
     timeRecoTypes_ = opts.GetOpt<vector<string> >(instanceName_+".timeRecoTypes");
 
@@ -46,9 +51,9 @@ bool WFAnalyzer::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint
                 TH1* wfTemplate=(TH1*)templateFile->Get((opts.GetOpt<string>(channel+".templateFit.file", 1)+templateTag).c_str());
                 if(wfTemplate)
                 {
-                    templates_[channel] = (TH1F*) wfTemplate->Clone();
-                    templates_[channel]->SetDirectory(0);
-                    WFs_[channel]->SetTemplate(templates_[channel]);
+                    templates_["PHYS"][channel] = (TH1F*) wfTemplate->Clone();
+                    templates_["PHYS"][channel]->SetDirectory(0);
+                    WFs_[channel]->SetTemplate(templates_["PHYS"][channel]);
                 }
                 else
                 {
@@ -60,6 +65,31 @@ bool WFAnalyzer::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint
             else
             {
                 Log("template file "+opts.GetOpt<string>(channel+".templateFit.file", 0)+" not found", ERR);
+                return false;
+            }
+            templateFile->Close();
+        }
+        if(opts.OptExist(channel+".templateFit.laserFile"))
+        {
+            TFile* templateFile = TFile::Open(opts.GetOpt<string>(channel+".templateFit.laserFile", 0).c_str(), ".READ");
+            if(templateFile)
+            {
+                TH1* wfTemplate=(TH1*)templateFile->Get((opts.GetOpt<string>(channel+".templateFit.laserFile", 1)+templateTag).c_str());
+                if(wfTemplate)
+                {
+                    templates_["LASER"][channel] = (TH1F*) wfTemplate->Clone();
+                    templates_["LASER"][channel]->SetDirectory(0);
+                }
+                else
+                {
+                    Log("template "+opts.GetOpt<string>(channel+".templateFit.laserFile", 1)
+                        +" not found in "+opts.GetOpt<string>(channel+".templateFit.laserFile", 0), ERR);
+                    return false;
+                }                
+            }
+            else
+            {
+                Log("template file "+opts.GetOpt<string>(channel+".templateFit.laserFile", 0)+" not found", ERR);
                 return false;
             }
             templateFile->Close();
@@ -132,6 +162,14 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
             ++outCh;
             continue;
         }
+
+        //---Check if trigger bit has changed from previous event
+        auto ctrg = ((TObjString*)(plugins[trgInstance_]->GetSharedData(trgInstance_, "trg_bit", false))[0].obj)->GetString().Data();
+        if(ctrg != trg_ && templates_[ctrg].find(channel) !=  templates_[ctrg].end())
+        {
+            trg_ = ctrg;
+            WFs_[channel]->SetTemplate(templates_[trg_][channel]);                                       
+        }                                
 
         //---subtract a specified channel if requested
         if(opts.OptExist(channel+".subtractChannel") && WFs_.find(opts.GetOpt<string>(channel+".subtractChannel")) != WFs_.end())
@@ -235,7 +273,7 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
             WFFitResultsScintPlusSpike fitResultsScintPlusSpike{-1, -1000, -1, -1000, -1};
             if(opts.OptExist(channel+".templateFit.spikeFile"))
             {
-                WFs_[channel]->SetTemplateScint(templates_[channel]);
+                WFs_[channel]->SetTemplateScint(templates_["PHYS"][channel]);
                 WFs_[channel]->SetTemplateSpike(spikeTemplates_[channel]);
                 fitResultsScintPlusSpike = WFs_[channel]->TemplateFitScintPlusSpike(
                     opts.OptExist(channel+".templateFit.amplitudeThreshold") ? opts.GetOpt<float>(channel+".templateFit.amplitudeThreshold") : 0,

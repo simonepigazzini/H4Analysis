@@ -2,6 +2,9 @@
 #define __WF_ANALYZER__
 
 #include <iostream>
+#include <typeinfo>
+
+#include "TObjString.h"
 
 #include "interface/PluginBase.h"
 #include "interface/DigiTree.h"
@@ -29,16 +32,18 @@ public:
     
 private:    
     //---internal data
-    string                      srcInstance_;
-    vector<string>              channelsNames_;
-    vector<string>              timeRecoTypes_;
-    map<string, vector<float> > timeOpts_;
-    DigiTree                    digiTree_;
-    RecoEventAnalyzer           eventAnalyzer_;
-    WFTree                      outWFTree_;
-    map<string, WFClass*>       WFs_;
-    map<string, TH1*>           templates_;
-    map<string, TH1*>           spikeTemplates_;
+    string                          srcInstance_;
+    string                          trgInstance_;
+    string                          trg_;
+    vector<string>                  channelsNames_;
+    vector<string>                  timeRecoTypes_;
+    map<string, vector<float> >     timeOpts_;
+    DigiTree                        digiTree_;
+    RecoEventAnalyzer               eventAnalyzer_;
+    WFTree                          outWFTree_;
+    map<string, WFClass*>           WFs_;
+    map<string, map<string, TH1*> > templates_;
+    map<string, TH1*>               spikeTemplates_;
 };
 
 DEFINE_PLUGIN(WFAnalyzer);

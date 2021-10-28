@@ -3,6 +3,7 @@
 
 #include <iostream>
 
+#include "TObjString.h"
 #include "interface/PluginBase.h"
 #include "interface/TrgTree.h"
 
@@ -26,6 +27,7 @@ private:
     string           filterName_;
     map<int, string> maskToName_;
     unsigned int     triggerBoard_;
+    TObjString       trg_;
     TrgTree          trgTree_;
 };
 
