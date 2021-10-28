@@ -152,6 +152,19 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
     if(opts.GetOpt<int>(instanceName_+".fillWFtree"))
         fillWFtree = *digiTree_.index % opts.GetOpt<int>(instanceName_+".WFtreePrescale") == 0;
 
+    //---Check if trigger bit has changed from previous event        
+    auto ctrg = ((TObjString*)(plugins[trgInstance_]->GetSharedData(trgInstance_+"_trg_bit", "", false))[0].obj)->GetString().Data();
+    if(ctrg != trg_ && 
+       templates_.find(ctrg) != templates_.end())
+    {
+        for(auto& channel : channelsNames_)
+        {
+            if(templates_[ctrg].find(channel) != templates_[ctrg].end())
+                WFs_[channel]->SetTemplate(templates_[ctrg][channel]);       
+        }                                
+        trg_ = ctrg;
+    }
+
     //---compute reco variables
     for(auto& channel : channelsNames_)
     {
@@ -162,14 +175,6 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
             ++outCh;
             continue;
         }
-
-        //---Check if trigger bit has changed from previous event
-        auto ctrg = ((TObjString*)(plugins[trgInstance_]->GetSharedData(trgInstance_, "trg_bit", false))[0].obj)->GetString().Data();
-        if(ctrg != trg_ && templates_[ctrg].find(channel) !=  templates_[ctrg].end())
-        {
-            trg_ = ctrg;
-            WFs_[channel]->SetTemplate(templates_[trg_][channel]);                                       
-        }                                
 
         //---subtract a specified channel if requested
         if(opts.OptExist(channel+".subtractChannel") && WFs_.find(opts.GetOpt<string>(channel+".subtractChannel")) != WFs_.end())
@@ -196,7 +201,7 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
             baselineInfo = WFs_[channel]->SubtractBaseline(opts.GetOpt<float>(channel+".baseline"));
 	else
             baselineInfo = WFs_[channel]->SubtractBaseline();
-	    
+
 	//FIXME MAREMMA MAIALA
         WFFitResults interpolAmpMax;
         if(opts.OptExist(channel+".signalWin", 4))
@@ -218,11 +223,11 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
                                                                   opts.GetOpt<int>(channel+".signalWin", 2)/2,
                                                                   max_function);
         }
+
         digiTree_.pedestal[outCh] = baselineInfo.baseline;
-	WFClassLiTeDTU* islitedtu = dynamic_cast<WFClassLiTeDTU*>(WFs_[channel]);
-	if (islitedtu != NULL) digiTree_.gain[outCh] = WFs_[channel]->GetGain();
+	digiTree_.gain[outCh] = WFs_[channel]->GetGain();
         digiTree_.b_charge[outCh] = WFs_[channel]->GetIntegral(opts.GetOpt<int>(channel+".baselineInt", 0), 
-                                                               opts.GetOpt<int>(channel+".baselineInt", 1));        
+                                                               opts.GetOpt<int>(channel+".baselineInt", 1));      
         digiTree_.b_slope[outCh] = baselineInfo.slope;
         digiTree_.b_rms[outCh] = baselineInfo.rms;
         digiTree_.maximum[outCh] = WFs_[channel]->GetAmpMax();

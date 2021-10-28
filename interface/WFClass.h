@@ -127,7 +127,7 @@ public:
     inline TF1*                    GetAmpFunc() { return f_max_; };
     inline TF1*                    GetFitFunc() { return f_fit_; };
     inline DigiChannelCalibration* GetCalibration() { return calibration_; };
-    inline int                     GetGain() { return *std::max_element(gain_.begin(), gain_.end()); };
+    inline int                     GetGain() { return 1; };
     float                          GetAmpMax(int min=-1, int max=-1);
     WFFitResults                   GetInterpolatedSample(int sample, int samplesLeft=-1, int samplesRight=-1);
     WFFitResults                   GetInterpolatedAmpMax(int min=-1, int max=-1, int nmFitSamples=7, int npFitSamples=7, string function="pol2", vector<float> params=vector<float>{});
