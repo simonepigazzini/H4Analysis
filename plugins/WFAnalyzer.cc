@@ -181,7 +181,7 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
                                                                   max_function);
         }
         digiTree_.pedestal[outCh] = baselineInfo.baseline;
-	WFClassLiTEDTU* islitedtu = dynamic_cast<WFClassLiTEDTU*>(WFs_[channel]);
+	WFClassLiTeDTU* islitedtu = dynamic_cast<WFClassLiTeDTU*>(WFs_[channel]);
 	if (islitedtu != NULL) digiTree_.gain[outCh] = WFs_[channel]->GetGain();
         digiTree_.b_charge[outCh] = WFs_[channel]->GetIntegral(opts.GetOpt<int>(channel+".baselineInt", 0), 
                                                                opts.GetOpt<int>(channel+".baselineInt", 1));        

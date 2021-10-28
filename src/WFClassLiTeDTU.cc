@@ -1,8 +1,8 @@
-#include "interface/WFClassLiTEDTU.h"
+#include "interface/WFClassLiTeDTU.h"
 
 //**********Constructors******************************************************************
 
-WFClassLiTEDTU::WFClassLiTEDTU(int polarity, float tUnit, DigiChannelCalibration* calibration):
+WFClassLiTeDTU::WFClassLiTeDTU(int polarity, float tUnit, DigiChannelCalibration* calibration):
     WFClass(polarity, tUnit), tmplFitTimeScint_(-1), tmplFitAmpScint_(-1), tmplFitTimeSpike_(-1), tmplFitAmpSpike_(-1),
     tmplFitConverged_(false), tmplTimeMaxScint_(0), tmplTimeMaxSpike_(0), interpolatorScint_(NULL), interpolatorSpike_(NULL)
 {}
@@ -13,7 +13,7 @@ WFClassLiTEDTU::WFClassLiTEDTU(int polarity, float tUnit, DigiChannelCalibration
 //---sample is inserted at the end of uncalibSamples_
 //---the times vector is filled with the uncalibrated sample time computed from the time unit
 //---a gain for each sample can be added. This is stored in a separate vector as well multiplied to the sample value.
-void WFClassLiTEDTU::AddSample(float sample, float gain) 
+void WFClassLiTeDTU::AddSample(float sample, float gain) 
 {
     uncalibSamples_.push_back(polarity_*sample*gain);
     gain_.push_back(gain);
@@ -22,7 +22,7 @@ void WFClassLiTEDTU::AddSample(float sample, float gain)
 };
 
 //----------template fit to the WF--------------------------------------------------------
-WFFitResults WFClassLiTEDTU::TemplateFit(float amp_threshold, float offset, int lW, int hW)
+WFFitResults WFClassLiTeDTU::TemplateFit(float amp_threshold, float offset, int lW, int hW)
 {
     double tmplFitChi2=0;
     if(tmplFitAmp_ == -1)
@@ -37,7 +37,7 @@ WFFitResults WFClassLiTEDTU::TemplateFit(float amp_threshold, float offset, int 
             fWinMax_ = maxSample_ + int(offset/tUnit_) + hW;
             //---setup minimization
             auto t0 = GetInterpolatedAmpMax().time;
-            ROOT::Math::Functor chi2(this, &WFClassLiTEDTU::TemplateChi2, 2);
+            ROOT::Math::Functor chi2(this, &WFClassLiTeDTU::TemplateChi2, 2);
             ROOT::Math::Minimizer* minimizer = ROOT::Math::Factory::CreateMinimizer("Minuit2", "Migrad");
             minimizer->SetMaxFunctionCalls(100000);
             minimizer->SetMaxIterations(1000);
@@ -61,7 +61,7 @@ WFFitResults WFClassLiTEDTU::TemplateFit(float amp_threshold, float offset, int 
     return WFFitResults{tmplFitAmp_, tmplFitTime_, tmplFitTimeErr_, TemplateChi2()/(fWinMax_-fWinMin_+1-2), 0};
 }
 
-WFFitResultsScintPlusSpike WFClassLiTEDTU::TemplateFitScintPlusSpike(float amp_threshold, float offset, int lW, int hW)
+WFFitResultsScintPlusSpike WFClassLiTeDTU::TemplateFitScintPlusSpike(float amp_threshold, float offset, int lW, int hW)
 {
     if(tmplFitAmpScint_ == -1 && tmplFitAmpSpike_ == -1)
     {
@@ -74,7 +74,7 @@ WFFitResultsScintPlusSpike WFClassLiTEDTU::TemplateFitScintPlusSpike(float amp_t
             fWinMax_ = maxSample_ + int(offset/tUnit_) + hW;
             float deltaTPeakShift = -0.5 * (tmplTimeMaxScint_ + tmplTimeMaxSpike_);
             //---setup minimization
-            ROOT::Math::Functor chi2(this, &WFClassLiTEDTU::TemplatesChi2, 4);
+            ROOT::Math::Functor chi2(this, &WFClassLiTeDTU::TemplatesChi2, 4);
             ROOT::Math::Minimizer* minimizer = ROOT::Math::Factory::CreateMinimizer("Minuit2", "Migrad");
             minimizer->SetMaxFunctionCalls(100000);
             minimizer->SetMaxIterations(1000);
@@ -121,7 +121,7 @@ WFFitResultsScintPlusSpike WFClassLiTEDTU::TemplateFitScintPlusSpike(float amp_t
 
 
 //----------Set the scintillation plus spike fit templates--------------------------------
-void WFClassLiTEDTU::SetTemplateScint(TH1* templateWF)
+void WFClassLiTeDTU::SetTemplateScint(TH1* templateWF)
 {
     //---check input
     if(!templateWF)
@@ -151,7 +151,7 @@ void WFClassLiTEDTU::SetTemplateScint(TH1* templateWF)
     return;
 }
 
-void WFClassLiTEDTU::SetTemplateSpike(TH1* templateWF)
+void WFClassLiTeDTU::SetTemplateSpike(TH1* templateWF)
 {
     //---check input
     if(!templateWF)
@@ -189,7 +189,7 @@ void WFClassLiTEDTU::SetTemplateSpike(TH1* templateWF)
 
 
 //----------Reset: get new set of sample, keep interpolator-------------------------------
-void WFClassLiTEDTU::Reset()
+void WFClassLiTeDTU::Reset()
 {
     startIndexCell_=-1;
     trigRef_=-1;
@@ -246,7 +246,7 @@ void WFClassLiTEDTU::Reset()
 
 
 //----------chi2 for scintillation plus spike template fit---------------------------------------------------------
-double WFClassLiTEDTU::TemplatesChi2(const double* par)
+double WFClassLiTeDTU::TemplatesChi2(const double* par)
 {
     double chi2 = 0;
     double delta = 0;
@@ -278,7 +278,7 @@ double WFClassLiTEDTU::TemplatesChi2(const double* par)
 
 //**********operators*********************************************************************
 //----------assignment--------------------------------------------------------------------
-WFClassLiTEDTU& WFClassLiTEDTU::operator=(const WFClassLiTEDTU& origin)
+WFClassLiTeDTU& WFClassLiTeDTU::operator=(const WFClassLiTeDTU& origin)
 {
     uncalibSamples_ = origin.uncalibSamples_;
     calibSamples_ = origin.calibSamples_;

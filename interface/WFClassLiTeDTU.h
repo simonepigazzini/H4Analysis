@@ -6,12 +6,12 @@
 
 using namespace std;
 
-class WFClassLiTEDTU : public WFClass
+class WFClassLiTeDTU : public WFClass
 {
 public:
     //---ctors---
-    WFClassLiTEDTU() {};
-    WFClassLiTEDTU(int polarity, float tUnit, DigiChannelCalibration* calibration=NULL);
+    WFClassLiTeDTU() {};
+    WFClassLiTeDTU(int polarity, float tUnit, DigiChannelCalibration* calibration=NULL);
     //---setters---
     void                           SetTemplateScint(TH1* templateWF=NULL) override; 
     void                           SetTemplateSpike(TH1* templateWF=NULL) override;
@@ -21,7 +21,7 @@ public:
     WFFitResults                   TemplateFit(float ampl_threshold=0, float offset=0., int lW=0, int hW=0) override;
     WFFitResultsScintPlusSpike     TemplateFitScintPlusSpike(float amp_threshold=0., float offset=0., int lW=0, int hW=0) override; 
     //---operators---
-    WFClassLiTEDTU&                operator=(const WFClassLiTEDTU& origin);
+    WFClassLiTeDTU&                operator=(const WFClassLiTeDTU& origin);
     //---utils---
     void                           Reset() override;    
     double                         TemplatesChi2(const double* par=NULL);

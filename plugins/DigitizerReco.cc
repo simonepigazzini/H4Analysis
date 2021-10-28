@@ -46,8 +46,8 @@ bool DigitizerReco::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, u
                 WFs_[channel] = new WFClassNINO(opts.GetOpt<int>(channel+".polarity"), tUnit);
             else if(opts.GetOpt<string>(channel+".type") == "Clock")
                 WFs_[channel] = new WFClassClock(tUnit);
-            else if(opts.GetOpt<string>(channel+".type") == "LiTEDTU")
-                WFs_[channel] = new WFClassLiTEDTU(opts.GetOpt<int>(channel+".polarity"), tUnit);
+            else if(opts.GetOpt<string>(channel+".type") == "LiTeDTU")
+                WFs_[channel] = new WFClassLiTeDTU(opts.GetOpt<int>(channel+".polarity"), tUnit);
         }
         else
             WFs_[channel] = new WFClass(opts.GetOpt<int>(channel+".polarity"), tUnit);
@@ -110,14 +110,8 @@ bool DigitizerReco::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugin
 		evtStatus = false;
                 WFs_[channel]->AddSample(4095);
             }
-            else if (channel == "CLK")
-            {
-		WFs_[channel]->AddSample(event.digiSampleValue[iSample]);
-            }
 	    else
-            {
 		WFs_[channel]->AddSample(event.digiSampleValue[iSample], event.digiSampleGain[iSample]);
-            }
 	    iSample++;
         }
         if(opts.OptExist(channel+".useTrigRef") && opts.GetOpt<bool>(channel+".useTrigRef"))
