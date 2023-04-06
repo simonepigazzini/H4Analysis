@@ -49,7 +49,10 @@ template<class P> inline PluginLoader<P>::PluginLoader(string plugin_name)
         cout << ">>> PluginLoader: " << dlerror() << endl;
         exit(1);
     }
+
     pluginCreator = (P* (*)(void))dlsym(pluginHandle, "create");
+    std::cout << "Loaded " << plugin_name << ": " << pluginCreator << std::endl;
+
     if((error = dlerror()) != NULL)
     {
         cout << ">>> PluginLoader: " << error << endl;

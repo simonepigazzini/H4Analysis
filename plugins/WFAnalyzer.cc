@@ -6,7 +6,7 @@ bool WFAnalyzer::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint
     trg_ = "";
 
     //---inputs---
-    for(auto& src : {"srcInstanceName", "trgInstanceName"})
+    for(auto& src : {"srcInstanceName"})
     {
         if(!opts.OptExist(instanceName_+"."+src))
         {
@@ -14,8 +14,12 @@ bool WFAnalyzer::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint
             return false;
         }
     }
+
     srcInstance_ = opts.GetOpt<string>(instanceName_+".srcInstanceName");
-    trgInstance_ = opts.GetOpt<string>(instanceName_+".trgInstanceName");
+    if(opts.OptExist(instanceName_+".trgInstanceName"))
+      trgInstance_ = opts.GetOpt<string>(instanceName_+".trgInstanceName");
+    else
+      trgInstance_="";
     channelsNames_ = opts.GetOpt<vector<string> >(instanceName_+".channelsNames");
     timeRecoTypes_ = opts.GetOpt<vector<string> >(instanceName_+".timeRecoTypes");
 
@@ -153,17 +157,21 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
         fillWFtree = *digiTree_.index % opts.GetOpt<int>(instanceName_+".WFtreePrescale") == 0;
 
     //---Check if trigger bit has changed from previous event        
-    auto ctrg = ((TObjString*)(plugins[trgInstance_]->GetSharedData(trgInstance_+"_trg_bit", "", false))[0].obj)->GetString().Data();
+    auto ctrg = "PHYS";
+    
+    if (trgInstance_!="")
+      ctrg=((TObjString*)(plugins[trgInstance_]->GetSharedData(trgInstance_+"_trg_bit", "", false))[0].obj)->GetString().Data();
+
     if(ctrg != trg_ && 
        templates_.find(ctrg) != templates_.end())
-    {
-        for(auto& channel : channelsNames_)
-        {
-            if(templates_[ctrg].find(channel) != templates_[ctrg].end())
-                WFs_[channel]->SetTemplate(templates_[ctrg][channel]);       
-        }                                
-        trg_ = ctrg;
-    }
+      {
+	for(auto& channel : channelsNames_)
+	  {
+	    if(templates_[ctrg].find(channel) != templates_[ctrg].end())
+	      WFs_[channel]->SetTemplate(templates_[ctrg][channel]);       
+	  }                                
+	trg_ = ctrg;
+      }
 
     //---compute reco variables
     for(auto& channel : channelsNames_)
@@ -198,10 +206,12 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
                                                opts.GetOpt<int>(channel+".signalInt", 1));
 	WFBaseline baselineInfo; 
 	if (opts.OptExist(channel+".baseline"))
-            baselineInfo = WFs_[channel]->SubtractBaseline(opts.GetOpt<float>(channel+".baseline"));
+	  baselineInfo = WFs_[channel]->SubtractBaseline(opts.GetOpt<float>(channel+".baseline"));
+	else if (opts.OptExist(channel+".baselineFit"))
+	  baselineInfo = WFs_[channel]->SubtractBaselineFit();
 	else
-            baselineInfo = WFs_[channel]->SubtractBaseline();
-
+	  baselineInfo = WFs_[channel]->SubtractBaseline();
+	
 	//FIXME MAREMMA MAIALA
         WFFitResults interpolAmpMax;
         if(opts.OptExist(channel+".signalWin", 4))
@@ -259,8 +269,8 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
                 digiTree_.time_slope[outCh+iT*channelsNames_.size()] = -99;
             }
         }
-        digiTree_.period[outCh] = WFs_[channel]->GetPeriod();
 
+        digiTree_.period[outCh] = WFs_[channel]->GetPeriod();
         //---template fit (only specified channels)
         if(opts.OptExist(channel+".templateFit.file"))
         {
