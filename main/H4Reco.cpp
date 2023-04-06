@@ -19,6 +19,7 @@
 
 #include "interface/PluginLoader.h"
 #include "interface/PluginBase.h"
+#include "interface/PreProcessorBase.h"
 #include "interface/DataLoader.h"
 #include "interface/RecoTree.h"
 
@@ -75,6 +76,30 @@ void TrackProcess(float* cpu, float* mem, float* vsz, float* rss)
          << "VSZ(M): " << vsz[0] << "/" << vsz[1] << endl
          << "RSS(M): " << rss[0] << "/" << rss[1] << endl
          << "time lasted: " << time << endl;
+}
+
+//----------Exception handler-------------------------------------------------------------
+//---This fuction is meant to provide debug information by printing
+//---the last called Plugin::Method while re-throwing the original exception
+void HandleException(std::exception_ptr eptr, PreProcessorBase* plugin)
+{
+    try
+    {
+        if (eptr)
+        {
+            std::rethrow_exception(eptr);
+        }
+    }
+    catch(const std::exception& e)
+    {
+        auto plugin_type = std::regex_replace(typeid(plugin).name(), std::regex(".*[0-9]+"), "");
+        std::cout << "\033[1;31m" << ">>>>> H4Reco ERROR! <<<<<" << "\033[0m" << std::endl
+                  << "Error in: " << "\033[1;33m" << plugin_type << "::" << plugin->GetCurrentMethod() << "\033[0m" << std::endl
+                  << "Plugin type: " << "\033[1;33m" << plugin->GetPreProcessorType() << "\033[0m" << std::endl
+                  << "Instance name: " << "\033[1;33m" << plugin->GetInstanceName() << "\033[0m" << std::endl
+                  << "Caught exception: " << e.what() << std::endl;
+        exit(-1);
+    }
 }
 
 //----------Exception handler-------------------------------------------------------------
@@ -163,6 +188,17 @@ int main(int argc, char* argv[])
     TDirectory* outDIR=outROOT;
 
     RecoTree mainTree(&index);
+
+    //---Get plugin sequence---
+    PluginLoader<PreProcessorBase>* preProcessLoader;
+    string preProcessorType = opts.GetOpt<string>("h4reco.preProcessorType");    
+    preProcessLoader = new PluginLoader<PreProcessorBase>(preProcessorType);
+    PreProcessorBase* preProcessor = preProcessLoader->CreateInstance(preProcessorType);
+    if(!preProcessor)
+      {
+	cout << ">>> ERROR: preprocessor type " <<  preProcessorType << " is not defined." << endl;
+	return 0;
+      }    
 
     //---Get plugin sequence---
     PluginLoader<PluginBase>* loader;
@@ -270,6 +306,7 @@ int main(int argc, char* argv[])
         }
 
 
+	H4Tree* event=0;
 	//---events loop
 	while((dataLoader.NextEvent() && (nEvents < maxEvents || maxEvents == -1)) || (isSim && (nEvents < maxEvents)))
         {
@@ -279,9 +316,26 @@ int main(int argc, char* argv[])
                 cout << ">>> Processed events: " << nEvents << "\033[0m" << endl;
 		TrackProcess(cpu, mem, vsz, rss);
             }
-        
+
+	    try
+	      {
+		preProcessor->PreProcessorBase::ProcessEvent(dataLoader.GetTree());
+		event=preProcessor->ProcessEvent(dataLoader.GetTree());
+
+		if(!event)
+		  {
+		    cout << ">>> ERROR: preprocess error call: " << preProcessor->GetInstanceName() << endl;
+		    exit(-1);
+		  }
+	      }
+	    catch(...)
+	      {
+		eptr = std::current_exception();
+	      }
+	    HandleException(eptr, preProcessor);
+
 	    //---set index value run*1e10+spill*1e4+event
-	    index = dataLoader.GetTree().runNumber*1e9 + dataLoader.GetTree().spillNumber*1e5 + dataLoader.GetTree().evtNumber;
+	    index = (*event).runNumber*1e9 + (*event).spillNumber*1e5 + (*event).evtNumber;
 	    
 	    //---call ProcessEvent for each plugin and check the return status
 	    bool status=true;
@@ -290,10 +344,10 @@ int main(int argc, char* argv[])
                 try
                 {
                     //---fake call to base class for debug porpouses
-                    plugin->PluginBase::ProcessEvent(dataLoader.GetTree(), pluginMap, opts);
+                    plugin->PluginBase::ProcessEvent((*event), pluginMap, opts);
                     //---real call + check for filters
                     if(status)
-                        status &= plugin->ProcessEvent(dataLoader.GetTree(), pluginMap, opts);
+                        status &= plugin->ProcessEvent((*event), pluginMap, opts);
                 }
                 catch(...)
                 {
@@ -304,12 +358,12 @@ int main(int argc, char* argv[])
         
 	    //---Fill the main tree with info variables and increase event counter
             mainTree.time_stamps.clear();
-            for(int iT=0; iT<dataLoader.GetTree().nEvtTimes; ++iT)
-                mainTree.time_stamps.push_back(dataLoader.GetTree().evtTime[iT]);
+            for(int iT=0; iT<(*event).nEvtTimes; ++iT)
+                mainTree.time_stamps.push_back((*event).evtTime[iT]);
 	    mainTree.evt_flag = status;
-	    mainTree.run = dataLoader.GetTree().runNumber;
-	    mainTree.spill = dataLoader.GetTree().spillNumber;
-	    mainTree.event = dataLoader.GetTree().evtNumber;
+	    mainTree.run = (*event).runNumber;
+	    mainTree.spill = (*event).spillNumber;
+	    mainTree.event = (*event).evtNumber;
 	    mainTree.Fill();
 	    ++nEvents;
         }

@@ -7,8 +7,9 @@
 #include <vector>
 
 #include "CfgManager/interface/CfgManager.h"
+#include "DynamicTTree/interface/DynamicTTreeBase.h"
 
-#include "interface/H4Tree.h"
+using namespace std;
 
 class DataLoader
 {
@@ -21,7 +22,7 @@ public:
     ~DataLoader() {};
 
     //----getters---
-    inline H4Tree&  GetTree() {return *inTree_;};
+    inline DynamicTTreeBase*  GetTree() {return inTree_;};
     inline int      GetNFiles() {return fileList_.size();};
     inline int      GetNFilesProcessed() {return iFile_;};
     inline long int GetCurrentEntry() {return inTree_->GetCurrentEntry();};
@@ -39,9 +40,9 @@ private:
     vector<string> fileList_;
     int            iFile_;
     TFile*         currentFile_;
-    H4Tree*        inTree_;
+    DynamicTTreeBase*        inTree_;
     bool           firstEventInSpill_;    
-    
+    string         dataType_;
 };
 
 #endif

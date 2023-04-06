@@ -1,4 +1,6 @@
 #include "interface/DataLoader.h"
+#include "interface/H4Tree.h"
+#include "interface/scopeFNALTree.h"
 
 //**********Contructor********************************************************************
 DataLoader::DataLoader(CfgManager& opts):
@@ -13,6 +15,7 @@ DataLoader::DataLoader(CfgManager& opts):
 //---Get list of files from run folder and store the list
 bool DataLoader::ReadInputFiles()
 {
+    dataType_=opts_.GetOpt<string>("h4reco.dataType");    
     int firstSpill=opts_.GetOpt<int>("h4reco.firstSpill");
     string ls_command;
     string file;
@@ -107,10 +110,13 @@ bool DataLoader::LoadNextFile()
         currentFile_ = TFile::Open(fileList_[iFile_].c_str(), "READ");
         if(currentFile_)
         {
+	  if (dataType_ == "H4tree")
             inTree_ = new H4Tree((TTree*)currentFile_->Get("H4tree"));
-            ++iFile_;
+	  // else if (dataType_ == "scopeFNALTree")
+          //   inTree_ = new scopeFNALTree((TTree*)currentFile_->Get("pulse"));
+	  ++iFile_;
 
-            return true;
+	  return true;
         }
         else
             return false;
