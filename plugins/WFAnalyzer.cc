@@ -6,7 +6,7 @@ bool WFAnalyzer::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint
     trg_ = "";
 
     //---inputs---
-    for(auto& src : {"srcInstanceName", "trgInstanceName"})
+    for(auto& src : {"srcInstanceName"})
     {
         if(!opts.OptExist(instanceName_+"."+src))
         {
@@ -14,8 +14,12 @@ bool WFAnalyzer::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, uint
             return false;
         }
     }
+
     srcInstance_ = opts.GetOpt<string>(instanceName_+".srcInstanceName");
-    trgInstance_ = opts.GetOpt<string>(instanceName_+".trgInstanceName");
+    if(opts.OptExist(instanceName_+".trgInstanceName"))
+      trgInstance_ = opts.GetOpt<string>(instanceName_+".trgInstanceName");
+    else
+      trgInstance_="";
     channelsNames_ = opts.GetOpt<vector<string> >(instanceName_+".channelsNames");
     timeRecoTypes_ = opts.GetOpt<vector<string> >(instanceName_+".timeRecoTypes");
 
@@ -153,17 +157,22 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
         fillWFtree = *digiTree_.index % opts.GetOpt<int>(instanceName_+".WFtreePrescale") == 0;
 
     //---Check if trigger bit has changed from previous event        
-    auto ctrg = ((TObjString*)(plugins[trgInstance_]->GetSharedData(trgInstance_+"_trg_bit", "", false))[0].obj)->GetString().Data();
-    if(ctrg != trg_ && 
-       templates_.find(ctrg) != templates_.end())
-    {
-        for(auto& channel : channelsNames_)
-        {
-            if(templates_[ctrg].find(channel) != templates_[ctrg].end())
-                WFs_[channel]->SetTemplate(templates_[ctrg][channel]);       
-        }                                
-        trg_ = ctrg;
-    }
+    auto ctrg = "PHYS";
+    
+    if (trgInstance_!="")
+      {
+	((TObjString*)(plugins[trgInstance_]->GetSharedData(trgInstance_+"_trg_bit", "", false))[0].obj)->GetString().Data();
+	if(ctrg != trg_ && 
+	   templates_.find(ctrg) != templates_.end())
+	  {
+	    for(auto& channel : channelsNames_)
+	      {
+		if(templates_[ctrg].find(channel) != templates_[ctrg].end())
+		  WFs_[channel]->SetTemplate(templates_[ctrg][channel]);       
+	      }                                
+	    trg_ = ctrg;
+	  }
+      }
 
     //---compute reco variables
     for(auto& channel : channelsNames_)

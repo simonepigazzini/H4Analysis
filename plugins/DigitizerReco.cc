@@ -111,7 +111,12 @@ bool DigitizerReco::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugin
                 WFs_[channel]->AddSample(4095);
             }
 	    else
-		WFs_[channel]->AddSample(event.digiSampleValue[iSample], event.digiSampleGain[iSample]);
+	    {
+	      if (opts.GetOpt<string>("h4reco.dataType")=="scopeFNALTree")
+		WFs_[channel]->AddSampleTime(event.digiSampleValue[iSample], event.digiSampleTime[iSample]);
+	      else
+		WFs_[channel]->AddSampleGain(event.digiSampleValue[iSample], event.digiSampleGain[iSample]);
+	    }
 	    iSample++;
         }
         if(opts.OptExist(channel+".useTrigRef") && opts.GetOpt<bool>(channel+".useTrigRef"))

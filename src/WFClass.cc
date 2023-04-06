@@ -509,6 +509,14 @@ void WFClass::AddSample(float sample)
 };
 
 
+void WFClass::AddSampleTime(float sample,float time)
+{
+    uncalibSamples_.push_back(polarity_*sample); 
+    times_.push_back( time );
+    samples_ = uncalibSamples_;
+};
+
+
 
 //---------estimate the baseline in a given range and then subtract it from the signal----
 WFBaseline WFClass::SubtractBaseline(int min, int max)

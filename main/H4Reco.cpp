@@ -95,7 +95,7 @@ void HandleException(std::exception_ptr eptr, PreProcessorBase* plugin)
         auto plugin_type = std::regex_replace(typeid(plugin).name(), std::regex(".*[0-9]+"), "");
         std::cout << "\033[1;31m" << ">>>>> H4Reco ERROR! <<<<<" << "\033[0m" << std::endl
                   << "Error in: " << "\033[1;33m" << plugin_type << "::" << plugin->GetCurrentMethod() << "\033[0m" << std::endl
-                  << "Plugin type: " << "\033[1;33m" << plugin->GetPreProcessorType() << "\033[0m" << std::endl
+                  << "Plugin type: " << "\033[1;33m" << plugin->GetPluginType() << "\033[0m" << std::endl
                   << "Instance name: " << "\033[1;33m" << plugin->GetInstanceName() << "\033[0m" << std::endl
                   << "Caught exception: " << e.what() << std::endl;
         exit(-1);
@@ -189,16 +189,31 @@ int main(int argc, char* argv[])
 
     RecoTree mainTree(&index);
 
-    //---Get plugin sequence---
-    PluginLoader<PreProcessorBase>* preProcessLoader;
+    //--- PreProcessor ---
     string preProcessorType = opts.GetOpt<string>("h4reco.preProcessorType");    
-    preProcessLoader = new PluginLoader<PreProcessorBase>(preProcessorType);
+    PluginLoader<PreProcessorBase>* preProcessLoader = new PluginLoader<PreProcessorBase>(preProcessorType);
+    preProcessLoader->Create();
     PreProcessorBase* preProcessor = preProcessLoader->CreateInstance(preProcessorType);
     if(!preProcessor)
       {
 	cout << ">>> ERROR: preprocessor type " <<  preProcessorType << " is not defined." << endl;
 	return 0;
       }    
+    try
+      {
+    	preProcessor->PreProcessorBase::Begin(opts);
+    	if (!preProcessor->Begin(opts))
+    	  {
+    	    cout << ">>> ERROR: preProcessor returned bad flag from Begin() call: " << preProcessor->GetInstanceName() << endl;
+    	    exit(-1);
+    	  }
+      }
+    catch(...)
+      {
+    	eptr = std::current_exception();
+      }
+    HandleException(eptr, preProcessor);
+
 
     //---Get plugin sequence---
     PluginLoader<PluginBase>* loader;
@@ -319,8 +334,8 @@ int main(int argc, char* argv[])
 
 	    try
 	      {
-		preProcessor->PreProcessorBase::ProcessEvent(dataLoader.GetTree());
-		event=preProcessor->ProcessEvent(dataLoader.GetTree());
+		preProcessor->PreProcessorBase::ProcessEvent(dataLoader.GetTree(),opts);
+		event=preProcessor->ProcessEvent(dataLoader.GetTree(),opts);
 
 		if(!event)
 		  {
@@ -358,8 +373,8 @@ int main(int argc, char* argv[])
         
 	    //---Fill the main tree with info variables and increase event counter
             mainTree.time_stamps.clear();
-            for(int iT=0; iT<(*event).nEvtTimes; ++iT)
-                mainTree.time_stamps.push_back((*event).evtTime[iT]);
+	    for(int iT=0; iT<(*event).nEvtTimes; ++iT)
+	      mainTree.time_stamps.push_back((*event).evtTime[iT]);
 	    mainTree.evt_flag = status;
 	    mainTree.run = (*event).runNumber;
 	    mainTree.spill = (*event).spillNumber;

@@ -28,6 +28,9 @@ bool DataLoader::ReadInputFiles()
         // if ( getMachineDomain() != "cern.ch" )
         //     ls_command = string("gfal-ls root://eoscms/"+path+run+" | grep 'root' > /tmp/"+run+".list");
         // else
+      if (dataType_=="scopeFNALTree")
+        ls_command = string("ls "+path+" | grep "+run+" > /tmp/"+run+".list");
+      else
         ls_command = string("ls "+path+run+" | grep 'root' > /tmp/"+run+".list");
     }
     else if(path.find("srm://") != string::npos)
@@ -41,13 +44,26 @@ bool DataLoader::ReadInputFiles()
     while(waveList >> file && (opts_.GetOpt<int>("h4reco.maxFiles")<0 || fileList_.size()<opts_.GetOpt<int>("h4reco.maxFiles")) )
     {
         //---skip files before specified spill
-        auto currentSpill = std::stoi(file.substr(0, file.size()-4));
+        int currentSpill;
+        if (dataType_=="scopeFNALTree")  
+	  currentSpill = 1;
+	else
+	  currentSpill=std::stoi(file.substr(0, file.size()-4));
+
         if(firstSpill == -1 || currentSpill >= firstSpill)
         {
             if(path.find("/eos/cms") != string::npos)
             {
-                std::cout << "+++ Adding file " << (path+run+"/"+file).c_str() << std::endl;
-                fileList_.push_back((path+run+"/"+file).c_str());
+	      if (dataType_=="scopeFNALTree")
+		{
+		  std::cout << "+++ Adding file " << (path+"/"+file).c_str() << std::endl;
+		  fileList_.push_back((path+"/"+file).c_str());
+		}
+	      else
+		{
+		  std::cout << "+++ Adding file " << (path+run+"/"+file).c_str() << std::endl;
+		  fileList_.push_back((path+run+"/"+file).c_str());
+		}
             }
             else if(path.find("srm://") != string::npos)
             {
@@ -112,8 +128,8 @@ bool DataLoader::LoadNextFile()
         {
 	  if (dataType_ == "H4tree")
             inTree_ = new H4Tree((TTree*)currentFile_->Get("H4tree"));
-	  // else if (dataType_ == "scopeFNALTree")
-          //   inTree_ = new scopeFNALTree((TTree*)currentFile_->Get("pulse"));
+	  else if (dataType_ == "scopeFNALTree")
+            inTree_ = new scopeFNALTree((TTree*)currentFile_->Get("pulse"));
 	  ++iFile_;
 
 	  return true;

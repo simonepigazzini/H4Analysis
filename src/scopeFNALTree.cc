@@ -6,6 +6,6 @@ void scopeFNALTree::Init()
 
 scopeFNALTree::~scopeFNALTree()
 {
-    delete[] channel;
-    delete[] time;
+  delete[] channel;
+  delete[] time;
 }

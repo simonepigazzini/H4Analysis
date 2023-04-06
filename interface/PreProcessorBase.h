@@ -34,17 +34,19 @@ public:
     virtual ~PreProcessorBase(){};    
 
     //---setters---
-    void SetPreProcessorType(const std::string& preProcessor) { preProcessorType_ = preProcessor; };
+    void SetPluginType(const std::string& preProcessor) { preProcessorType_ = preProcessor; };
     void SetInstanceName(const std::string& instance) { instanceName_ = instance; };
     void SetCurrentMethod(std::string method) { currentMethod_ = method; };
 
     //---getters---
-    std::string        GetPreProcessorType() { return preProcessorType_; };
+    std::string        GetPluginType() { return preProcessorType_; };
     std::string        GetInstanceName() { return instanceName_; };
     std::string        GetCurrentMethod() { return currentMethod_; };
     
     //---utils---
-    virtual H4Tree* ProcessEvent(DynamicTTreeBase* event)
+    virtual bool Begin(CfgManager& opts)        
+    { CHECKPOINT(); return true; };
+    virtual H4Tree* ProcessEvent(DynamicTTreeBase* event, CfgManager& opts)
     { CHECKPOINT(); return 0; };
 
     void Log(std::string message, LoggerLevel lv=INFO);

@@ -157,7 +157,8 @@ public:
     virtual void                           Reset();
     bool                                   ApplyCalibration();
     virtual void                           AddSample(float sample);
-    virtual void                           AddSample(float sample, float gain) {AddSample(sample);};
+    virtual void                           AddSampleTime(float sample, float time);
+    virtual void                           AddSampleGain(float sample, float gain) {AddSample(sample);}; 
     WFBaseline                             SubtractBaseline(int min=-1, int max=-1);
     WFBaseline                             SubtractBaseline(float baseline);
 				           

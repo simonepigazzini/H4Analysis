@@ -13,7 +13,7 @@ WFClassLiTeDTU::WFClassLiTeDTU(int polarity, float tUnit, DigiChannelCalibration
 //---sample is inserted at the end of uncalibSamples_
 //---the times vector is filled with the uncalibrated sample time computed from the time unit
 //---a gain for each sample can be added. This is stored in a separate vector as well multiplied to the sample value.
-void WFClassLiTeDTU::AddSample(float sample, float gain) 
+void WFClassLiTeDTU::AddSampleGain(float sample, float gain) 
 {
     uncalibSamples_.push_back(polarity_*sample*gain);
     gain_.push_back(gain);
