@@ -127,7 +127,6 @@ WFFitResults WFClassClock::GetTimeCLK(float wleft, float wright, int min, int ma
     }
     //auto phase_err = h_phase_err.Fit("gaus", "QRSO", "goff")->Parameter(2);    
     auto phase_err = h_phase_err.GetRMS();
-    
 //    return WFFitResults{0, phase, std::sqrt(phase_err/(N-1)), 0};
     return WFFitResults{0, phase, phase_err, -1, 0};
 }
