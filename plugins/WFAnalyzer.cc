@@ -268,6 +268,7 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
                 digiTree_.time_slope[outCh+iT*channelsNames_.size()] = -99;
             }
         }
+
         digiTree_.period[outCh] = WFs_[channel]->GetPeriod();
 
         //---template fit (only specified channels)

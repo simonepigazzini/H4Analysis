@@ -70,7 +70,6 @@ WFFitResults WFClassClock::GetTimeLE(float thr, int nmFitSamples, int npFitSampl
         chi2le_ = LinearInterpolation(A, B, leSample_-nmFitSamples, leSample_+npFitSamples);
         leTime_ = (leThr_ - A) / B;
     }
-    std::cout << leThr_ <<  "," << leTime_ << ","<<  chi2le_ << "," << B << std::endl;
     return WFFitResults{leThr_, leTime_, chi2le_, B};
 
 }
@@ -137,8 +136,6 @@ WFFitResults WFClassClock::GetTimeCLK(float wleft, float wright, int min, int ma
 //---Template fit of each single clock cycle
 WFFitResults WFClassClock::TemplateFit(float ampl_threshold, float offset, int lW, int hW)
 {
-    std::cout << "+++" << std::endl;
-
     if(tmplFitAmp_ == -1)
     {
         BaselineRMS();

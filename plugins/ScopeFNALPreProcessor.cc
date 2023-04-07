@@ -30,7 +30,7 @@ H4Tree* ScopeFNALPreProcessor::ProcessEvent(DynamicTTreeBase* event, CfgManager&
 	h4Tree_.digiStartIndexCell[ich*NDIGIS+is]=0;
 	h4Tree_.digiSampleGain[ich*NDIGIS+is]=0;
 	h4Tree_.digiSampleValue[ich*NDIGIS+is]=(*thisEvent).channel[ich*NDIGIS+is];
-	h4Tree_.digiSampleTime[ich*NDIGIS+is]=(*thisEvent).time[is];
+	h4Tree_.digiSampleTime[ich*NDIGIS+is]=(*thisEvent).time[is]*1e9;
       }
 
   //now fill the digis map
