@@ -161,7 +161,7 @@ bool WFAnalyzer::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugins, 
     
     if (trgInstance_!="")
       {
-	((TObjString*)(plugins[trgInstance_]->GetSharedData(trgInstance_+"_trg_bit", "", false))[0].obj)->GetString().Data();
+	ctrg=((TObjString*)(plugins[trgInstance_]->GetSharedData(trgInstance_+"_trg_bit", "", false))[0].obj)->GetString().Data();
 	if(ctrg != trg_ && 
 	   templates_.find(ctrg) != templates_.end())
 	  {
