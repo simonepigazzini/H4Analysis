@@ -67,7 +67,6 @@ WFFitResults WFClass::GetInterpolatedSample(int sample, int samplesLeft, int sam
 //----------Get the interpolated max/min amplitude wrt polarity---------------------------
 WFFitResults WFClass::GetInterpolatedAmpMax(int min, int max, int nmFitSamples, int npFitSamples, string function, vector<float> params)
 {
-  std::cout << min << "," << max << "," << function << "," << nmFitSamples << "," << npFitSamples << std::endl;
     //---check if already computed
     if(min==-1 && max==-1 && fitAmpMax_!=-1)
         return WFFitResults{fitAmpMax_, fitTimeMax_, -1, fitChi2Max_, 0};
