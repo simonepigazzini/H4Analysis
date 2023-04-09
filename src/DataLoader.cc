@@ -15,7 +15,7 @@ DataLoader::DataLoader(CfgManager& opts):
 //---Get list of files from run folder and store the list
 bool DataLoader::ReadInputFiles()
 {
-    dataType_=opts_.GetOpt<string>("h4reco.dataType");    
+    dataType_= opts_.OptExist("h4reco.dataType") ? opts_.GetOpt<string>("h4reco.dataType") : "H4Tree";    
     int firstSpill=opts_.GetOpt<int>("h4reco.firstSpill");
     string ls_command;
     string file;
@@ -126,8 +126,8 @@ bool DataLoader::LoadNextFile()
         currentFile_ = TFile::Open(fileList_[iFile_].c_str(), "READ");
         if(currentFile_)
         {
-	  if (dataType_ == "H4tree")
-            inTree_ = new H4Tree((TTree*)currentFile_->Get("H4tree"));
+	  if (dataType_ == "H4Tree")
+            inTree_ = new H4Tree((TTree*)currentFile_->Get("H4Tree"));
 	  else if (dataType_ == "scopeFNALTree")
             inTree_ = new scopeFNALTree((TTree*)currentFile_->Get("pulse"));
 	  ++iFile_;

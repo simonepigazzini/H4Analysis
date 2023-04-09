@@ -191,7 +191,7 @@ int main(int argc, char* argv[])
     RecoTree mainTree(&index);
 
     //--- PreProcessor ---
-    string preProcessorType = opts.GetOpt<string>("h4reco.preProcessorType");    
+    string preProcessorType = opts.OptExist("h4reco.preProcessorType") ? opts.GetOpt<string>("h4reco.preProcessorType") : "H4DAQPreProcessor" ;    
     PluginLoader<PreProcessorBase>* preProcessLoader = new PluginLoader<PreProcessorBase>(preProcessorType);
     preProcessLoader->Create();
     PreProcessorBase* preProcessor = preProcessLoader->CreateInstance(preProcessorType);
