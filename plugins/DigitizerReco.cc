@@ -40,17 +40,18 @@ bool DigitizerReco::Begin(map<string, PluginBase*>& plugins, CfgManager& opts, u
     {
         nSamples_[channel] = opts.GetOpt<int>(channel+".nSamples");
         auto tUnit = opts.GetOpt<float>(channel+".tUnit");
+	auto polarity = opts.OptExist(channel+".polarity") ? opts.GetOpt<int>(channel+".polarity") : 1;
         if(opts.OptExist(channel+".type"))
         {
             if(opts.GetOpt<string>(channel+".type") == "NINO")
-                WFs_[channel] = new WFClassNINO(opts.GetOpt<int>(channel+".polarity"), tUnit);
+                WFs_[channel] = new WFClassNINO(polarity, tUnit);
             else if(opts.GetOpt<string>(channel+".type") == "Clock")
-                WFs_[channel] = new WFClassClock(tUnit);
+	        WFs_[channel] = new WFClassClock(polarity,tUnit);
             else if(opts.GetOpt<string>(channel+".type") == "LiTeDTU")
-                WFs_[channel] = new WFClassLiTeDTU(opts.GetOpt<int>(channel+".polarity"), tUnit);
+                WFs_[channel] = new WFClassLiTeDTU(polarity, tUnit);
         }
         else
-            WFs_[channel] = new WFClass(opts.GetOpt<int>(channel+".polarity"), tUnit);
+            WFs_[channel] = new WFClass(polarity, tUnit);
         
         
         //---set channel calibration if available
@@ -90,39 +91,48 @@ bool DigitizerReco::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugin
     {
         //---reset and read new WFs_
         WFs_[channel]->Reset();
+	
         auto digiBd = opts.GetOpt<unsigned int>(channel+".digiBoard");
         auto digiGr = opts.GetOpt<unsigned int>(channel+".digiGroup");
         auto digiCh = opts.GetOpt<unsigned int>(channel+".digiChannel");
         auto offset = event.digiMap.at(make_tuple(digiBd, digiGr, digiCh));
         auto max_sample = offset+std::min(nSamples_[channel], event.digiNSamplesMap[make_tuple(digiBd, digiGr, digiCh)]); 
         auto iSample = offset;
-	
-        while(iSample < max_sample && event.digiBoard[iSample] != -1)
-        {
-            //Set the start index cell
-            if (iSample==offset)
-                WFs_[channel]->SetStartIndexCell(event.digiStartIndexCell[iSample]);
 
-            //---H4DAQ bug: sometimes ADC value is out of bound.
-            //---skip everything if one channel is bad
-            if(event.digiSampleValue[iSample] > 1e6)
-            {
-		evtStatus = false;
-                WFs_[channel]->AddSample(4095);
-            }
-	    else
-	    {
-	      if (opts.GetOpt<string>("h4reco.dataType")=="scopeFNALTree")
-		WFs_[channel]->AddSampleTime(event.digiSampleValue[iSample], event.digiSampleTime[iSample]);
-	      else
-		WFs_[channel]->AddSampleGain(event.digiSampleValue[iSample], event.digiSampleGain[iSample]);
-	    }
-	    iSample++;
-        }
-        if(opts.OptExist(channel+".useTrigRef") && opts.GetOpt<bool>(channel+".useTrigRef"))
-            WFs_[channel]->SetTrigRef(trigRef);
-        if(WFs_[channel]->GetCalibration())
-            WFs_[channel]->ApplyCalibration();
+	if (!opts.OptExist(channel+".copyChannel"))
+	  {
+	    while( iSample < max_sample && event.digiBoard[iSample] != -1)
+	      {
+		//Set the start index cell
+		if (iSample==offset)
+		  WFs_[channel]->SetStartIndexCell(event.digiStartIndexCell[iSample]);
+		
+		//---H4DAQ bug: sometimes ADC value is out of bound.
+		//---skip everything if one channel is bad
+		if(event.digiSampleValue[iSample] > 1e6)
+		  {
+		    evtStatus = false;
+		    WFs_[channel]->AddSample(4095);
+		  }
+		else
+		  {
+		    if (opts.GetOpt<string>("h4reco.dataType")=="scopeFNALTree")
+		      WFs_[channel]->AddSampleTime(event.digiSampleValue[iSample], event.digiSampleTime[iSample]);
+		    else
+		      WFs_[channel]->AddSampleGain(event.digiSampleValue[iSample], event.digiSampleGain[iSample]);
+		  }
+		iSample++;
+	      }
+	    if(opts.OptExist(channel+".useTrigRef") && opts.GetOpt<bool>(channel+".useTrigRef"))
+	      WFs_[channel]->SetTrigRef(trigRef);
+	    if(WFs_[channel]->GetCalibration())
+	      WFs_[channel]->ApplyCalibration();
+	  }
+	else
+	  {
+	    //Crop from another WF (need to be set first in the list)
+	    WFs_[channel]->CropWF(*(WFs_[opts.GetOpt<string>(channel+".copyChannel",0)]),opts.GetOpt<int>(channel+".copyChannel",1),opts.GetOpt<int>(channel+".copyChannel",2));
+	  }
     }
 
     if(!evtStatus)
