@@ -116,7 +116,8 @@ bool DigitizerReco::ProcessEvent(H4Tree& event, map<string, PluginBase*>& plugin
 		  }
 		else
 		  {
-		    if (opts.GetOpt<string>("h4reco.dataType")=="scopeFNALTree")
+		    auto dataType = opts.OptExist("h4reco.dataType") ? opts.GetOpt<string>("h4reco.dataType") : "H4Tree";
+		    if (dataType=="scopeFNALTree")
 		      WFs_[channel]->AddSampleTime(event.digiSampleValue[iSample], event.digiSampleTime[iSample]);
 		    else
 		      WFs_[channel]->AddSampleGain(event.digiSampleValue[iSample], event.digiSampleGain[iSample]);

@@ -24,7 +24,7 @@ using namespace std;
 
 
 typedef unsigned long int uint32;
-typedef unsigned long long int uint64;
+typedef unsigned long long uint64;
  
 //****************************************************************************************
 //----------Helper functions--------------------------------------------------------------
@@ -73,7 +73,7 @@ typedef std::unordered_map<const bgc_key_t, int, key_hash, key_equal> bgc_map_t;
 
 #define DATA_VECT_TABLE                                     \
     DATA(unsigned int, evtTimeBoard, nEvtTimes, MAX_RO)				\
-    DATA(unsigned long, evtTime, nEvtTimes, MAX_RO)			\
+    DATA(unsigned long long, evtTime, nEvtTimes, MAX_RO)			\
     DATA(unsigned int, adcBoard, nAdcChannels, MAX_ADC_CHANNELS)		\
     DATA(unsigned int, adcChannel, nAdcChannels, MAX_ADC_CHANNELS)		\
     DATA(unsigned int, adcData, nAdcChannels, MAX_ADC_CHANNELS)		\

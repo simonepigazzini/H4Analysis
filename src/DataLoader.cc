@@ -127,11 +127,10 @@ bool DataLoader::LoadNextFile()
         if(currentFile_)
         {
 	  if (dataType_ == "H4Tree")
-            inTree_ = new H4Tree((TTree*)currentFile_->Get("H4Tree"));
+	      inTree_ = new H4Tree((TTree*)currentFile_->Get("H4tree"));
 	  else if (dataType_ == "scopeFNALTree")
             inTree_ = new scopeFNALTree((TTree*)currentFile_->Get("pulse"));
 	  ++iFile_;
-
 	  return true;
         }
         else

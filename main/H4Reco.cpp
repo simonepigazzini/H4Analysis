@@ -267,7 +267,6 @@ int main(int argc, char* argv[])
         }
         HandleException(eptr, plugin);
     }
-            
 
     int iLoop=0;
     int maxEvents = opts.OptExist("h4reco.maxEvents") ? opts.GetOpt<int>("h4reco.maxEvents") : -1;
@@ -322,16 +321,19 @@ int main(int argc, char* argv[])
         }
 
 
+
 	H4Tree* event=0;
 	//---events loop
 	while((dataLoader.NextEvent() && (nEvents < maxEvents || maxEvents == -1)) || (isSim && (nEvents < maxEvents)))
         {
+
 	    if(dataLoader.FirstEventInSpill())
             {
                 cout << "\033[1;36m" << ">>> Processed spills: " << dataLoader.GetNFilesProcessed() << "/" << dataLoader.GetNFiles() << endl;
                 cout << ">>> Processed events: " << nEvents << "\033[0m" << endl;
 		TrackProcess(cpu, mem, vsz, rss);
             }
+	    
 
 	    try
 	      {
