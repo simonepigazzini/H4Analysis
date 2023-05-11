@@ -15,7 +15,7 @@ void H4Tree::Init()
         {
             currentDigiChannel = digiChannel[iSample];
             currentDigiGroup = digiGroup[iSample];
-            currentDigiBoard = digiBoard[iSample];            
+            currentDigiBoard = digiBoard[iSample];
             digiMap[make_tuple(currentDigiBoard, currentDigiGroup, currentDigiChannel)] = iSample;
             digiNSamplesMap[make_tuple(currentDigiBoard, currentDigiGroup, currentDigiChannel)] = 1;
         }

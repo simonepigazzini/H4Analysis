@@ -25,7 +25,7 @@ public:
     //---utils---
     void                           Reset() override;    
     double                         TemplatesChi2(const double* par=NULL);
-    void                           AddSample(float sample, float gain) override; 
+    void                           AddSampleGain(float sample, float gain) override; 
     WFFitResults                   TemplateFit(float ampl_threshold=0, float offset=0., int lW=0, int hW=0) override;
     WFFitResultsScintPlusSpike     TemplateFitScintPlusSpike(float amp_threshold=0., float offset=0., int lW=0, int hW=0) override; 
     

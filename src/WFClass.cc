@@ -460,8 +460,6 @@ void WFClass::Reset()
     tmplFitTimeErr_=-1;
     tmplFitAmp_=-1;
     tmplFitAmpShift_=0;
-    interpolatorMin_=-1;
-    interpolatorMax_=-1;
     uncalibSamples_.clear();
     calibSamples_.clear();
     gain_.clear();
@@ -509,6 +507,14 @@ void WFClass::AddSample(float sample)
 };
 
 
+void WFClass::AddSampleTime(float sample,float time)
+{
+    uncalibSamples_.push_back(polarity_*sample); 
+    times_.push_back( time );
+    samples_ = uncalibSamples_;
+};
+
+
 
 //---------estimate the baseline in a given range and then subtract it from the signal----
 WFBaseline WFClass::SubtractBaseline(int min, int max)
@@ -520,6 +526,7 @@ WFBaseline WFClass::SubtractBaseline(int min, int max)
     }
     //---compute baseline
     float baseline_=0;
+    int nSamples=0;
     for(int iSample=bWinMin_; iSample<bWinMax_; ++iSample)
     {
         if(iSample < 0)
@@ -527,8 +534,10 @@ WFBaseline WFClass::SubtractBaseline(int min, int max)
         if(iSample >= samples_.size())
             break;
         baseline_ += samples_.at(iSample);
+	++nSamples;
     }
-    baseline_ = baseline_/((float)(bWinMax_-bWinMin_));
+    
+    baseline_ = baseline_/((float)nSamples);
     //---subtract baseline
     for(unsigned int iSample=0; iSample<samples_.size(); ++iSample)
         samples_.at(iSample) = (samples_.at(iSample) - baseline_);    
@@ -819,13 +828,24 @@ double WFClass::AnalyticChi2(const double* par)
     return chi2;
 }
 
-
-
 void WFClass::Print()
 {
     std::cout << "+++ DUMP WF +++" << std::endl;
     for (unsigned int i=0; i<samples_.size(); ++i)
         std::cout << "SAMPLE " << i << ": " << samples_[i] << std::endl;
+}
+
+void WFClass::CropWF(WFClass& origin, int firstSample, int lastSample)
+{
+  if (firstSample==-1)
+    firstSample=0;
+  if (lastSample==-1)
+    lastSample=origin.samples_.size();
+
+  samples_ = std::vector<double>(origin.samples_.begin()+firstSample,origin.samples_.begin()+lastSample);
+  times_ = std::vector<double>(origin.times_.begin()+firstSample,origin.times_.begin()+lastSample);
+  startIndexCell_=origin.startIndexCell_;
+  trigRef_=origin.trigRef_;
 }
 
 //**********operators*********************************************************************

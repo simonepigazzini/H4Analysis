@@ -12,10 +12,19 @@
 using namespace std;
 
 #define MAX_ADC_CHANNELS 500000
+#define MAX_DIGI_SAMPLES 100000
 #define MAX_TDC_CHANNELS 200
+#define MAX_SCALER_WORDS 16
+#define MAX_PATTERNS 16
+#define MAX_PATTERNS_SHODO 16
+#define SMALL_HODO_X_NFIBERS 8
+#define SMALL_HODO_Y_NFIBERS 8
+#define MAX_TRIG_WORDS 32
+#define MAX_RO 100
+
 
 typedef unsigned long int uint32;
-typedef unsigned long long int uint64;
+typedef unsigned long long uint64;
  
 //****************************************************************************************
 //----------Helper functions--------------------------------------------------------------
@@ -63,24 +72,25 @@ typedef std::unordered_map<const bgc_key_t, int, key_hash, key_equal> bgc_map_t;
     DATA(unsigned int,  nTriggerWords)       
 
 #define DATA_VECT_TABLE                                     \
-    DATA(unsigned int, evtTimeBoard, nEvtTimes)             \
-    DATA(uint64,       evtTime, nEvtTimes)                  \
-    DATA(unsigned int, adcBoard, MAX_ADC_CHANNELS)          \
-    DATA(unsigned int, adcChannel, MAX_ADC_CHANNELS)        \
-    DATA(unsigned int, adcData, MAX_ADC_CHANNELS)           \
-    DATA(unsigned int, tdcChannel, MAX_TDC_CHANNELS)        \
-    DATA(unsigned int, tdcData, MAX_TDC_CHANNELS)           \
-    DATA(unsigned int, pattern, nPatterns)                  \
-    DATA(unsigned int, patternBoard, nPatterns)             \
-    DATA(unsigned int, patternChannel, nPatterns)           \
-    DATA(unsigned int, triggerWords, nTriggerWords)         \
-    DATA(unsigned int, triggerWordsBoard, nTriggerWords)    \
-    DATA(int,          digiBoard, nDigiSamples)             \
-    DATA(unsigned int, digiGroup, nDigiSamples)             \
-    DATA(unsigned int, digiChannel, nDigiSamples)           \
-    DATA(unsigned int, digiStartIndexCell, nDigiSamples)    \
-    DATA(float,        digiSampleValue, nDigiSamples)       \
-    DATA(float,        digiSampleGain, nDigiSamples)       
+    DATA(unsigned int, evtTimeBoard, nEvtTimes, MAX_RO)				\
+    DATA(unsigned long long, evtTime, nEvtTimes, MAX_RO)			\
+    DATA(unsigned int, adcBoard, nAdcChannels, MAX_ADC_CHANNELS)		\
+    DATA(unsigned int, adcChannel, nAdcChannels, MAX_ADC_CHANNELS)		\
+    DATA(unsigned int, adcData, nAdcChannels, MAX_ADC_CHANNELS)		\
+    DATA(unsigned int, tdcChannel, nTdcChannels, MAX_TDC_CHANNELS)		\
+    DATA(unsigned int, tdcData, nTdcChannels, MAX_TDC_CHANNELS)		\
+    DATA(unsigned int, pattern, nPatterns, MAX_PATTERNS)				\
+    DATA(unsigned int, patternBoard, nPatterns, MAX_PATTERNS)				\
+    DATA(unsigned int, patternChannel, nPatterns, MAX_PATTERNS)			\
+    DATA(unsigned int, triggerWords, nTriggerWords, MAX_TRIG_WORDS)			\
+    DATA(unsigned int, triggerWordsBoard, nTriggerWords, MAX_TRIG_WORDS)			\
+    DATA(int,          digiBoard, nDigiSamples, MAX_DIGI_SAMPLES)             \
+    DATA(unsigned int, digiGroup, nDigiSamples, MAX_DIGI_SAMPLES)             \
+    DATA(unsigned int, digiChannel, nDigiSamples, MAX_DIGI_SAMPLES)           \
+    DATA(unsigned int, digiStartIndexCell, nDigiSamples, MAX_DIGI_SAMPLES)    \
+    DATA(float,        digiSampleValue, nDigiSamples, MAX_DIGI_SAMPLES)       \
+    DATA(float,        digiSampleTime, nDigiSamples, MAX_DIGI_SAMPLES)       \
+    DATA(float,        digiSampleGain, nDigiSamples, MAX_DIGI_SAMPLES)       
 
 #include "DynamicTTree/interface/DynamicTTreeInterface.h"
 
@@ -88,10 +98,16 @@ typedef std::unordered_map<const bgc_key_t, int, key_hash, key_equal> bgc_map_t;
 #undef DATA_TABLE
 #undef DATA_VECT_TABLE
 
+
 class H4Tree : public H4TreeBase
 {
 public:
     //---ctors
+    H4Tree(const char* name="", const char* title=""): 
+        H4TreeBase(name,title) 
+        {
+        }
+
     H4Tree(TChain* t):
         H4TreeBase(t)
         {
